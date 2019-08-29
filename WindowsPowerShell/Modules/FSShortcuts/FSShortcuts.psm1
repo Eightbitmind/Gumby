@@ -5,11 +5,9 @@
 .PARAMETER Text
 	.
 #>
-function FssEnsureShortcutDrive($driveLetter, $path)
-{
+function FssEnsureShortcutDrive($driveLetter, $path) {
 	$substOut = &'subst'
-	if ($substOut -eq $null -or !$substOut.Contains($driveLetter))
-	{
+	if ($substOut -eq $null -or !$substOut.Contains($driveLetter)) {
 		subst $driveLetter $path
 	}
 }
@@ -21,14 +19,10 @@ function FssEnsureShortcutDrive($driveLetter, $path)
 .PARAMETER Text
 	.
 #>
-function FssExpandShortcut($shortcutPath)
-{
-	if (Test-Path "$shortcutPath\__ShortcutTarget.txt")
-	{
+function FssExpandShortcut($shortcutPath) {
+	if (Test-Path "$shortcutPath\__ShortcutTarget.txt") {
 		Invoke-Expression "`"$(Get-Content $shortcutPath\__ShortcutTarget.txt)`""
-	}
-	else
-	{
+	} else {
 		$shortcutPath
 	}
 }
@@ -40,14 +34,12 @@ function FssExpandShortcut($shortcutPath)
 .PARAMETER Text
 	.
 #>
-function FssSetLocationIfShortcut()
-{
-	if (Test-Path '__ShortcutTarget.txt')
-	{
-		cd (FssExpandShortcut (pwd))
+function FssSetLocationIfShortcut() {
+	if (Test-Path '__ShortcutTarget.txt') {
+		Set-Location (FssExpandShortcut (pwd))
 	}
 }
 
-Export-ModuleMember -Function FssEnsureShortcutDrive
-Export-ModuleMember -Function FssExpandShortcut
-Export-ModuleMember -Function FssSetLocationIfShortcut
+Export-ModuleMember -Function FssEnsureShortcutDrive,
+	FssExpandShortcut,
+	FssSetLocationIfShortcut
