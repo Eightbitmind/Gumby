@@ -5,25 +5,31 @@ using module Window
 $dirHistory = New-Object 'System.Collections.ArrayList'
 $dirHistorySize = 10
 
-function DirHistoryPush($dir)
-{
-	$index = $dirHistory.IndexOf($dir)
+<#
+.SYNOPSIS
+Adds an item to the directory history.
 
-	if ($index -lt 0)
-	{
-		$dirHistory.Add($dir) | Out-Null
+.PARAMETER Directory
+Item to add to the directory history.
+#>
+function DirHistoryPush($Directory) {
+	$index = $dirHistory.IndexOf($Directory)
+
+	if ($index -lt 0) {
+		$dirHistory.Add($Directory) | Out-Null
 		while ($dirHistory.Count -gt $dirHistorySize) { $dirHistory.RemoveAt(0) }
-	}
-	elseif($index -lt $dirHistory.Count - 1)
-	{
+	} elseif ($index -lt $dirHistory.Count - 1) {
 		$temp = $dirHistory[$index]
 		$dirHistory[$index] = $dirHistory[$dirHistory.Count - 1]
 		$dirHistory[$dirHistory.Count - 1] = $temp
 	}
 }
 
-function DirHistorySelect()
-{
+<#
+.SYNOPSIS
+Prompts the user to select an item from the directory history and makes it the current directory.
+#>
+function DirHistorySelect() {
 	$horizontalPercent = 0.5
 	$verticalPercent = 0.5
 
@@ -36,11 +42,9 @@ function DirHistorySelect()
 	$lb = [ListBox]::new($dirHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Directory History'
 
-	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedItemIndex -lt $lb.Items.Count))
-	{
+	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedItemIndex -lt $lb.Items.Count)) {
 		Set-Location $lb.SelectedItem()
 	}
 }
 
-Export-ModuleMember -Function DirHistoryPush
-Export-ModuleMember -Function DirHistorySelect
+Export-ModuleMember -Function DirHistoryPush, DirHistorySelect
