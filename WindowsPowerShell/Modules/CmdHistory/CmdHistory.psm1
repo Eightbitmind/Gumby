@@ -1,13 +1,20 @@
 using module ListBox
 using module Window
 
+<#
+.SYNOPSIS
+Selects and invokes a command from the command history.
+
+.PARAMETER Count
+Maximum number of command history items to select from.
+#>
 function CmdHistorySelect($Count = 50) {
 	$rawCmdHistory = Get-History
 
 	$omittedCommands = "Get-History", "ch"
 
 	# Not using 'Get-Unique' cmdlet here as it requires alphabetical sorting, and I want to preserve
-	# the historic order of commmands.
+	# the historic order of commands.
 
 	$cmdHistory = @()
 
