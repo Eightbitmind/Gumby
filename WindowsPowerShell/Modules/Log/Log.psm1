@@ -4,6 +4,23 @@
 	Error
 }
 
+# Design considerations:
+# I want to enable the use of Log calls without having to worry about performance. Therefore, Log
+# calls in the absence of log listeners should have a negligible overhead.
+#
+# Should taking of time stamps be centralized in the log dispatcher?
+# I think not for not all log outputs might utilize them (e.g. a file-based listener might while a
+# screen-based listener might not).
+#
+# Should verbosity-gating be centralized in the log dispatcher?
+# I think not. It is conceivable to have a run with multiple listeners that operate with different
+# verbosity settings (e.g. a screen-based listener that shows only "important" output while a
+# file-based listener logs everything).
+#
+# Should the log dispatcher keep track of nesting depth (sections)?
+# I think not for not all log outputs might utilize them (e.g. an XML-based log listener might
+# represent sections with respective tags rather than through indentation).
+
 # Would 'Trace' be a better name?
 class Log {
 	static [void] Comment([string] $Message) {
