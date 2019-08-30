@@ -1,56 +1,43 @@
-﻿$LogMessageType = @{
-	Comment = "C";
-	Error = "E";
-	Warning = "W";
+﻿
+enum LogMessageType {
+	Comment
+	Warning
+	Error
 }
 
-function New-Log([string] $logFile, [int] $verbosityLimit = [int]::MaxValue)
-{
-    if(Test-Path $logFile) { rm $logFile }
+# Would 'Trace' be a better name?
+class Log {
+	static [void] Comment([string] $Message) {
 
-   	echo ("Running on {0} on {1:yyyy-MM-dd} at {1:HH:mm}" -f $env:COMPUTERNAME, (Get-Date)) > $logFile
+		foreach ($l in [Log]::Listeners) {
+			$l.ProcessMessage([LogMessageType]::Comment, $Message)
+		}
+	}
 
-    New-Object Object |
-        Add-Member -MemberType NoteProperty -Name LogFile -Value $logFile -PassThru |
-        Add-Member -MemberType NoteProperty -Name VerbosityLimit -Value $verbosityLimit -PassThru |
-        Add-Member -MemberType ScriptMethod -Name Log -PassThru {
-            param([string] $message, $messageType = $LogMessageType.Comment, [int] $verbosityLevel = 1)
+	static [void] Warning([string] $Message) {
+		foreach ($l in [Log]::Listeners) {
+			$l.ProcessMessage([LogMessageType]::Warning, $Message)
+		}
+		++[Log]::_warningCount
+	}
 
-        	echo ("{0,-14} {1} {2}" -f ("{0:HH:mm:ss.FFFFF}" -f (Get-Date)), $messageType, $message) >> $this.LogFile
+	static [void] Error([string] $Message) {
+		foreach ($l in [Log]::Listeners) {
+			$l.ProcessMessage([LogMessageType]::Error, $Message)
+		}
+		++[Log]::_errorCount
+	}
 
-	        switch($messageType) {
-		        $LogMessageType.Comment {
-			        if($verbosityLevel -le $this.VerbosityLimit) {
-				        Write-Host $message
-			        }
-		        }
-		        $LogMessageType.Error {
-                    # http://social.technet.microsoft.com/Forums/windowsserver/en-US/b5462361-2158-479d-90bd-b9365940a7f1/writeerror-in-script-method-writes-nothing?forum=winserverpowershell
-			        # Write-Error -Message $message
-                    Write-Host -ForegroundColor Red "ERROR: $message"
-                }
-		        $LogMessageType.Warning {
-			        Write-Warning $message
-		        }
+	static [uint32] WarningCount() { return [Log]::_warningCount }
+	static [uint32] ErrorCount() { return [Log]::_errorCount }
 
-	        }
-        } |
-        Add-Member -MemberType ScriptMethod -Name Comment -PassThru {
-            param([string] $message, [int] $verbosityLevel = 1)
-	        $this.Log($message, $LogMessageType.Comment, $verbosityLevel)
-        } |
-        Add-Member -MemberType ScriptMethod -Name Trace  -PassThru {
-            param([string] $message)
-	        $this.Log($message, $LogMessageType.Comment, 2)
-        } |
-        Add-Member -MemberType ScriptMethod -Name Error -PassThru {
-            param([string] $message)
-	        $this.Log($message, $LogMessageType.Error, 1)
-        } |
-        Add-Member -MemberType ScriptMethod -Name Warning -PassThru {
-            param([string] $message)
-	        $this.Log($message, $LogMessageType.Warning, 1)
-        }
+	static [void] Reset() {
+		[Log]::_errorCount = 0
+		[Log]::_warningCount = 0
+	}
+
+	static [Object[]] $Listeners = @()
+
+	static hidden [uint32] $_warningCount = 0
+	static hidden [uint32] $_errorCount = 0
 }
-
-Export-ModuleMember -Function New-Log
