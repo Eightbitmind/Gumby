@@ -132,7 +132,7 @@ function OpenWithVisualStudio([string] $fileName, [switch] $newVSInstance) {
 	.
 #>
 function OpenWithVisualStudioCode([switch] $NewInstance) {
-	$app = "${env:ProgramFiles}\Microsoft VS Code\Code.exe"
+	$app = "${env:ProgramFiles}\Microsoft VS Code\bin\code.cmd"
 	$reuse = if ($NewInstance) { '' } else { '-r' }
 	&$app $reuse $args
 }
