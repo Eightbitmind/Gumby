@@ -1,7 +1,11 @@
-﻿enum LogMessageType {
+﻿# abstain from using module Assert here as it might use the Log module
+
+enum LogMessageType {
 	Comment
 	Warning
 	Error
+	BeginSection
+	EndSection
 }
 
 # Design considerations:
@@ -27,6 +31,10 @@ class Log {
 		[Log]::DispatchMessage([LogMessageType]::Comment, $Message)
 	}
 
+	static [void] Trace([string] $Message) {
+		[Log]::DispatchMessage([LogMessageType]::Comment, $Message)
+	}
+
 	static [void] Warning([string] $Message) {
 		[Log]::DispatchMessage([LogMessageType]::Warning, $Message)
 		++[Log]::_warningCount
@@ -35,6 +43,14 @@ class Log {
 	static [void] Error([string] $Message) {
 		[Log]::DispatchMessage([LogMessageType]::Error, $Message)
 		++[Log]::_errorCount
+	}
+
+	static [void] BeginSection([string] $Message) {
+		[Log]::DispatchMessage([LogMessageType]::BeginSection, $Message)
+	}
+
+	static [void] EndSection([string] $Message) {
+		[Log]::DispatchMessage([LogMessageType]::EndSection, $Message)
 	}
 
 	static hidden [void] DispatchMessage([LogMessageType] $MessageType, [string] $Message) {
@@ -49,9 +65,10 @@ class Log {
 		[Log]::_warningCount = 0
 	}
 
-	# static [Object[]] $Listeners = (New-Object -TypeName Collections.ArrayList)
-	static [Object[]] $Listeners = @()
+	# ArrayList over standard array for mutability
+	static [Collections.ArrayList] $Listeners = [Collections.ArrayList]::new()
 
+	static hidden [uint32] $_nextListenerId = 0
 	static hidden [uint32] $_warningCount = 0
 	static hidden [uint32] $_errorCount = 0
 }
@@ -62,19 +79,32 @@ class FileLogListener {
 	}
 
 	[void] ProcessMessage([LogMessageType] $messageType, [string] $message) {
-		#echo ("{0,-14} {1} {2}" -f ("{0:HH:mm:ss.FFFFF}" -f (Get-Date)), $messageType, $message) >> $this._fileName
+		if ($messageType -eq [LogMessageType]::EndSection) {
+			if ($this._nestingLevel -eq 0) { throw "mismatching log sections" }
+			--$this._nestingLevel
+		}
 
-		Write-Output "$((Get-Date).ToString("HH:mm:ss.FFFFF")) $([FileLogListener]::GetMessageTypeString($messageType)): $message" >> $this._fileName
+		Write-Output ("{0,-14} {1}{2}: {3}" -f
+			(Get-Date).ToString("HH:mm:ss.FFFFF"),
+			<# indent #> (" " * 4 * $this._nestingLevel),
+			[FileLogListener]::GetMessageTypeString($messageType),
+			$message
+		) >> $this._fileName
+
+		if ($messageType -eq [LogMessageType]::BeginSection) { ++$this._nestingLevel }
 	}
 
 	static hidden [string] GetMessageTypeString([LogMessageType] $messageType) {
 		switch ($messageType) {
 			([LogMessageType]::Comment) { return "COMMENT" }
 			([LogMessageType]::Warning) { return "WARNING" }
-			([LogMessageType]::Error)   { return "ERROR" }
+			([LogMessageType]::Error) { return "ERROR" }
+			([LogMessageType]::BeginSection) { return "BEGIN" }
+			([LogMessageType]::EndSection) { return "END" }
 		}
 		throw "unknown message type '$messageType'"
 	}
 
 	hidden [string] $_fileName
+	hidden [uint32] $_nestingLevel = 0
 }

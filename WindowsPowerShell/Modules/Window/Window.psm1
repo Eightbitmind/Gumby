@@ -27,7 +27,6 @@ class Window {
 		}
 	}
 
-
 	[void] WriteLine([int] $y, [string] $text, $foregroundColor, $backgroundColor) {
 		assert ($y -lt ($this._rect.Bottom - $this._rect.Top - 1)) "line index outside of client area"
 		[Management.Automation.Host.BufferCell[,]] $buffer = 
@@ -36,30 +35,6 @@ class Window {
 				$foregroundColor, $backgroundColor)
 
 		$Global:Host.UI.RawUI.SetBufferContents($this.GetClientCoordinates(0, $y), $buffer)
-	}
-
-	# Delete?
-	[void] DONT_USE_InvertLine([int] $y) {
-		$lineCoordinates = $this.GetClientCoordinates(0, $y)
-		$lineRect = $this.GetClientRectangle();
-		$lineRect.Top += $y
-		$lineRect.Bottom = $lineRect.Top
-
-		# Note that GetBufferContents returns a column-major array, i.e. coordinates (x, y) are at
-		# array position [y, x].
-		$lineBuffer = $Global:Host.UI.RawUI.GetBufferContents($lineRect)
-
-		for ($x = 0; $x -lt ($this._rect.Right - $this._rect.Left - 1); ++$x) {
-			$invertedCell = New-Object System.Management.Automation.Host.BufferCell ($lineBuffer[0, $x].Character),
-				($lineBuffer[0, $x].BackgroundColor),
-				($lineBuffer[0, $x].ForegroundColor),
-				($lineBuffer[0, $x].BufferCellType)
-			# See comments in DrawFrame as to why we're assigning whole array elements instead of
-			# array element properties.
-			$lineBuffer[0, $x] = $invertedCell
-		}
-
-		$Global:Host.UI.RawUI.SetBufferContents($lineCoordinates, $lineBuffer)
 	}
 
 	[void] ScrollAreaVertically([UInt32] $top, [UInt32] $bottom, [int] $amount) {

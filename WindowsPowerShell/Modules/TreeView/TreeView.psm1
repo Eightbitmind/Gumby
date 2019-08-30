@@ -1,10 +1,6 @@
 using module ListBox
+using module Log
 using module Window
-
-function Log($message) {
-	#Write-Host 
-	$message | Out-File -Append -FilePath "$env:TEMP\PSDebug.log"
-}
 
 class FileTreeView : ListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
@@ -91,8 +87,7 @@ class FileTreeView : ListBox {
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
-		# debug
-		# Log "L='$($this.SelectedItem().Value.FullName)'; KC=$key"
+		[Log]::Trace("TV.OnKey: SII=$($this.SelectedItemIndex); SIN='$($this.SelectedItem().Value.FullName)'; K=$($key.Key)")
 
 		switch ($key.Key) {
 			([ConsoleKey]::RightArrow) {
@@ -141,7 +136,8 @@ class FileTreeView : ListBox {
 	}
 
 	[void] OpenSubDir() {
-Log "entering TV.OpenSubDir"
+		[Log]::BeginSection("TV.OpenSubDir: FIIV=$($this._firstIndexInView); SII=$($this.SelectedItemIndex)")
+
 		# Is the item already expanded?
 		if (($this.SelectedItemIndex -lt $this.Items.Count - 1) -and
 			($this.Items[$this.SelectedItemIndex + 1].Level -eq $this.SelectedItem().Level + 1)
@@ -251,10 +247,10 @@ Log "entering TV.OpenSubDir"
 
 		if ($b -gt 0) {
 			# scenarios 1, 2
-Log "TV.OpenSubDir.Scen1and2"
+			[Log]::Trace("TV.OpenSubDir: Scen1and2")
 
 			if ($b -gt $c) {
-Log "TV.OpenSubDir.Scen1"
+				[Log]::Trace("TV.OpenSubDir: Scen1")
 
 				# scenario 1
 
@@ -282,7 +278,7 @@ Log "TV.OpenSubDir.Scen1"
 
 			} else {
 				# scenario 2
-Log "TV.OpenSubDir.Scen2"
+				[Log]::Trace("TV.OpenSubDir: Scen2")
 
 				# un-invert the selected item and change its icon to indicate expansion
 				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedItemIndex), $this._foregroundColor, $this._backgroundColor)
@@ -305,7 +301,7 @@ Log "TV.OpenSubDir.Scen2"
 			}
 			
 		} else {
-Log "TV.OpenSubDir.Scen3"
+			[Log]::Trace("TV.OpenSubDir: Scen3")
 			
 			assert ($b -eq 0)
 			
@@ -324,11 +320,11 @@ Log "TV.OpenSubDir.Scen3"
 		}
 		#endregion
 
-Log "leaving TV.OpenSubDir, FIIV=$($this._firstIndexInView), SII=$($this.SelectedItemIndex)"
+		[Log]::EndSection("TV.OpenSubDir: FIIV=$($this._firstIndexInView); SII=$($this.SelectedItemIndex)")
 	}
 
 	[void] CloseSubDir() {
-Log "entering TV.CloseSubDir"
+		[Log]::BeginSection("TV.CloseSubDir")
 
 		# Going up deepens the displayed tree. Is there a way to return it to the depth we started
 		# at? Perhaps we can have a "sliding window" of the last n ancestral levels?
@@ -388,7 +384,8 @@ Log "entering TV.CloseSubDir"
 
 			$this.DisplayItems()
 		}
-Log "leaving TV.CloseSubDir"
+
+		[Log]::EndSection("TV.CloseSubDir")
 	}
 
 	[System.Collections.ArrayList] GetDirectoryContent([System.IO.DirectoryInfo] $directory) {

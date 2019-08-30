@@ -18,7 +18,7 @@ using module TestUtils
 & {
 	$logFileName = "$env:TEMP\TestLog.log"
 	$fll = [FileLogListener]::new($logFileName)
-	[Log]::Listeners += $fll
+	[Log]::Listeners.Add($fll) | Out-Null
 	[Log]::Comment("lobsglog")
 	[Log]::Warning("logsblog")
 
@@ -30,5 +30,5 @@ using module TestUtils
 
 	Remove-Item $logFileName
 	[Log]::Reset()
-	[Log]::Listeners = @()
+	[Log]::Listeners.Remove($fll)
 }

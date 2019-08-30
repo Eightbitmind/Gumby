@@ -1,7 +1,18 @@
+using module Log
 using module TreeView
 using module Window
 
+$debug = $true
+
 function SetLocationVisually($startDir = (Get-Location)) {
+	$fll = $null
+	if ($debug) {
+		$logFileName = "$env:TEMP\SetLocationVisually.log"
+		if (Test-Path $logFileName) { Remove-Item $logFileName }
+		$fll = [FileLogListener]::new($logFileName)
+		[Log]::Listeners.Add($fll) | Out-Null
+	}
+
 	$sd = Get-Item $startDir
 
 	$horizontalPercent = 0.8
@@ -19,6 +30,8 @@ function SetLocationVisually($startDir = (Get-Location)) {
 	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedItemIndex -lt $tv.Items.Count)) {
 		Set-Location $tv.SelectedItem().Value.FullName
 	}
+
+	if ($fll -ne $null) { [Log]::Listeners.Remove($fll) }
 }
 
 function SelectVisually($startDir = (Get-Location)) {
