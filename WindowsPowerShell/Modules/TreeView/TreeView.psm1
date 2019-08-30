@@ -3,7 +3,7 @@ using module Window
 
 function Log($message) {
 	#Write-Host 
-	$message | Out-File -Append -FilePath "$($env:TEMP)\TreeView.log"
+	$message | Out-File -Append -FilePath "$env:TEMP\PSDebug.log"
 }
 
 class FileTreeView : ListBox {
@@ -142,7 +142,6 @@ class FileTreeView : ListBox {
 
 	[void] OpenSubDir() {
 Log "entering TV.OpenSubDir"
-
 		# Is the item already expanded?
 		if (($this.SelectedItemIndex -lt $this.Items.Count - 1) -and
 			($this.Items[$this.SelectedItemIndex + 1].Level -eq $this.SelectedItem().Level + 1)
@@ -223,7 +222,7 @@ Log "entering TV.OpenSubDir"
 		$c = [Math]::Min($directoryContent.Count, $b)
 		$d = $b - $c
 
-		# --- fix up data ---
+		#region fix up data
 
 		if ($this.SelectedItem().Level -eq $this.MaxLevelCount - 1) {
 			# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
@@ -246,20 +245,16 @@ Log "entering TV.OpenSubDir"
 			$this.Items.Insert(++$ii, @{Level = $this.SelectedItem().Level + 1; Value = $fsItem})
 		}
 
-		++$this.SelectedItemIndex
+		#endregion fix up data
 
-		$this.DisplayItems()
-
-		return
-
-		# --- fix up visuals ---
+		#region fix up visuals
 
 		if ($b -gt 0) {
 			# scenarios 1, 2
-#Log "TV.OpenSubDir.Scen1and2"
+Log "TV.OpenSubDir.Scen1and2"
 
 			if ($b -gt $c) {
-#Log "TV.OpenSubDir.Scen1"
+Log "TV.OpenSubDir.Scen1"
 
 				# scenario 1
 
@@ -287,7 +282,7 @@ Log "entering TV.OpenSubDir"
 
 			} else {
 				# scenario 2
-#Log "TV.OpenSubDir.Scen2"
+Log "TV.OpenSubDir.Scen2"
 
 				# un-invert the selected item and change its icon to indicate expansion
 				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedItemIndex), $this._foregroundColor, $this._backgroundColor)
@@ -310,7 +305,7 @@ Log "entering TV.OpenSubDir"
 			}
 			
 		} else {
-#Log "TV.OpenSubDir.Scen3"
+Log "TV.OpenSubDir.Scen3"
 			
 			assert ($b -eq 0)
 			
@@ -327,8 +322,9 @@ Log "entering TV.OpenSubDir"
 			++$this._firstIndexInView
 			++$this.SelectedItemIndex
 		}
+		#endregion
 
-Log "leaving TV.OpenSubDir"
+Log "leaving TV.OpenSubDir, FIIV=$($this._firstIndexInView), SII=$($this.SelectedItemIndex)"
 	}
 
 	[void] CloseSubDir() {
