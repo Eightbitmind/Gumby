@@ -1,5 +1,8 @@
 using module String
 using module TestUtils
+
+#region Abbreviate tests
+
 #                         0123456789
 TestAreEqual (Abbreviate "abcdefghij" 10) "abcdefghij"
 TestAreEqual (Abbreviate "abcdefghij" 9) "abc...hij"
@@ -9,7 +12,33 @@ TestAreEqual (Abbreviate "abcdefghij" 6) "ab...j"
 TestAreEqual (Abbreviate "abcdefghij" 5) "a...j"
 TestAreEqual (Abbreviate "abcdefghij" 4) "a..."
 
-TestTuplesAreEqual (Split-Line "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
+#endregion
+
+#region EnsureStringLength
+
+TestAreEqual (EnsureStringLength "abc" 6) "abc   "
+TestAreEqual (EnsureStringLength "abc" 6 "_") "abc___"
+TestAreEqual (EnsureStringLength "abcdef" 3) "abc"
+
+#endregion
+
+#region NormalizeWhitespace tests
+
+TestAreEqual (NormalizeWhitespace "") ""
+TestAreEqual (NormalizeWhitespace "abc") "abc"
+TestAreEqual (NormalizeWhitespace "abc ") "abc"
+TestAreEqual (NormalizeWhitespace " abc") "abc"
+TestAreEqual (NormalizeWhitespace "   a bc`tdef `t ghi `n") "a bc def ghi"
+
+#endregion
+
+#region Split-Line tests
+
+TestTuplesAreEqual (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
+
+#endregion
+
+#region Zip tests
 
 & {
 	$r = Zip ("a", "b", "c") (1, 2, 3)
@@ -19,4 +48,4 @@ TestTuplesAreEqual (Split-Line "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
 	TestAreEqual $r.c 3
 }
 
-TestAreEqual (ConvertTo-NormalizedString "   a bc`tdef `t ghi `n") "a bc def ghi"
+#endregion

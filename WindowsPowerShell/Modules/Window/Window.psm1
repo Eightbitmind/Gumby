@@ -1,4 +1,5 @@
 using module Assert
+using module String
 
 enum WindowResult {
 	OK
@@ -19,19 +20,11 @@ class Window {
 		$this._backgroundColor = $backgroundColor
 	}
 
-	[string] EnsureStringLength([string] $s, [int] $l) {
-		if($s.Length -lt $l) {
-			return $s.PadRight($l, ' ')
-		} else {
-			return $s.Substring(0, $l)
-		}
-	}
-
 	[void] WriteLine([int] $y, [string] $text, $foregroundColor, $backgroundColor) {
 		assert ($y -lt ($this._rect.Bottom - $this._rect.Top - 1)) "line index outside of client area"
 		[Management.Automation.Host.BufferCell[,]] $buffer = 
 			$Global:Host.UI.RawUI.NewBufferCellArray(
-				@($this.EnsureStringLength($text, $this._rect.Right - $this._rect.Left - 1)),
+				@(EnsureStringLength $text ($this._rect.Right - $this._rect.Left - 1)),
 				$foregroundColor, $backgroundColor)
 
 		$Global:Host.UI.RawUI.SetBufferContents($this.GetClientCoordinates(0, $y), $buffer)
