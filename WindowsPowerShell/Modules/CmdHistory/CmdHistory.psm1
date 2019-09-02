@@ -40,7 +40,7 @@ function CmdHistorySelect($Count = 50) {
 	$lb = [ListBox]::new($cmdHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Command History'
 
-	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedItemIndex -lt $lb.Items.Count)) {
+	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex -lt $lb.Items.Count)) {
 		Invoke-Expression $lb.SelectedItem()
 	}
 }

@@ -14,13 +14,13 @@ class ListBox : Window {
 	}
 
 	[object] SelectedItem() {
-		return $this.Items[$this.SelectedItemIndex]
+		return $this.Items[$this.SelectedIndex]
 	}
 
 	[void] OnShown() {
 		for ($i = 0; $i -lt [Math]::Min($this.Items.Count, $this.ClientHeight()); ++$i) {
 
-			if ($i -eq $this.SelectedItemIndex) {
+			if ($i -eq $this.SelectedIndex) {
 				$fc = $this._backgroundColor
 				$bc = $this._foregroundColor
 			} else {
@@ -31,7 +31,7 @@ class ListBox : Window {
 			$this.WriteLine($i, $this.Items[$i], $fc, $bc)
 		}
 
-		$si = if ($this.Items.Count -gt 0) { $this.SelectedItemIndex + 1 } else { 0 }
+		$si = if ($this.Items.Count -gt 0) { $this.SelectedIndex + 1 } else { 0 }
 
 		$this.WriteStatusBar("$si/$($this.Items.Count)")
 		([Window]$this).OnShown()
@@ -49,52 +49,52 @@ class ListBox : Window {
 					break
 				}
 
-				if ($this.SelectedItemIndex -eq ($this.Items.Count - 1)) {
+				if ($this.SelectedIndex -eq ($this.Items.Count - 1)) {
 					# at end of list, no change
 					break
 				}
 
 				# unselect currently selected line
-				$this.WriteLine($this.SelectedItemIndex - $this._firstIndexInView, $this.GetItemLabel($this.SelectedItemIndex) , $this._foregroundColor, $this._backgroundColor)
+				$this.WriteLine($this.SelectedIndex - $this.FirstIndexInView, $this.GetItemLabel($this.SelectedIndex) , $this._foregroundColor, $this._backgroundColor)
 
-				if (($this.SelectedItemIndex - $this._firstIndexInView) -ge ($this.ClientHeight() - 1)) {
+				if (($this.SelectedIndex - $this.FirstIndexInView) -ge ($this.ClientHeight() - 1)) {
 					# last line is selected, scroll up one line
 					$this.ScrollAreaVertically(0, $this.ClientHeight() - 1, -1)
-					++$this._firstIndexInView
+					++$this.FirstIndexInView
 					# display next line
-					$this.WriteLine($this.ClientHeight() - 1, $this.GetItemLabel($this.SelectedItemIndex + 1), $this._backgroundColor, $this._foregroundColor)
+					$this.WriteLine($this.ClientHeight() - 1, $this.GetItemLabel($this.SelectedIndex + 1), $this._backgroundColor, $this._foregroundColor)
 				} else {
-					$this.WriteLine($this.SelectedItemIndex - $this._firstIndexInView + 1, $this.GetItemLabel($this.SelectedItemIndex + 1) , $this._backgroundColor, $this._foregroundColor)
+					$this.WriteLine($this.SelectedIndex - $this.FirstIndexInView + 1, $this.GetItemLabel($this.SelectedIndex + 1) , $this._backgroundColor, $this._foregroundColor)
 				}
 
-				++$this.SelectedItemIndex
+				++$this.SelectedIndex
 
-				$this.WriteStatusBar("$($this.SelectedItemIndex + 1)/$($this.Items.Count)")
+				$this.WriteStatusBar("$($this.SelectedIndex + 1)/$($this.Items.Count)")
 			}
 
 			([ConsoleKey]::UpArrow) {
-				if ($this.SelectedItemIndex -eq 0) {
+				if ($this.SelectedIndex -eq 0) {
 					# at start of list, no change
 					# also handles empty list
 					break
 				}
 
 				# unselect currently selected line
-				$this.WriteLine($this.SelectedItemIndex - $this._firstIndexInView, $this.GetItemLabel($this.SelectedItemIndex) , $this._foregroundColor, $this._backgroundColor)
+				$this.WriteLine($this.SelectedIndex - $this.FirstIndexInView, $this.GetItemLabel($this.SelectedIndex) , $this._foregroundColor, $this._backgroundColor)
 
-				if ($this.SelectedItemIndex -eq $this._firstIndexInView) {
+				if ($this.SelectedIndex -eq $this.FirstIndexInView) {
 					# first line is selected, scroll down one line
 					$this.ScrollAreaVertically(0, $this.ClientHeight() - 1, 1)
-					--$this._firstIndexInView
+					--$this.FirstIndexInView
 					# display next line
-					$this.WriteLine(0, $this.GetItemLabel($this.SelectedItemIndex - 1), $this._backgroundColor, $this._foregroundColor)
+					$this.WriteLine(0, $this.GetItemLabel($this.SelectedIndex - 1), $this._backgroundColor, $this._foregroundColor)
 				} else {
-					$this.WriteLine($this.SelectedItemIndex - $this._firstIndexInView - 1, $this.GetItemLabel($this.SelectedItemIndex - 1) , $this._backgroundColor, $this._foregroundColor)
+					$this.WriteLine($this.SelectedIndex - $this.FirstIndexInView - 1, $this.GetItemLabel($this.SelectedIndex - 1) , $this._backgroundColor, $this._foregroundColor)
 				}
 
-				--$this.SelectedItemIndex
+				--$this.SelectedIndex
 
-				$this.WriteStatusBar("$($this.SelectedItemIndex + 1)/$($this.Items.Count)")
+				$this.WriteStatusBar("$($this.SelectedIndex + 1)/$($this.Items.Count)")
 			}
 
 			default {
@@ -108,6 +108,6 @@ class ListBox : Window {
 	}
 
 	[System.Collections.ICollection] $Items
-	[int] $SelectedItemIndex = 0
-	[int] hidden $_firstIndexInView = 0
+	[int] $FirstIndexInView = 0
+	[int] $SelectedIndex = 0
 }

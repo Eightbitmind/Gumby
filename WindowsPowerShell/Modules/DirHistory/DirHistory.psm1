@@ -42,7 +42,7 @@ function DirHistorySelect() {
 	$lb = [ListBox]::new($dirHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Directory History'
 
-	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedItemIndex -lt $lb.Items.Count)) {
+	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex -lt $lb.Items.Count)) {
 		Set-Location $lb.SelectedItem()
 	}
 }

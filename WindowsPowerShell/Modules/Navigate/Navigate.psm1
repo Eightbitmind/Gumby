@@ -27,7 +27,7 @@ function SetLocationVisually($startDir = (Get-Location)) {
 	$tv = [FileTreeView]::new($sd, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Folder'
 
-	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedItemIndex -lt $tv.Items.Count)) {
+	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
 		Set-Location $tv.SelectedItem().Value.FullName
 	}
 
@@ -50,7 +50,7 @@ function SelectVisually($startDir = (Get-Location)) {
 	$tv.Title = 'Select File'
 
 	$tv = [FileTreeView]::new($sd, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
-	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedItemIndex -lt $tv.Items.Count)) {
+	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
 		return $tv.SelectedItem().Value.FullName
 	}
 }

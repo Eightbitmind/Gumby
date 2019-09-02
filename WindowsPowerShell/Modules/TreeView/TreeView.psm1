@@ -31,8 +31,8 @@ class FileTreeView : ListBox {
 
 	[void] TraceItems() {
 		for ($i = 0; $i -lt $this.Items.Count; ++$i) {
-			if ($i -eq $this._firstIndexInView) { $fiiv = ", FIIV" } else { $fiiv = "" }
-			if ($i -eq $this.SelectedItemIndex) { $sii = ", SII" } else { $sii = "" }
+			if ($i -eq $this.FirstIndexInView) { $fiiv = ", FIIV" } else { $fiiv = "" }
+			if ($i -eq $this.SelectedIndex) { $sii = ", SII" } else { $sii = "" }
 			[Log]::Trace(("{0}: `"{1}`" L={2}{3}{4}" -f
 				$i,
 				$this.GetItemLabel($i),
@@ -45,7 +45,7 @@ class FileTreeView : ListBox {
 	[void] OnShown() {
 		for ($i = 0; $i -lt [Math]::Min($this.Items.Count, $this.ClientHeight()); ++$i) {
 
-			if ($i -eq $this.SelectedItemIndex) {
+			if ($i -eq $this.SelectedIndex) {
 				$fc = $this._backgroundColor
 				$bc = $this._foregroundColor
 			} else {
@@ -56,7 +56,7 @@ class FileTreeView : ListBox {
 			$this.WriteLine($i, $this.GetItemLabel($i), $fc, $bc)
 		}
 
-		$si = if ($this.Items.Count -gt 0) { $this.SelectedItemIndex + 1 } else { 0 }
+		$si = if ($this.Items.Count -gt 0) { $this.SelectedIndex + 1 } else { 0 }
 		$this.WriteStatusBar("$si/$($this.Items.Count)")
 
 		# skipping ListBox.OnShown()
@@ -65,8 +65,8 @@ class FileTreeView : ListBox {
 
 	[void] DisplayItems() {
 		for ($y = 0; $y -lt $this.ClientHeight(); ++$y) {
-			if ($this._firstIndexInView + $y -lt $this.Items.Count) {
-				if ($this._firstIndexInView + $y -eq $this.SelectedItemIndex) {
+			if ($this.FirstIndexInView + $y -lt $this.Items.Count) {
+				if ($this.FirstIndexInView + $y -eq $this.SelectedIndex) {
 					$fc = $this._backgroundColor
 					$bc = $this._foregroundColor
 				} else {
@@ -74,7 +74,7 @@ class FileTreeView : ListBox {
 					$bc = $this._backgroundColor
 				}
 
-				$this.WriteLine($y, $this.GetItemLabel($this._firstIndexInView + $y), $fc, $bc)
+				$this.WriteLine($y, $this.GetItemLabel($this.FirstIndexInView + $y), $fc, $bc)
 			} else {
 				$this.WriteLine($y, "", $this._foregroundColor, $this._backgroundColor)
 			}
@@ -100,7 +100,7 @@ class FileTreeView : ListBox {
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
-		[Log]::Trace("TV.OnKey: SII=$($this.SelectedItemIndex); SIN='$($this.SelectedItem().Value.FullName)'; K=$($key.Key)")
+		[Log]::Trace("TV.OnKey: SII=$($this.SelectedIndex); SIN='$($this.SelectedItem().Value.FullName)'; K=$($key.Key)")
 
 		switch ($key.Key) {
 			([ConsoleKey]::RightArrow) {
@@ -149,11 +149,11 @@ class FileTreeView : ListBox {
 	}
 
 	[void] OpenSubDir() {
-		[Log]::BeginSection("TV.OpenSubDir: FIIV=$($this._firstIndexInView); SII=$($this.SelectedItemIndex)")
+		[Log]::BeginSection("TV.OpenSubDir: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex)")
 
 		# Is the item already expanded?
-		if (($this.SelectedItemIndex -lt $this.Items.Count - 1) -and
-			($this.Items[$this.SelectedItemIndex + 1].Level -eq $this.SelectedItem().Level + 1)
+		if (($this.SelectedIndex -lt $this.Items.Count - 1) -and
+			($this.Items[$this.SelectedIndex + 1].Level -eq $this.SelectedItem().Level + 1)
 		) {
 			[console]::Beep(300, 100)
 			return
@@ -175,7 +175,7 @@ class FileTreeView : ListBox {
 
 		#region fix up data
 
-		[uint32] $ii = $this.SelectedItemIndex
+		[uint32] $ii = $this.SelectedIndex
 		foreach ($fsItem in $directoryContent) {
 			$this.Items.Insert(++$ii, @{Level = $this.SelectedItem().Level + 1; Value = $fsItem})
 		}
@@ -200,7 +200,7 @@ class FileTreeView : ListBox {
 
 			# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
 
-			$first, $last = $this.GetAncestralSiblingRange($this.SelectedItemIndex, $this.SelectedItem().Level - 1)
+			$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.SelectedItem().Level - 1)
 			[Log]::Trace("TV.OpenSubDir: first=$first, last=$last")
 
 			# Prune every item outside of [$first, $last], promote everything inside that range.
@@ -211,8 +211,8 @@ class FileTreeView : ListBox {
 
 			foreach ($item in $this.Items) { --$item.Level }
 
-			$this.SelectedItemIndex -= $first - 1
-			$this._firstIndexInView = [Math]::Max(0, $this.SelectedItemIndex - $this.ClientHeight() + 1)
+			$this.SelectedIndex -= $first - 1
+			$this.FirstIndexInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight() + 1)
 
 			# Scrolling left doesn't make sense as abbreviated items would need to get
 			# "un-abbreviated". Therefore, we'll just re-render everything.
@@ -278,7 +278,7 @@ class FileTreeView : ListBox {
 		#       +---                    +---
 		#
 
-		$a = $this.SelectedItemIndex - $this._firstIndexInView + 1
+		$a = $this.SelectedIndex - $this.FirstIndexInView + 1
 		$b = $this.ClientHeight() - $a;
 		$c = [Math]::Min($directoryContent.Count, $b)
 		$d = $b - $c
@@ -293,7 +293,7 @@ class FileTreeView : ListBox {
 				# scenario 1
 
 				# un-invert the selected item and change its icon to indicate expansion
-				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedItemIndex), $this._foregroundColor, $this._backgroundColor)
+				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex), $this._foregroundColor, $this._backgroundColor)
 
 				# make room for child items
 				$this.ScrollAreaVertically($a, $this.ClientHeight() - 1, $c)
@@ -309,17 +309,17 @@ class FileTreeView : ListBox {
 						$bc = $this._backgroundColor
 					}
 
-					$this.WriteLine($a + $i, $this.GetItemLabel($this.SelectedItemIndex + $i + 1), $fc, $bc)
+					$this.WriteLine($a + $i, $this.GetItemLabel($this.SelectedIndex + $i + 1), $fc, $bc)
 				}
 
-				++$this.SelectedItemIndex
+				++$this.SelectedIndex
 
 			} else {
 				# scenario 2
 				[Log]::Trace("TV.OpenSubDir: Scen2")
 
 				# un-invert the selected item and change its icon to indicate expansion
-				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedItemIndex), $this._foregroundColor, $this._backgroundColor)
+				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex), $this._foregroundColor, $this._backgroundColor)
 
 				# render child items
 				for ($i = 0; $i -lt $c; ++$i) {
@@ -332,10 +332,10 @@ class FileTreeView : ListBox {
 						$bc = $this._backgroundColor
 					}
 
-					$this.WriteLine($a + $i, $this.GetItemLabel($this.SelectedItemIndex + $i + 1), $fc, $bc)
+					$this.WriteLine($a + $i, $this.GetItemLabel($this.SelectedIndex + $i + 1), $fc, $bc)
 				}
 
-				++$this.SelectedItemIndex
+				++$this.SelectedIndex
 			}
 			
 		} else {
@@ -346,19 +346,19 @@ class FileTreeView : ListBox {
 			# scenario 3
 			
 			# un-invert the selected item and change its icon to indicate expansion
-			$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedItemIndex), $this._foregroundColor, $this._backgroundColor)
+			$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex), $this._foregroundColor, $this._backgroundColor)
 			
 			# make room for child items
 			$this.ScrollAreaVertically(1, $this.ClientHeight() - 1, -1)
 
-			$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedItemIndex + 1), $this._backgroundColor, $this._foregroundColor)
+			$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex + 1), $this._backgroundColor, $this._foregroundColor)
 
-			++$this._firstIndexInView
-			++$this.SelectedItemIndex
+			++$this.FirstIndexInView
+			++$this.SelectedIndex
 		}
 		#endregion
 
-		[Log]::EndSection("TV.OpenSubDir: FIIV=$($this._firstIndexInView); SII=$($this.SelectedItemIndex)")
+		[Log]::EndSection("TV.OpenSubDir: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex)")
 	}
 
 	[void] CloseSubDir() {
@@ -373,14 +373,14 @@ class FileTreeView : ListBox {
 		# could create more than MaxLevelCount levels.
 
 		if ($this.SelectedItem().Level -gt 0) {
-			[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedItemIndex, 0)
+			[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex, 0)
 
 			# iterating backwards for index consistency
 			for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) { $this.Items.RemoveAt($i) }
 
-			$this.SelectedItemIndex = $firstSibling - 1
+			$this.SelectedIndex = $firstSibling - 1
 
-			$this._firstIndexInView = [Math]::Min($this._firstIndexInView, $this.SelectedItemIndex)
+			$this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
 			$this.DisplayItems()
 		} else {
 			$parent = if ($this.SelectedItem().Value -is [System.IO.DirectoryInfo]) {
@@ -411,8 +411,8 @@ class FileTreeView : ListBox {
 				foreach ($grandParentChild in $this.GetDirectoryContent($parent.Parent)) {
 					if ($grandParentChild.Name -eq $parent.Name) {
 						# item has already been inserted per the line above
-						$this.SelectedItemIndex = $insertPosition
-						$this._firstIndexInView = [Math]::Min($this._firstIndexInView, $this.SelectedItemIndex)
+						$this.SelectedIndex = $insertPosition
+						$this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
 						$insertPosition = $this.Items.Count
 					} else {
 						$this.Items.Insert($insertPosition++, @{Level = 0; Value = $grandParentChild})
