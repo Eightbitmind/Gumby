@@ -29,6 +29,19 @@ class FileTreeView : ListBox {
 		}
 	}
 
+	[void] TraceItems() {
+		for ($i = 0; $i -lt $this.Items.Count; ++$i) {
+			if ($i -eq $this._firstIndexInView) { $fiiv = ", FIIV" } else { $fiiv = "" }
+			if ($i -eq $this.SelectedItemIndex) { $sii = ", SII" } else { $sii = "" }
+			[Log]::Trace(("{0}: `"{1}`" L={2}{3}{4}" -f
+				$i,
+				$this.GetItemLabel($i),
+				$this.Items[$i].Level,
+				$fiiv,
+				$sii))
+		}
+	}
+
 	[void] OnShown() {
 		for ($i = 0; $i -lt [Math]::Min($this.Items.Count, $this.ClientHeight()); ++$i) {
 
@@ -160,6 +173,58 @@ class FileTreeView : ListBox {
 			return
 		}
 
+		#region fix up data
+
+		[uint32] $ii = $this.SelectedItemIndex
+		foreach ($fsItem in $directoryContent) {
+			$this.Items.Insert(++$ii, @{Level = $this.SelectedItem().Level + 1; Value = $fsItem})
+		}
+
+		if ($this.SelectedItem().Level -eq $this.MaxLevelCount - 1) {
+			if ([Log]::Listeners.Count -gt 0) {
+				[Log]::Trace("TV.OpenSubDir: MaxLevel overflow")
+				$this.TraceItems()
+			}
+
+			# I0-00
+			#     I1-00 <-- first
+			#     I1-01
+			#         I2-00
+			#         I2-01
+			#             I3-00 *
+			#                 ... (items about to get expanded)
+			#             I3-01
+			#         I2-02
+			#     I1-02 <-- last
+			# I0-1
+
+			# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
+
+			$first, $last = $this.GetAncestralSiblingRange($this.SelectedItemIndex, $this.SelectedItem().Level - 1)
+			[Log]::Trace("TV.OpenSubDir: first=$first, last=$last")
+
+			# Prune every item outside of [$first, $last], promote everything inside that range.
+
+			for ($i = $this.Items.Count - 1; $i -gt $last; --$i) { $this.Items.RemoveAt($i) }
+
+			for ($i = $first; $i -gt 0; --$i) { $this.Items.RemoveAt($i - 1) }
+
+			foreach ($item in $this.Items) { --$item.Level }
+
+			$this.SelectedItemIndex -= $first - 1
+			$this._firstIndexInView = [Math]::Max(0, $this.SelectedItemIndex - $this.ClientHeight() + 1)
+
+			# Scrolling left doesn't make sense as abbreviated items would need to get
+			# "un-abbreviated". Therefore, we'll just re-render everything.
+
+			$this.DisplayItems()
+			return
+		}
+
+		#endregion fix up data
+
+		#region fix up visuals
+
 		# ==========================================================================================
 		# Scenarios:
 		#
@@ -217,33 +282,6 @@ class FileTreeView : ListBox {
 		$b = $this.ClientHeight() - $a;
 		$c = [Math]::Min($directoryContent.Count, $b)
 		$d = $b - $c
-
-		#region fix up data
-
-		if ($this.SelectedItem().Level -eq $this.MaxLevelCount - 1) {
-			# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
-
-			$first, $last = $this.GetAncestralSiblingRange($this.SelectedItemIndex, $this.SelectedItem().Level - 1)
-
-			# Prune every item outside of [$first, $last], promote everything inside that range.
-
-			for ($i = $this.Items.Count - 1; $i -gt $last; --$i) { $this.Items.RemoveAt($i) }
-
-			for ($i = $first; $i -gt 0; --$i) { $this.Items.RemoveAt($i - 1) }
-
-			foreach ($item in $this.Items) { --$item.Level }
-
-			$this.SelectedItemIndex -= $first
-		}
-
-		[uint32] $ii = $this.SelectedItemIndex
-		foreach ($fsItem in $directoryContent) {
-			$this.Items.Insert(++$ii, @{Level = $this.SelectedItem().Level + 1; Value = $fsItem})
-		}
-
-		#endregion fix up data
-
-		#region fix up visuals
 
 		if ($b -gt 0) {
 			# scenarios 1, 2
