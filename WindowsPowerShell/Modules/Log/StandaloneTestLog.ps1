@@ -1,6 +1,11 @@
 using module Log
 using module TestUtils
 
+# The file is named to *not* match the pattern used in RunAllTests.ps1.
+
+# FUTURE: By utilizing test-method-local log observers, it might be possible to rearrange these
+# tests in a test class.
+
 & {
 	[Log]::Error("slogblog")
 	TestAreEqual ([Log]::WarningCount()) 0

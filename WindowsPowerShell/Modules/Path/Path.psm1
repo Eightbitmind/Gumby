@@ -1,6 +1,3 @@
-function PathNormalize([string] $path)
-{
+function PathNormalize([string] $Path) {
 	$path.Replace('/', '\')
 }
-
-Export-ModuleMember -Function PathNormalize

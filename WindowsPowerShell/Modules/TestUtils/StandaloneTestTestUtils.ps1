@@ -1,6 +1,8 @@
 using module Log
 using module TestUtils
 
+# The file is named to *not* match the pattern used in RunAllTests.ps1.
+
 #region Test infrastructure
 
 function _TestAreEqual($actual, $expected, $message = "Test Value") {

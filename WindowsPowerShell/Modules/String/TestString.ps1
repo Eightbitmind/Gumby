@@ -92,6 +92,4 @@ class StringModuleTests {
 	}
 }
 
-$testRunner = [TestRunner]::new()
-$testRunner.TestClasses.Add(([StringModuleTests])) | Out-Null
-$testRunner.RunTests()
+RunTests([StringModuleTests])

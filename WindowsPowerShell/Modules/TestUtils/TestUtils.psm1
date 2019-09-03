@@ -190,3 +190,14 @@ class TestRunner {
 			$attributeType)
 	}
 }
+
+function RunTests() {
+	$globalTestRunner = Get-Variable -Scope Global -Name 'TestRunner' -ErrorAction Ignore
+	if ($globalTestRunner -ne $null) {
+		foreach ($arg in $args) { $globalTestRunner.Value.TestClasses.Add($arg) | Out-Null }
+	} else {
+		$testRunner = [TestRunner]::new()
+		foreach ($arg in $args) { $testRunner.TestClasses.Add($arg) | Out-Null }
+		$testRunner.RunTests()
+	}
+}

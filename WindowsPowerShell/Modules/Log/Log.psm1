@@ -134,6 +134,8 @@ class FileLogListener : LogListenerBase {
 			([LogMessageType]::Comment) { return "COMMENT" }
 			([LogMessageType]::Warning) { return "WARNING" }
 			([LogMessageType]::Error) { return "ERROR" }
+			([LogMessageType]::Success) { return "SUCCESS" }
+			([LogMessageType]::Failure) { return "FAILURE" }
 			([LogMessageType]::BeginSection) { return "BEGIN" }
 			([LogMessageType]::EndSection) { return "END" }
 		}

@@ -1,6 +1,8 @@
 using module TestUtils
 using module TreeView
 
+# The file is named to *not* match the pattern used in RunAllTests.ps1.
+
 #		0	1	2	3
 #	0	A
 #	1		C
