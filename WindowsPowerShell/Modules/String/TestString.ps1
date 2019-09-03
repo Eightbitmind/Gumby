@@ -1,51 +1,97 @@
 using module String
 using module TestUtils
 
-#region Abbreviate tests
+[TestClass()]
+class StringModuleTests {
+	[TestMethod()]
+	[void] Abbreviate10() {
+		TestAreEqual (Abbreviate "abcdefghij" 10) "abcdefghij"
+	}
 
-#                         0123456789
-TestAreEqual (Abbreviate "abcdefghij" 10) "abcdefghij"
-TestAreEqual (Abbreviate "abcdefghij" 9) "abc...hij"
-TestAreEqual (Abbreviate "abcdefghij" 8) "abc...ij"
-TestAreEqual (Abbreviate "abcdefghij" 7) "ab...ij"
-TestAreEqual (Abbreviate "abcdefghij" 6) "ab...j"
-TestAreEqual (Abbreviate "abcdefghij" 5) "a...j"
-TestAreEqual (Abbreviate "abcdefghij" 4) "a..."
+	[TestMethod()]
+	[void] Abbreviate09() {
+		TestAreEqual (Abbreviate "abcdefghij" 9) "abc...hij"
+	}
 
-#endregion
+	[TestMethod()]
+	[void] Abbreviate08() {
+		TestAreEqual (Abbreviate "abcdefghij" 8) "abc...ij"
+	}
 
-#region EnsureStringLength
+	[TestMethod()]
+	[void] Abbreviate07() {
+		TestAreEqual (Abbreviate "abcdefghij" 7) "ab...ij"
+	}
 
-TestAreEqual (EnsureStringLength "abc" 6) "abc   "
-TestAreEqual (EnsureStringLength "abc" 6 "_") "abc___"
-TestAreEqual (EnsureStringLength "abcdef" 3) "abc"
+	[TestMethod()]
+	[void] Abbreviate06() {
+		TestAreEqual (Abbreviate "abcdefghij" 6) "ab...j"
+	}
 
-#endregion
+	[TestMethod()]
+	[void] Abbreviate05() {
+		TestAreEqual (Abbreviate "abcdefghij" 5) "a...j"
+	}
 
-#region NormalizeWhitespace tests
+	[TestMethod()]
+	[void] Abbreviate04() {
+		TestAreEqual (Abbreviate "abcdefghij" 4) "a..."
+	}
 
-TestAreEqual (NormalizeWhitespace "") ""
-TestAreEqual (NormalizeWhitespace "abc") "abc"
-TestAreEqual (NormalizeWhitespace "abc ") "abc"
-TestAreEqual (NormalizeWhitespace " abc") "abc"
-TestAreEqual (NormalizeWhitespace "   a bc`tdef `t ghi `n") "a bc def ghi"
+	[TestMethod()]
+	[void] EnsureStringLength_ExtendsStringWithDefaultFillChar() {
+	TestAreEqual (EnsureStringLength "abc" 6) "abc   "
+	}
 
-#endregion
+	[TestMethod()]
+	[void] EnsureStringLength_ExtendsStringWithCustomFillChar() {
+		TestAreEqual (EnsureStringLength "abc" 6 "_") "abc___"
+	}
 
-#region Split-Line tests
+	[TestMethod()]
+	[void] EnsureStringLength_TruncatesString() {
+		TestAreEqual (EnsureStringLength "abcdef" 3) "abc"
+	}
 
-TestTuplesAreEqual (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
+	[TestMethod()]
+	[void] NormalizeWhitespace_EmptyString() {
+	TestAreEqual (NormalizeWhitespace "") ""
+	}
+	[TestMethod()]
+	[void] NormalizeWhitespace_StringWithoutWhitespace() {
+		TestAreEqual (NormalizeWhitespace "abc") "abc"
+	}
 
-#endregion
+	[TestMethod()]
+	[void] NormalizeWhitespace_StringWithTrailingWhitespace() {
+		TestAreEqual (NormalizeWhitespace "abc ") "abc"
+	}
 
-#region Zip tests
+	[TestMethod()]
+	[void] NormalizeWhitespace_StringWithLeadingWhitespace() {
+		TestAreEqual (NormalizeWhitespace " abc") "abc"
+	}
 
-& {
-	$r = Zip ("a", "b", "c") (1, 2, 3)
-	TestAreEqual $r.Count 3
-	TestAreEqual $r.a 1
-	TestAreEqual $r.b 2
-	TestAreEqual $r.c 3
+	[TestMethod()]
+	[void] NormalizeWhitespace_StringWithScatteredWhitespace() {
+		TestAreEqual (NormalizeWhitespace "   a bc`tdef `t ghi `n") "a bc def ghi"
+	}
+
+	[TestMethod()]
+	[void] SplitCSVLine_WellFormedCSVLine() {
+		TestTuplesAreEqual (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
+	}
+
+	[TestMethod()]
+	[void] Zip_ThreeItems() {
+		$r = Zip ("a", "b", "c") (1, 2, 3)
+		TestAreEqual $r.Count 3
+		TestAreEqual $r.a 1
+		TestAreEqual $r.b 2
+		TestAreEqual $r.c 3
+	}
 }
 
-#endregion
+$testRunner = [TestRunner]::new()
+$testRunner.TestClasses.Add(([StringModuleTests])) | Out-Null
+$testRunner.RunTests()

@@ -4,6 +4,8 @@ enum LogMessageType {
 	Comment
 	Warning
 	Error
+	Success
+	Failure
 	BeginSection
 	EndSection
 }
@@ -45,6 +47,16 @@ class Log {
 		++[Log]::_errorCount
 	}
 
+	static [void] Success([string] $Message) {
+		[Log]::DispatchMessage([LogMessageType]::Success, $Message)
+		++[Log]::_successCount
+	}
+
+	static [void] Failure([string] $Message) {
+		[Log]::DispatchMessage([LogMessageType]::Failure, $Message)
+		++[Log]::_failureCount
+	}
+
 	static [void] BeginSection([string] $Message) {
 		[Log]::DispatchMessage([LogMessageType]::BeginSection, $Message)
 	}
@@ -59,21 +71,44 @@ class Log {
 
 	static [uint32] WarningCount() { return [Log]::_warningCount }
 	static [uint32] ErrorCount() { return [Log]::_errorCount }
+	static [uint32] SuccessCount() { return [Log]::_successCount }
+	static [uint32] FailureCount() { return [Log]::_failureCount }
 
 	static [void] Reset() {
 		[Log]::_errorCount = 0
 		[Log]::_warningCount = 0
+		[Log]::_successCount = 0
+		[Log]::_failureCount = 0
 	}
 
 	# ArrayList over standard array for mutability
 	static [Collections.ArrayList] $Listeners = [Collections.ArrayList]::new()
 
-	static hidden [uint32] $_nextListenerId = 0
 	static hidden [uint32] $_warningCount = 0
 	static hidden [uint32] $_errorCount = 0
+	static hidden [uint32] $_successCount = 0
+	static hidden [uint32] $_failureCount = 0
 }
 
-class FileLogListener {
+class LogListenerBase {
+	[void] ProcessMessage([LogMessageType] $MessageType, [string] $Message) {
+		throw "calling abstract message"
+	}
+}
+
+class LogObserver : LogListenerBase{
+	LogObserver([scriptblock] $onProcessMessage) {
+		$this.OnProcessMessage = $onProcessMessage
+	}
+
+	[void] ProcessMessage([LogMessageType] $MessageType, [string] $Message) {
+		$this.OnProcessMessage.Invoke($MessageType, $Message)
+	}
+
+	hidden [scriptblock] $OnProcessMessage
+}
+
+class FileLogListener : LogListenerBase {
 	FileLogListener([string] $fileName) {
 		$this._fileName = $fileName
 	}
@@ -107,4 +142,26 @@ class FileLogListener {
 
 	hidden [string] $_fileName
 	hidden [uint32] $_nestingLevel = 0
+}
+
+class ConsoleLogListener : LogListenerBase {
+	[void] ProcessMessage([LogMessageType] $MessageType, [string] $Message) {
+		switch ($MessageType) {
+			([LogMessageType]::Warning) {
+				Write-Host -ForegroundColor Yellow $Message
+			}
+
+			([LogMessageType]::Error) {
+				Write-Host -ForegroundColor Red $Message
+			}
+
+			([LogMessageType]::Success) {
+				Write-Host -ForegroundColor Green $Message
+			}
+
+			([LogMessageType]::Failure) {
+				Write-Host -ForegroundColor Red $Message
+			}
+		}
+	}
 }
