@@ -40,7 +40,7 @@ class StringModuleTests {
 
 	[TestMethod()]
 	[void] EnsureStringLength_ExtendsStringWithDefaultFillChar() {
-	TestAreEqual (EnsureStringLength "abc" 6) "abc   "
+		TestAreEqual (EnsureStringLength "abc" 6) "abc   "
 	}
 
 	[TestMethod()]
@@ -55,7 +55,7 @@ class StringModuleTests {
 
 	[TestMethod()]
 	[void] NormalizeWhitespace_EmptyString() {
-	TestAreEqual (NormalizeWhitespace "") ""
+		TestAreEqual (NormalizeWhitespace "") ""
 	}
 	[TestMethod()]
 	[void] NormalizeWhitespace_StringWithoutWhitespace() {
