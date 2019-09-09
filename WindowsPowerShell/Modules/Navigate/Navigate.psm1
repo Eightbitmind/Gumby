@@ -49,7 +49,6 @@ function SelectVisually($startDir = (Get-Location)) {
 	$tv = [FileTreeView]::new($sd, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select File'
 
-	$tv = [FileTreeView]::new($sd, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
 		return $tv.SelectedItem().Value.FullName
 	}

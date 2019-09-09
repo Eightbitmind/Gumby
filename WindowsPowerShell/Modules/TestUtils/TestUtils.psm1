@@ -1,7 +1,31 @@
 using module Log
 
-function TestIsTrue($condition, $message = "value is not true") {
+function TestIsTrue($condition, $message = "value is true") {
 	if ($condition) {
+		[Log]::Success($message)
+	} else {
+		[Log]::Failure($message)
+	}
+}
+
+function TestIsFalse($condition, $message = "value is false") {
+	if (!$condition) {
+		[Log]::Success($message)
+	} else {
+		[Log]::Failure($message)
+	}
+}
+
+function TestIsNull($actual, $message = "object is null") {
+	if ($null -eq $actual) {
+		[Log]::Success($message)
+	} else {
+		[Log]::Failure($message)
+	}
+}
+
+function TestIsNotNull($actual, $message = "object is not null") {
+	if ($null -ne $actual) {
 		[Log]::Success($message)
 	} else {
 		[Log]::Failure($message)
@@ -93,9 +117,17 @@ class TestRunner {
 
 	[Collections.ArrayList] $TestClasses = [Collections.ArrayList]::new()
 	[LogListenerBase] $TestMethodLogger = [TestMethodLogger]::new()
+	[FileLogListener] hidden $fileLogListener
+
+	TestRunner([string] $logFilePath = "$env:TEMP\Test.log") {
+		if (Test-Path $logFilePath) { Remove-Item $logFilePath }
+		$this.fileLogListener = [FileLogListener]::new($logFilePath)
+	}
 
 	[void] RunTests() {
+		[Log]::Listeners.Add($this.fileLogListener) | Out-Null
 		foreach ($testClass in $this.TestClasses) { $this.RunTestClass($testClass) }
+		[Log]::Listeners.Remove($this.fileLogListener)
 	}
 
 	hidden [void] RunTestClass($testClass) {
@@ -105,6 +137,8 @@ class TestRunner {
 			[Log]::Error("failed to instantiate test class `"$($testClass.Name)`"")
 			return
 		}
+
+		[Log]::BeginSection("test class `"$($testClass.Name)`"")
 		
 		$testClassSetupMethodsSucceeded = $true
 		foreach ($classSetupMethod in $this.FindMembers($testClass, ([TestClassSetup]))) {
@@ -142,19 +176,25 @@ class TestRunner {
 					}
 				})
 	
-				$testMethodException = $false
+				$testMethodException = $null
 				[Log]::Listeners.Add($lo) | Out-Null
 	
+				[Log]::BeginSection("test method `"$($testMethod.Name)`"")
+
 				try {
 					$testMethod.Invoke($testClassInstance, @())
 				} catch {
-					$testMethodException = $true
+					$testMethodException = $error
 				}
-	
+
+				[Log]::EndSection("test method `"$($testMethod.Name)`"")
+
 				[Log]::Listeners.Remove($lo)
 	
-				if ($testMethodException -or ($testMethodStats.ErrorCount -gt 0)) {
-					# TODO: log the exception
+				if ($testMethodException -ne $null) {
+					[Log]::Error($testMethodException)
+					$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Error), $testMethod.Name)
+				} elseif($testMethodStats.ErrorCount -gt 0) {
 					$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Error), $testMethod.Name)
 				} elseif (($testMethodStats.FailureCount -eq 0) -and ($testMethodStats.SuccessCount -gt 0)) {
 					if ($testMethodStats.WarningCount -eq 0) {
@@ -176,6 +216,8 @@ class TestRunner {
 				# continue executing other class teardown methods
 			}
 		}
+
+		[Log]::EndSection("test class `"$($testClass.Name)`"")
 	}
 
 	hidden [Reflection.MemberInfo[]] FindMembers([Reflection.TypeInfo] $testClass, $attributeType) {
@@ -191,12 +233,12 @@ class TestRunner {
 	}
 }
 
-function RunTests() {
+function RunTests($logFilePath <#, TestClasses... #>) {
 	$globalTestRunner = Get-Variable -Scope Global -Name 'TestRunner' -ErrorAction Ignore
 	if ($globalTestRunner -ne $null) {
 		foreach ($arg in $args) { $globalTestRunner.Value.TestClasses.Add($arg) | Out-Null }
 	} else {
-		$testRunner = [TestRunner]::new()
+		$testRunner = [TestRunner]::new($logFilePath)
 		foreach ($arg in $args) { $testRunner.TestClasses.Add($arg) | Out-Null }
 		$testRunner.RunTests()
 	}
