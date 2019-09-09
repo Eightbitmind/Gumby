@@ -67,6 +67,74 @@ class SimpleObjectTVItem : TVItemBase {
 	hidden [Collections.Generic.IList`1[TVItemBase]] $_children = $null
 }
 
+class FileTVItem : TVItemBase {
+	FileTVItem([IO.FileSystemInfo] $fsInfo) {
+		$this.fsInfo = $fsInfo
+		# TODO: determine level
+	}
+
+	hidden FileTVItem([IO.FileSystemInfo] $fsInfo, [uint32] $level) : base($level) {
+		$this.fsInfo = $fsInfo
+	}
+
+	[string] Name() { return $this.fsInfo.Name }
+
+	[bool] IsContainer() {
+		return ($this.fsInfo -is [System.IO.DirectoryInfo])
+	}
+
+	[TVItemBase] Parent() {
+		$fsParent = if ($this.fsInfo -is [System.IO.DirectoryInfo]) {
+			$this.fsInfo.Parent
+		} else {
+			$this.fsInfo.Directory
+		}
+
+		if ($fsParent -ne $null) {
+			return [FileTVItem]::new($fsParent, $this.Level() - 1)
+		} else {
+			return $null
+		}
+	}
+
+	[Collections.Generic.IList`1[TVItemBase]] Children() {
+
+		# Be aware that FS items retrieved via PS drive provider commands (e.g. Get-Item or
+		# Get-ChildItem) are annotated with 'PS*' properties (e.g. PSIsContainer). FS items
+		# retrieved via "native" .NET methods or properties do not have these annotations.
+		# Therefore, mixing drive provider and native retrieval methods can result in incongruous
+		# objects and obscure bugs. Better exclusively use one or the other kind of retrieval
+		# methods.
+
+		if ($this._children -eq $null) {
+
+			$this._children = [Collections.Generic.List`1[TVItemBase]]::new()
+
+			$fsDirInfo = $this.fsInfo -as [System.IO.DirectoryInfo]
+
+			if ($fsDirInfo -ne $null) {
+				foreach ($fsChildDirInfo in $fsDirInfo.GetDirectories()) {
+					if (($fsChildDirInfo.Attributes -band ([System.IO.FileAttributes]::Hidden)) -eq ([System.IO.FileAttributes]::Hidden)) { continue }
+					if (($fsChildDirInfo.Attributes -band ([System.IO.FileAttributes]::System)) -eq ([System.IO.FileAttributes]::System)) { continue }
+		
+					$this._children.Add([FileTVItem]::new($fsChildDirInfo, $this.Level() + 1))
+				}
+				foreach ($fsChildFileInfo in $fsDirInfo.GetFiles()) {
+					if (($fsChildFileInfo.Attributes -band ([System.IO.FileAttributes]::Hidden)) -eq ([System.IO.FileAttributes]::Hidden)) { continue }
+					if (($fsChildFileInfo.Attributes -band ([System.IO.FileAttributes]::System)) -eq ([System.IO.FileAttributes]::System)) { continue }
+					$this._children.Add([FileTVItem]::new($fsChildFileInfo, $this.Level() + 1))
+				}
+			}
+		}
+
+		return $this._children
+	}
+
+	hidden [IO.FileSystemInfo] $fsInfo
+	hidden [TVItemBase] $_parent = $null
+	hidden [Collections.Generic.IList`1[TVItemBase]] $_children = $null
+}
+
 class FileTreeView : ListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 
