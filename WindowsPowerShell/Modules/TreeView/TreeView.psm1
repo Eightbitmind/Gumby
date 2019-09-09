@@ -4,12 +4,13 @@ using module Window
 
 class TVItemBase {
 	TVItemBase() {}
-	TVItemBase([uint32] $level) {
-		$this.Level = $level
+
+	hidden TVItemBase([uint32] $level) {
+		$this._level = $level
 	}
 
 	[string] Name() { throw "abstract" }
-	[uint32] $Level = 0
+	[uint32] Level() {return $this._level }
 	[bool] IsContainer() { throw "abstract" }
 	[bool] IsExpanded() { return $this._isExpanded }
 	[TVItemBase] Parent() { throw "abstract" }
@@ -23,7 +24,8 @@ class TVItemBase {
 		$this._isExpanded = $false
 	}
 
-	[bool] hidden $_isExpanded = $false
+	hidden [bool] $_isExpanded = $false
+	hidden [uint32] $_level = 0
 }
 
 class SimpleObjectTVItem : TVItemBase {
@@ -50,7 +52,7 @@ class SimpleObjectTVItem : TVItemBase {
 			if ($this.simpleObject.ContainsKey('Children')) {
 				$this._children = [Collections.Generic.List`1[TVItemBase]]::new($this.simpleObject.Children.Count)
 				foreach ($simpleChild in $this.simpleObject.Children) {
-					$this._children.Add([SimpleObjectTVItem]::new($simpleChild, $this, $this.Level + 1)) | Out-Null
+					$this._children.Add([SimpleObjectTVItem]::new($simpleChild, $this, $this.Level() + 1)) | Out-Null
 				}
 			} else {
 				$this._children = [Collections.Generic.List`1[TVItemBase]]::new()
@@ -551,7 +553,7 @@ class TreeView : ListBox {
 			[Log]::Trace(("{0}: `"{1}`" L={2}{3}{4}" -f
 				$i,
 				$this.GetItemLabel($i),
-				$this.Items[$i].Level,
+				$this.Items[$i].Level(),
 				$fiiv,
 				$sii))
 		}
@@ -608,7 +610,7 @@ class TreeView : ListBox {
 			<# black small square #> 0x25AA
 		}
 
-		return (' ' * 4 * $this.Items[$itemIndex].Level) + $icon + ' ' + $this.Items[$itemIndex].Name()
+		return (' ' * 4 * ($this.Items[$itemIndex].Level() - $this.topLevelInView)) + $icon + ' ' + $this.Items[$itemIndex].Name()
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
@@ -631,14 +633,14 @@ class TreeView : ListBox {
 
 	[int[]] GetAncestralSiblingRange([uint32] $itemIndex, [uint32] $levelCount) {
 		function GetFirstAtLevel([uint32] $i) {
-			[uint32] $level = $this.Items[$i].Level
-			for (; ($i -gt 0) -and ($this.Items[$i - 1].Level -ge $level); --$i) {}
+			[uint32] $level = $this.Items[$i].Level()
+			for (; ($i -gt 0) -and ($this.Items[$i - 1].Level() -ge $level); --$i) {}
 			return $i
 		}
 
 		function GetLastAtLevel([uint32] $i) {
-			[uint32] $level = $this.Items[$i].Level
-			for (; ($i -lt $this.Items.Count - 1) -and ($this.Items[$i + 1].Level -ge $level); ++$i) {}
+			[uint32] $level = $this.Items[$i].Level()
+			for (; ($i -lt $this.Items.Count - 1) -and ($this.Items[$i + 1].Level() -ge $level); ++$i) {}
 			return $i
 		}
 
@@ -646,13 +648,13 @@ class TreeView : ListBox {
 		[uint32] $last = GetLastAtLevel $itemIndex
 
 		for ([uint32] $i = 1; $i -le $levelCount; ++$i) {
-			if (($first -gt 0) -and ($this.Items[$first - 1].Level -eq $this.Items[$itemIndex].Level - $i)) {
-				# assert($this.Items[$first - 1].Level -eq $this.Items[$first].Level - 1)
+			if (($first -gt 0) -and ($this.Items[$first - 1].Level() -eq $this.Items[$itemIndex].Level() - $i)) {
+				# assert($this.Items[$first - 1].Level() -eq $this.Items[$first].Level() - 1)
 				$first = GetFirstAtLevel ($first - 1)
 			}
 
-			if (($last -lt $this.Items.Count - 1) -and ($this.Items[$last + 1].Level -eq $this.Items[$itemIndex].Level - $i)) {
-				# assert($this.Items[$last + 1].Level -lt $this.Items[$last].Level)
+			if (($last -lt $this.Items.Count - 1) -and ($this.Items[$last + 1].Level() -eq $this.Items[$itemIndex].Level() - $i)) {
+				# assert($this.Items[$last + 1].Level() -lt $this.Items[$last].Level())
 				$last = GetLastAtLevel ($last + 1)
 			}
 		}
@@ -691,7 +693,7 @@ class TreeView : ListBox {
 				$this.Items.Insert(++$ii, $child)
 			}
 
-			if ($this.SelectedItem().Level -eq $this.MaxLevelCount - 1) {
+			if (($this.SelectedItem().Level() - $this.topLevelInView) -eq ($this.MaxLevelCount - 1)) {
 				if ([Log]::Listeners.Count -gt 0) {
 					[Log]::Trace("TV.Expand: MaxLevel overflow")
 					$this.TraceItems()
@@ -711,16 +713,14 @@ class TreeView : ListBox {
 
 				# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
 
-				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.SelectedItem().Level - 1)
+				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.SelectedItem().Level() - 1)
 				[Log]::Trace("TV.Expand: first=$first, last=$last")
 
-				# Prune every item outside of [$first, $last], promote everything inside that range.
-
+				# Prune every item outside of [$first, $last]
 				for ($i = $this.Items.Count - 1; $i -gt $last; --$i) { $this.Items.RemoveAt($i) }
-
 				for ($i = $first; $i -gt 0; --$i) { $this.Items.RemoveAt($i - 1) }
 
-				foreach ($item in $this.Items) { --$item.Level }
+				++$this.topLevelInView
 
 				$this.SelectedIndex -= $first - 1
 				$this.FirstIndexInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight() + 1)
@@ -886,10 +886,10 @@ class TreeView : ListBox {
 			# As we could have left folders expanded by going out of them via CursorUp/-Down, right-shifting
 			# could create more than MaxLevelCount levels.
 
-			if ($this.SelectedItem().Level -gt 0) {
+			if ($this.SelectedItem().Level() -gt $this.topLevelInView) {
 				[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex, 0)
 
-				# iterating backwards for index consistency
+				# remove collapsed items (iterating backwards for index consistency)
 				for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) { $this.Items.RemoveAt($i) }
 
 				$this.SelectedIndex = $firstSibling - 1
@@ -902,18 +902,17 @@ class TreeView : ListBox {
 				if ($parent -eq $null) { return }
 
 				# As we're expanding the tree view toward the root, trim the nodes that would exceed the
-				# maximum view depth. Also, adjust each node's level for the impending "right-shift".
+				# maximum view depth.
 				for ([uint32] $i = $this.Items.Count - 1; ; --$i) {
-					if ($this.Items[$i].Level -eq $this.MaxLevelCount - 1) {
+					if (($this.Items[$i].Level() - $this.topLevelInView) -ge ($this.MaxLevelCount - 1)) {
 						$this.Items.RemoveAt($i)
-					} else {
-						++$this.Items[$i].Level
 					}
-
 					if ($i -eq 0) { break }
 				}
 
+				
 				$this.Items.Insert(0, $parent)
+				--$this.topLevelInView # equivalent to assigning '$parent.Level()'
 
 				if ($parent.Parent() -ne $null) {
 					[uint32] $insertPosition = 0
@@ -939,5 +938,6 @@ class TreeView : ListBox {
 	}
 
 	hidden [object] <# TypeInfo? #> $itemType
+	hidden [uint32] $topLevelInView = 0
 }
 

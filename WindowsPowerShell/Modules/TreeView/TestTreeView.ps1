@@ -22,7 +22,7 @@ class SimpleObjectTVItemTests {
 	[TestMethod()]
 	[void] Level_Root_AsExpected(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Level 0
+		TestAreEqual $tvi.Level() 0
 	}
 
 	[TestMethod()]
@@ -73,7 +73,7 @@ class SimpleObjectTVItemTests {
 	[TestMethod()]
 	[void] Level_FirstChild_AsExpected(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Level 1
+		TestAreEqual $tvi.Children()[0].Level() 1
 	}
 
 	[TestMethod()]
