@@ -54,4 +54,20 @@ function SelectVisually($startDir = (Get-Location)) {
 	}
 }
 
-Export-ModuleMember -Function SetLocationVisually, SelectVisually
+function ProcessShortcuts($data) {
+	$horizontalPercent = 0.8
+	$verticalPercent = 0.8
+
+	$width = [console]::WindowWidth * $horizontalPercent
+	$left = [int](([console]::WindowWidth - $width) / 2)
+
+	$height = [console]::WindowHeight * $verticalPercent
+	$top = [int](([console]::WindowHeight - $height) / 2)
+
+	$tv = [TreeView]::new($data, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$tv.Title = 'Select Shortcut'
+
+	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
+		return $tv.SelectedItem().Object().Action.Invoke()
+	}
+}
