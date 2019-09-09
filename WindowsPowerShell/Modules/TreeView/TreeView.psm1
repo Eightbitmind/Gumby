@@ -62,6 +62,10 @@ class SimpleObjectTVItem : TVItemBase {
 		return $this._children
 	}
 
+	[object] Object() {
+		return $this.simpleObject
+	}
+
 	hidden [object] $simpleObject
 	hidden [TVItemBase] $_parent = $null
 	hidden [Collections.Generic.IList`1[TVItemBase]] $_children = $null
@@ -593,7 +597,7 @@ class TreeView : ListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 
 	TreeView(
-		[object] $root,
+		[object[]] $items,
 		[object] <# TypeInfo? #> $itemType,
 		[int] $left,
 		[int] $top,
@@ -611,7 +615,10 @@ class TreeView : ListBox {
 		$backgroundColor
 	) {
 		$this.itemType = $itemType
-		$this.Items.Add($itemType::new($root)) | Out-Null
+
+		foreach ($item in $items) {
+			$this.Items.Add($itemType::new($item)) | Out-Null
+		}
 	}
 
 	[void] TraceItems() {
