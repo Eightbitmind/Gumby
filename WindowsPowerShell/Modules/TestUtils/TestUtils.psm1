@@ -57,7 +57,9 @@ function TestTuplesAreEqual($actual, $expected, $message = "Test Tuples") {
 			[Log]::Failure("$($message): more items than expected")
 		}
 
-		if ($actualEnum.Current -ne $expectedEnum.Current) {
+		if ($actualEnum.Current -eq $expectedEnum.Current) {
+			[Log]::Success("$($message): found expected item '$($expectedEnum.Current)'")
+		} else {
 			[Log]::Failure("$($message): actual '$($actualEnum.Current)', expected '$($expectedEnum.Current)'")
 		}
 	}

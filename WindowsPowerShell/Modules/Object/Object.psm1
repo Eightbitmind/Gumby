@@ -22,61 +22,51 @@ function DeepCopy($Original) {
 	}
 }
 
-function MergeObjects($a, $b) {
-	function MergeInto($target, $source) {
-		foreach ($k in $source.Keys) {
-			if (!$target.ContainsKey($k)) {
-				$target[$k] = $source[$k]
+function MergeObjects([ref] $target, $source) {
+
+	function Mergeable($a, $b) { return ($a.GetType() -eq $b.GetType()) -and ($a -is [array] -or $a -is [hashtable]) }
+
+	if (!(Mergeable $target.value $source)) {
+		throw "unmergeable types"
+	} elseif ($target.value -is [array]) {
+		$temp = [Collections.ArrayList]::new()
+		
+		$i = 0
+		for(; ($i -lt $target.value.Count) -and ($i -lt $source.Count); ++$i) {
+
+			if (Mergeable $target.value[$i] $source[$i]) {
+				$refable = $target.value[$i]
+				MergeObjects ([ref]$refable) $source[$i]
+				$temp.Add($refable)
 			} else {
-				if (($target[$k] -is [array]) -and ($source[$k] -is [array])) {
-					foreach ($e in $source[$k]) { $target[$k] += $e }
-				} elseif (($target[$k] -is [hashtable]) -and ($source[$k] -is [hashtable])) {
-					MergeInto $target[$k] $source[$k]
-				}
+				$temp.Add($target.value[$i])
+				$temp.Add($source[$i])
 			}
 		}
+
+		# in case the target array is longer than the source array
+		for (; $i -lt $target.value.Count; ++$i) {
+			$temp.Add($target.value[$i])
+		}
+
+		# in case the source array is longer than the target array
+		for (; $i -lt $source.Count; ++$i) {
+			$temp.Add($source[$i])
+		}
+
+		$target.value = $temp.ToArray()
+
+	} elseif ($target.value -is [hashtable]) {
+		foreach ($key in $source.Keys) {
+			if (!$target.value.ContainsKey($key)) {
+				$target.value[$key] = $source[$key]
+			} else {
+				$refable = $target.value[$key]
+				MergeObjects ([ref]$refable) $source[$key]
+				$target.value[$key] = $refable
+			}
+		}
+	} else {
+		$target.value = $source
 	}
-
-	$p = DeepCopy $a;
-	$q = DeepCopy $b;
-	MergeInto $p $q
-	return $p
 }
-
-
-# function deepCopy(obj) {
-#     if (Array.isArray(obj)) {
-#       const result = [];
-#       for (const element of obj) result.push(deepCopy(element));
-#       return result;
-#     } else if (typeof obj === 'object') {
-#       const result = {};
-#       for (const key in obj) result[key] = deepCopy(obj[key]);
-#       return result;
-#     } else if (typeof obj === 'boolean' || typeof obj === 'number' || typeof obj === 'string') {
-#       return obj;
-#     } else {
-#       throw new Error('unexpected object type');
-#     }
-#   }
-
-#   function merge(a, b) {
-#     function mergeInto(target, source) {
-#       for (const k in source) {
-#         if (!target.hasOwnProperty(k)) {
-#           target[k] = source[k];
-#         } else {
-#           if (Array.isArray(target[k]) && Array.isArray(source[k])) {
-#             for (const i of source[k]) target[k].push(i);
-#           } else if (typeof target[k] === 'object' && typeof source[k] === 'object') {
-#             mergeInto(target[k], source[k]);
-#           }
-#         }
-#       }
-#     }
-
-#     const p = deepCopy(a);
-#     const q = deepCopy(b);
-#     mergeInto(p, q);
-#     return p;
-#   }
