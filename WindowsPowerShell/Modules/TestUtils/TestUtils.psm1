@@ -32,6 +32,14 @@ function TestIsNotNull($actual, $message = "object is not null") {
 	}
 }
 
+function TestIsType($object, $type) {
+	if ($object -is $type) {
+		[Log]::Success("object is of type $($type.Name)")
+	} else {
+		[Log]::Failure("object is of type $($object.GetType()), expected $($type.Name)")
+	}
+}
+
 function TestAreEqual($actual, $expected, $message = "Test Value") {
 	if ($actual -eq $expected) {
 		[Log]::Success("value '$actual' matches expectation")
