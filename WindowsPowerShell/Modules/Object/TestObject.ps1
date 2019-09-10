@@ -142,5 +142,18 @@ class DeepCopyTests {
 	}
 }
 
+[TestClass()]
+class MergeObjectsTests {
+	[TestMethod()]
+	[void] MergeObjects_Array() {
+		$a = 1, 2, 3
+		$b = 4, 5, 6
+
+		$r = MergeObjects $a $b
+
+		TestAreEqual $r.Count 6
+	}
+}
+
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
-RunTests $standaloneLogFilePath ([DeepCopyTests])
+RunTests $standaloneLogFilePath ([DeepCopyTests]) ([MergeObjectsTests])

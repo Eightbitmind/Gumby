@@ -5,32 +5,20 @@ function Dispose($Object) {
 }
 
 function DeepCopy($Original) {
-	# As everything is an object, these tests need to precede the '-is [object]' test
-	if (
-		$Original -is [bool] -or
-		$Original -is [int16] -or
-		$Original -is [int] -or
-		$Original -is [uint16] -or
-		$Original -is [uint32] -or
-		$Original -is [uint64] -or
-		$Original -is [string] -or
-		$Original -is [scriptblock]
-	) {
-		return $Original
-	} elseif ($Original -is [array]) {
+	if ($Original -is [array]) {
 		$copy = @()
 		foreach ($element in $Original) {
 			$copy += (DeepCopy $element) 
 		}
 		return $copy
-	} elseif ($Original -is [object]) {
+	} elseif ($Original -is [hashtable]) {
 		$copy = @{}
 		foreach ($key in $Original.Keys) {
 			$copy[$key] = DeepCopy $Original[$key]
 		}
 		return $copy
 	} else {
-		throw "unexpected type"
+		return $Original
 	}
 }
 
@@ -42,7 +30,7 @@ function MergeObjects($a, $b) {
 			} else {
 				if (($target[$k] -is [array]) -and ($source[$k] -is [array])) {
 					foreach ($e in $source[$k]) { $target[$k] += $e }
-				} elseif (($target[$k] -is [object]) -and ($source[$k] -is [object])) {
+				} elseif (($target[$k] -is [hashtable]) -and ($source[$k] -is [hashtable])) {
 					MergeInto $target[$k] $source[$k]
 				}
 			}
