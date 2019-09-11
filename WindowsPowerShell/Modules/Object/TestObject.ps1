@@ -175,7 +175,7 @@ class MergeObjectsTests {
 	}
 
 	[TestMethod()]
-	[void] MergeObjects_Object() {
+	[void] MergeObjects_Objects() {
 		$a = @{ Name = "Anton" }
 		$b = @{ Age = 27 }
 
@@ -183,6 +183,19 @@ class MergeObjectsTests {
 
 		TestAreEqual $a.Keys.Count 2
 		TestAreEqual $a.Name "Anton"
+		TestAreEqual $a.Age 27
+	}
+
+
+	[TestMethod()]
+	[void] MergeObjects_ObjectsWithSharedProperties() {
+		$a = @{ Name = "Anton"; Age = 27 }
+		$b = @{ Name = "Kurt" }
+
+		MergeObjects ([ref] $a) $b
+
+		TestAreEqual $a.Keys.Count 2
+		TestAreEqual $a.Name "Kurt"
 		TestAreEqual $a.Age 27
 	}
 
