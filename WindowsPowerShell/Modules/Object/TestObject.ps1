@@ -3,11 +3,6 @@ using module TestUtils
 [TestClass()]
 class DeepCopyTests {
 	[TestMethod()]
-	[void] Throwing_TestMethod() {
-		throw "meatballs"
-	}
-
-	[TestMethod()]
 	[void] DeepCopy_Bool() {
 		$original = $true
 		$copy = DeepCopy $original
@@ -85,7 +80,7 @@ class DeepCopyTests {
 
 		TestIsType $copy ([array])
 		TestAreEqual $copy.Count 3
-		TestTuplesAreEqual $copy[0] (7, 2, 3)
+		TestTuplesAreEqual $copy[0] (1, 2, 3)
 		TestTuplesAreEqual $copy[1] (10, 20, 30)
 		TestTuplesAreEqual $copy[2] (100, 200, 300)
 	}
