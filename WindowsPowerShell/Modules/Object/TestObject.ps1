@@ -3,6 +3,11 @@ using module TestUtils
 [TestClass()]
 class DeepCopyTests {
 	[TestMethod()]
+	[void] Throwing_TestMethod() {
+		throw "meatballs"
+	}
+
+	[TestMethod()]
 	[void] DeepCopy_Bool() {
 		$original = $true
 		$copy = DeepCopy $original
@@ -40,7 +45,7 @@ class DeepCopyTests {
 
 	[TestMethod()]
 	[void] DeepCopy_Array() {
-		$original = 1, 2, 3
+		$original = (1, 2, 3)
 		$copy = DeepCopy $original
 
 		# modify original
@@ -62,8 +67,9 @@ class DeepCopyTests {
 		TestAreEqual $original.Age 28
 
 		# modification of original should have no effect on copy
-		TestTuplesAreEqual $copy.Name "Anton"
-		TestTuplesAreEqual $copy.Age 27
+		TestAreEqual $copy.Keys.Count 2
+		TestAreEqual $copy.Name "Anton"
+		TestAreEqual $copy.Age 27
 	}
 
 	[TestMethod()]
@@ -78,6 +84,7 @@ class DeepCopyTests {
 		# modification of original should have no effect on copy
 
 		TestIsType $copy ([array])
+		TestAreEqual $copy.Count 3
 		TestTuplesAreEqual $copy[0] (7, 2, 3)
 		TestTuplesAreEqual $copy[1] (10, 20, 30)
 		TestTuplesAreEqual $copy[2] (100, 200, 300)

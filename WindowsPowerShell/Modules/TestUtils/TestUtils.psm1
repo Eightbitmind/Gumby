@@ -218,7 +218,7 @@ class TestRunner {
 				try {
 					$testMethod.Invoke($testClassInstance, @())
 				} catch {
-					$testMethodException = $error
+					$testMethodException = $_.Exception.InnerException
 				}
 
 				[Log]::EndSection("test method `"$($testMethod.Name)`"")
@@ -226,7 +226,7 @@ class TestRunner {
 				[Log]::Listeners.Remove($lo)
 	
 				if ($testMethodException -ne $null) {
-					[Log]::Error($testMethodException)
+					[Log]::Error("test method `"$($testMethod.Name)`" failed due to exception `"$($testMethodException.Message)`"")
 					$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Error), $testMethod.Name)
 				} elseif($testMethodStats.ErrorCount -gt 0) {
 					$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Error), $testMethod.Name)

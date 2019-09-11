@@ -6,11 +6,11 @@ function Dispose($Object) {
 
 function DeepCopy($Original) {
 	if ($Original -is [array]) {
-		$copy = @()
+		$copy = [Collections.ArrayList]::new() # @()
 		foreach ($element in $Original) {
-			$copy += (DeepCopy $element) 
+			$copy.Add((DeepCopy $element)) # $copy += (DeepCopy $element)
 		}
-		return $copy
+		return $copy.ToArray() # $copy
 	} elseif ($Original -is [hashtable]) {
 		$copy = @{}
 		foreach ($key in $Original.Keys) {
