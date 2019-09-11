@@ -108,18 +108,42 @@ class TestMethodLogger : LogListenerBase {
 	[void] ProcessMessage([LogMessageType] $messageType, [string] $message) {
 		switch($messageType) {
 			([LogMessageType]::Warning) {
-				Write-Host -ForegroundColor Yellow "$message ... WARNING"
+				Write-Host -ForegroundColor Yellow $this.SpaceWords(($message, "WARNING"), [console]::WindowWidth, '.')
 			}
 			([LogMessageType]::Error) {
-				Write-Host -ForegroundColor Red "$message ... ERROR"
+				Write-Host -ForegroundColor Red $this.SpaceWords(($message, "ERROR"), [console]::WindowWidth, '.')
 			}
 			([LogMessageType]::Success) {
-				Write-Host -ForegroundColor Green "$message ... SUCCESS"
+				Write-Host -ForegroundColor Green $this.SpaceWords(($message, "SUCCESS"), [console]::WindowWidth, '.')
 			}
 			([LogMessageType]::Failure) {
-				Write-Host -ForegroundColor Red "$message ... FAILURE"
+				Write-Host -ForegroundColor Red $this.SpaceWords(($message, "FAILURE"), [console]::WindowWidth, '.')
 			}
 		}
+	}
+
+	hidden [string] SpaceWords([string[]] $Words, [int] $Width, [string] $SpacingChar = ' ') {
+		# The code below is a sketch that only works correctly for 2 words. A proper version needs
+		# to provide heterogenous spacing lengths according to the integer divisibility of the
+		# total spacing length.
+
+		assert ($Words.Count -ge 2)
+		assert ($SpacingChar.Length -eq 1)
+
+		$totalSpacingLength = $Width
+		foreach ($word in $Words) { $totalSpacingLength -= $word.Length }
+
+		assert ($totalSpacingLength -ge 0)
+
+		$spacingLength = $totalSpacingLength / ($Words.Count - 1)
+
+		$sb = [Text.StringBuilder]::new($Width)
+		for ($i = 0; $i -lt $Words.Count; ++$i) {
+			$sb.Append($Words[$i])
+			if ($i -lt $Words.Count - 1) { $sb.Append($SpacingChar * $spacingLength) }
+		}
+
+		return $sb.ToString()
 	}
 }
 
