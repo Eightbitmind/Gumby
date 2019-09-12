@@ -1,4 +1,5 @@
 using module Log
+using module String
 
 function TestIsTrue($condition, $message = "value is true") {
 	if ($condition) {
@@ -104,62 +105,8 @@ class TestClassTeardown : Attribute {}
 
 class TestMethod : Attribute {}
 
-class TestMethodLogger : LogListenerBase {
-	[void] ProcessMessage([LogMessageType] $messageType, [string] $message) {
-		switch($messageType) {
-			([LogMessageType]::BeginSection) {
-				Write-Host $message
-				$this.indentation += 2
-			}
-			([LogMessageType]::EndSection) {
-				$this.indentation -= 2
-			}
-			([LogMessageType]::Warning) {
-				Write-Host -ForegroundColor Yellow ((' ' * $this.indentation) + $this.SpaceWords(($message, "WARNING"), [console]::WindowWidth - $this.indentation - 1, '.'))
-			}
-			([LogMessageType]::Error) {
-				Write-Host -ForegroundColor Red ((' ' * $this.indentation) + $this.SpaceWords(($message, "ERROR"), [console]::WindowWidth - $this.indentation - 1, '.'))
-			}
-			([LogMessageType]::Success) {
-				Write-Host -ForegroundColor Green ((' ' * $this.indentation) + $this.SpaceWords(($message, "SUCCESS"), [console]::WindowWidth - $this.indentation - 1, '.'))
-			}
-			([LogMessageType]::Failure) {
-				Write-Host -ForegroundColor Red ((' ' * $this.indentation) + $this.SpaceWords(($message, "FAILURE"), [console]::WindowWidth - $this.indentation - 1, '.'))
-			}
-		}
-	}
-
-	hidden [string] SpaceWords([string[]] $Words, [int] $Width, [string] $SpacingChar = ' ') {
-		# The code below is a sketch that only works correctly for 2 words. A proper version needs
-		# to provide heterogenous spacing lengths according to the integer divisibility of the
-		# total spacing length.
-
-		assert ($Words.Count -ge 2)
-		assert ($SpacingChar.Length -eq 1)
-
-		$totalSpacingLength = $Width
-		foreach ($word in $Words) { $totalSpacingLength -= $word.Length }
-
-		assert ($totalSpacingLength -ge 0)
-
-		$spacingLength = $totalSpacingLength / ($Words.Count - 1)
-
-		$sb = [Text.StringBuilder]::new($Width)
-		for ($i = 0; $i -lt $Words.Count; ++$i) {
-			$sb.Append($Words[$i])
-			if ($i -lt $Words.Count - 1) { $sb.Append($SpacingChar * $spacingLength) }
-		}
-
-		return $sb.ToString()
-	}
-
-	hidden [int] $indentation = 0
-}
-
 class TestRunner {
-
 	[Collections.ArrayList] $TestClasses = [Collections.ArrayList]::new()
-	[LogListenerBase] $TestMethodLogger = [TestMethodLogger]::new()
 	[FileLogListener] hidden $fileLogListener
 
 	TestRunner([string] $logFilePath = "$env:TEMP\Test.log") {
@@ -171,6 +118,11 @@ class TestRunner {
 		[Log]::Listeners.Add($this.fileLogListener) | Out-Null
 		foreach ($testClass in $this.TestClasses) { $this.RunTestClass($testClass) }
 		[Log]::Listeners.Remove($this.fileLogListener)
+
+		$this.successCount = 0
+		$this.failureCount = 0
+		$this.errorCount = 0
+		$this.warningCount = 0
 	}
 
 	hidden [void] RunTestClass($testClass) {
@@ -182,7 +134,7 @@ class TestRunner {
 			return
 		}
 
-		$this.TestMethodLogger.ProcessMessage(([LogMessageType]::BeginSection), $testClass.Name)
+		$this.HandleTestClassBegin($testClass.Name)
 		[Log]::BeginSection("test class `"$($testClass.Name)`"")
 
 		try {
@@ -223,7 +175,7 @@ class TestRunner {
 					})
 		
 					$testMethodException = $null
-					
+
 					[Log]::BeginSection("test method `"$($testMethod.Name)`"")
 					
 					[Log]::Listeners.Add($lo) | Out-Null
@@ -236,17 +188,17 @@ class TestRunner {
 		
 					if ($testMethodException -ne $null) {
 						[Log]::Error("exception `"$($testMethodException.Message)`"")
-						$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Error), $testMethod.Name)
+						$this.HandleTestMethodError($testMethod.Name)
 					} elseif($testMethodStats.ErrorCount -gt 0) {
-						$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Error), $testMethod.Name)
+						$this.HandleTestMethodError($testMethod.Name)
 					} elseif (($testMethodStats.FailureCount -eq 0) -and ($testMethodStats.SuccessCount -gt 0)) {
 						if ($testMethodStats.WarningCount -eq 0) {
-							$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Success), $testMethod.Name)
+							$this.HandleTestMethodSuccess($testMethod.Name)
 						} else {
-							$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Warning), $testMethod.Name)
+							$this.HandleTestMethodWarning($testMethod.Name)
 						}
 					} else {
-						$this.TestMethodLogger.ProcessMessage(([LogMessageType]::Failure), $testMethod.Name)
+						$this.HandleTestMethodFailure($testMethod.Name)
 					}
 
 					[Log]::EndSection("test method `"$($testMethod.Name)`"")
@@ -264,7 +216,7 @@ class TestRunner {
 
 		} finally {
 			[Log]::EndSection("test class `"$($testClass.Name)`"")
-			$this.TestMethodLogger.ProcessMessage(([LogMessageType]::EndSection), $testClass.Name)
+			$this.HandleTestClassEnd()
 		}
 	}
 
@@ -279,6 +231,42 @@ class TestRunner {
 			},
 			$attributeType)
 	}
+
+	hidden [void] HandleTestClassBegin([string] $testClassName) {
+		Write-Host $testClassName
+		$this.indentation += 2
+	}
+
+	hidden [void] HandleTestClassEnd() {
+		$this.indentation -= 2
+	}
+
+	hidden [void] HandleTestMethodWarning([string] $testMethodName) {
+		Write-Host -ForegroundColor Yellow ((' ' * $this.indentation) + (SpaceWords ($testMethodName, "WARNING") ([console]::WindowWidth - $this.indentation - 1) '.'))
+		++$this.warningCount
+	}
+
+	hidden [void] HandleTestMethodError([string] $testMethodName) {
+		Write-Host -ForegroundColor Red ((' ' * $this.indentation) + (SpaceWords ($testMethodName, "ERROR") ([console]::WindowWidth - $this.indentation - 1) '.'))
+		++$this.errorCount
+	}
+
+	hidden [void] HandleTestMethodSuccess([string] $testMethodName) {
+		Write-Host -ForegroundColor Green ((' ' * $this.indentation) + (SpaceWords ($testMethodName, "SUCCESS") ([console]::WindowWidth - $this.indentation - 1) '.'))
+		++$this.successCount
+	}
+
+	hidden [void] HandleTestMethodFailure([string] $testMethodName) {
+		Write-Host -ForegroundColor Red ((' ' * $this.indentation) + (SpaceWords ($testMethodName, "FAILURE") ([console]::WindowWidth - $this.indentation - 1) '.'))
+		++$this.failureCount
+	}
+
+	hidden [int] $indentation = 0
+
+	hidden [uint32] $successCount = 0
+	hidden [uint32] $failureCount = 0
+	hidden [uint32] $errorCount = 0
+	hidden [uint32] $warningCount = 0
 }
 
 function RunTests($logFilePath <#, TestClasses... #>) {

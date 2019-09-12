@@ -1,4 +1,6 @@
-﻿<#
+﻿using module Assert
+
+<#
 .SYNOPSIS
 If necessary, abbreviates a string by replacing part of it with the ellipsis.
 
@@ -77,6 +79,30 @@ Normalized string.
 #>
 function NormalizeWhitespace([string] $Text) {
 	$([regex] '\s+').Replace($Text.Trim().Replace('`r`n', ' ').Replace('`r', ' ').Replace('`n', ' '), ' ')
+}
+
+function SpaceWords([string[]] $Words, [int] $Width, [string] $SpacingChar = ' ') {
+	# The code below is a sketch that only works correctly for 2 words. A proper version needs
+	# to provide heterogenous spacing lengths according to the integer divisibility of the
+	# total spacing length.
+
+	assert ($Words.Count -ge 2)
+	assert ($SpacingChar.Length -eq 1)
+
+	$totalSpacingLength = $Width
+	foreach ($word in $Words) { $totalSpacingLength -= $word.Length }
+
+	assert ($totalSpacingLength -ge 0)
+
+	$spacingLength = $totalSpacingLength / ($Words.Count - 1)
+
+	$sb = [Text.StringBuilder]::new($Width)
+	for ($i = 0; $i -lt $Words.Count; ++$i) {
+		$sb.Append($Words[$i]) | Out-Null
+		if ($i -lt $Words.Count - 1) { $sb.Append($SpacingChar * $spacingLength) | Out-Null }
+	}
+
+	return $sb.ToString()
 }
 
 <#
