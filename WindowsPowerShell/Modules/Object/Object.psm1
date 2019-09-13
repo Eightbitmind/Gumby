@@ -79,21 +79,21 @@ function MergeObjects([ref] $Target, $Source) {
 				if (Mergeable $Target.value[$i] $Source[$i]) {
 					$refable = $Target.value[$i]
 					MergeObjects ([ref]$refable) $Source[$i]
-					$temp.Add($refable)
+					$temp.Add($refable) | Out-Null
 				} else {
-					$temp.Add($Target.value[$i])
-					$temp.Add($Source[$i])
+					$temp.Add($Target.value[$i]) | Out-Null
+					$temp.Add($Source[$i]) | Out-Null
 				}
 			}
 
 			# in case the target array is longer than the source array
 			for (; $i -lt $Target.value.Count; ++$i) {
-				$temp.Add($Target.value[$i])
+				$temp.Add($Target.value[$i]) | Out-Null
 			}
 
 			# in case the source array is longer than the target array
 			for (; $i -lt $Source.Count; ++$i) {
-				$temp.Add($Source[$i])
+				$temp.Add($Source[$i]) | Out-Null
 			}
 
 			$Target.value = $temp.ToArray()

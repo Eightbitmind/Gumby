@@ -1,4 +1,5 @@
 using module Log
+using module Object
 using module TreeView
 using module Window
 
@@ -52,6 +53,44 @@ function SelectVisually($startDir = (Get-Location)) {
 	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
 		return $tv.SelectedItem().Value.FullName
 	}
+}
+
+function MergeShortcuts($ShortcutObjects) {
+	$shortcuts = @()
+
+	foreach($shortcutObject in $ShortcutObjects) {
+		MergeObjects ([ref]$shortcuts) $shortcutObject
+	}
+
+	function ConvertActionsToChildren($o) {
+		$convertedActions = $null
+		if ($o.ContainsKey('Actions')) {
+			$convertedActions = [Collections.ArrayList]::new($o.Actions.Keys.Count)
+
+			foreach ($k in ($o.Actions.Keys | Sort-Object)) {
+				$convertedActions.Add(@{Name= $k; Action = $o.Actions[$k]}) | Out-Null
+			}
+
+			$o.Remove('Actions')
+		}
+
+		# should work whether or not $o has a 'Children' member
+		foreach ($child in $o.Children) {
+			ConvertActionsToChildren $child
+		}
+
+		if ($convertedActions -ne $null) {
+			# if $o does not have a 'Children' member, this should create one
+			$o.Children += $convertedActions.ToArray()
+		}
+
+	}
+
+	foreach ($e in $shortcuts) {
+		ConvertActionsToChildren $e
+	}
+
+	return $shortcuts
 }
 
 function ProcessShortcuts($data) {
