@@ -65,52 +65,59 @@ with values 'TargetOverSource', 'SourceOverTarget' and 'ThrowOnCollision'; and a
 parameter with values 'TargetThenSource', 'SourceThenTarget', 'InterleaveTargetFirst',
 'InterleaveSourceFirst' ...).
 #>
-function MergeObjects([ref] $Target, $Source) {
+function MergeObjects(<# Objects... #>) {
 
 	function Mergeable($a, $b) { return ($a.GetType() -eq $b.GetType()) -and ($a -is [array] -or $a -is [hashtable]) }
 
-	if (Mergeable $Target.value $Source) {
-		if ($Target.value -is [array]) {
-			$temp = [Collections.ArrayList]::new()
-			
-			$i = 0
-			for(; ($i -lt $Target.value.Count) -and ($i -lt $Source.Count); ++$i) {
+	function MergeTwoObjects ([ref] $Target, $Source) {
+		if (Mergeable $Target.value $Source) {
+			if ($Target.value -is [array]) {
+				$temp = [Collections.ArrayList]::new()
+				
+				$i = 0
+				for(; ($i -lt $Target.value.Count) -and ($i -lt $Source.Count); ++$i) {
 
-				if (Mergeable $Target.value[$i] $Source[$i]) {
-					$refable = $Target.value[$i]
-					MergeObjects ([ref]$refable) $Source[$i]
-					$temp.Add($refable) | Out-Null
-				} else {
+					if (Mergeable $Target.value[$i] $Source[$i]) {
+						$refable = $Target.value[$i]
+						MergeTwoObjects ([ref]$refable) $Source[$i]
+						$temp.Add($refable) | Out-Null
+					} else {
+						$temp.Add($Target.value[$i]) | Out-Null
+						$temp.Add($Source[$i]) | Out-Null
+					}
+				}
+
+				# in case the target array is longer than the source array
+				for (; $i -lt $Target.value.Count; ++$i) {
 					$temp.Add($Target.value[$i]) | Out-Null
+				}
+
+				# in case the source array is longer than the target array
+				for (; $i -lt $Source.Count; ++$i) {
 					$temp.Add($Source[$i]) | Out-Null
 				}
-			}
 
-			# in case the target array is longer than the source array
-			for (; $i -lt $Target.value.Count; ++$i) {
-				$temp.Add($Target.value[$i]) | Out-Null
-			}
+				$Target.value = $temp.ToArray()
 
-			# in case the source array is longer than the target array
-			for (; $i -lt $Source.Count; ++$i) {
-				$temp.Add($Source[$i]) | Out-Null
-			}
-
-			$Target.value = $temp.ToArray()
-
-		} elseif ($Target.value -is [hashtable]) {
-			foreach ($key in $Source.Keys) {
-				if (!$Target.value.ContainsKey($key)) {
-					$Target.value[$key] = $Source[$key]
-				} else {
-					$refable = $Target.value[$key]
-					MergeObjects ([ref]$refable) $Source[$key]
-					$Target.value[$key] = $refable
+			} elseif ($Target.value -is [hashtable]) {
+				foreach ($key in $Source.Keys) {
+					if (!$Target.value.ContainsKey($key)) {
+						$Target.value[$key] = $Source[$key]
+					} else {
+						$refable = $Target.value[$key]
+						MergeTwoObjects ([ref]$refable) $Source[$key]
+						$Target.value[$key] = $refable
+					}
 				}
 			}
 		}
+		else {
+			$Target.value = $Source
+		}
 	}
-	else {
-		$Target.value = $Source
-	}
+
+	$refable = $args[0]
+	for ($i = 1; $i -lt $args.Count; ++$i) { MergeTwoObjects ([ref]$refable) $args[$i] }
+
+	return $refable
 }

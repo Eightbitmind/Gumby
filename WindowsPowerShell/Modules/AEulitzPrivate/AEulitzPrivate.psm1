@@ -1,9 +1,8 @@
-function AEulitzPrivateShortcuts(){
-	return ,
-		@{
-			Name = "Locations"
-			Actions = @{
-				ToolsGitHub = { Set-Location "$HOME\ToolsGitHub" }
-			}
+function AEulitzPrivateShortcuts() {
+	return @{
+		"Directories" = @{
+			"ToolsGitHub"              = { Set-Location "$HOME/ToolsGitHub" }
+			"ToolsGitHub - PS Modules" = { Set-Location "$HOME/ToolsGitHub/WindowsPowerShell/Modules" }
 		}
+	}
 }

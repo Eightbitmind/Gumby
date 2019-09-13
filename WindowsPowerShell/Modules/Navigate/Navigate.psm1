@@ -55,45 +55,25 @@ function SelectVisually($startDir = (Get-Location)) {
 	}
 }
 
-function MergeShortcuts($ShortcutObjects) {
-	$shortcuts = @()
+function ProcessShortcuts($shortcuts) {
 
-	foreach($shortcutObject in $ShortcutObjects) {
-		MergeObjects ([ref]$shortcuts) $shortcutObject
-	}
+	function ConvertToTVItems($o) {
+		$children = [Collections.ArrayList]::new()
+		$actions = [Collections.ArrayList]::new()
+		foreach ($k in ($o.Keys | Sort-Object)) {
+			if ($o[$k] -is [hashtable]) {
 
-	function ConvertActionsToChildren($o) {
-		$convertedActions = $null
-		if ($o.ContainsKey('Actions')) {
-			$convertedActions = [Collections.ArrayList]::new($o.Actions.Keys.Count)
+				$children.Add(@{Name = "$k"; Children = (ConvertToTVItems $o[$k])}) | Out-Null
 
-			foreach ($k in ($o.Actions.Keys | Sort-Object)) {
-				$convertedActions.Add(@{Name= $k; Action = $o.Actions[$k]}) | Out-Null
+			} else {
+				$actions.Add(@{Name = "$k"; Action = $o[$k]}) | Out-Null
 			}
-
-			$o.Remove('Actions')
 		}
-
-		# should work whether or not $o has a 'Children' member
-		foreach ($child in $o.Children) {
-			ConvertActionsToChildren $child
-		}
-
-		if ($convertedActions -ne $null) {
-			# if $o does not have a 'Children' member, this should create one
-			$o.Children += $convertedActions.ToArray()
-		}
-
+		return $children + $actions
 	}
 
-	foreach ($e in $shortcuts) {
-		ConvertActionsToChildren $e
-	}
+	$tvItems = ConvertToTVItems $shortcuts
 
-	return $shortcuts
-}
-
-function ProcessShortcuts($data) {
 	$horizontalPercent = 0.8
 	$verticalPercent = 0.8
 
@@ -103,7 +83,7 @@ function ProcessShortcuts($data) {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$tv = [TreeView]::new($data, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$tv = [TreeView]::new($tvItems, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Shortcut'
 
 	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex -lt $tv.Items.Count)) {

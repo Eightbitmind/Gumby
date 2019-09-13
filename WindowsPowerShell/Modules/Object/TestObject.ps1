@@ -151,9 +151,9 @@ class MergeObjectsTests {
 		$a = 1, 3, 5
 		$b = 2, 4, 6
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $a (1, 2, 3, 4, 5, 6)
+		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6)
 	}
 
 	[TestMethod()]
@@ -161,9 +161,9 @@ class MergeObjectsTests {
 		$a = 1, 3, 5, 7, 8
 		$b = 2, 4, 6
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $a (1, 2, 3, 4, 5, 6, 7, 8)
+		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6, 7, 8)
 	}
 
 	[TestMethod()]
@@ -171,9 +171,9 @@ class MergeObjectsTests {
 		$a = 1, 3, 5
 		$b = 2, 4, 6, 7, 8
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $a (1, 2, 3, 4, 5, 6, 7, 8)
+		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6, 7, 8)
 	}
 
 	[TestMethod()]
@@ -181,11 +181,11 @@ class MergeObjectsTests {
 		$a = @{ Name = "Anton" }
 		$b = @{ Age = 27 }
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestAreEqual $a.Keys.Count 2
-		TestAreEqual $a.Name "Anton"
-		TestAreEqual $a.Age 27
+		TestAreEqual $m.Keys.Count 2
+		TestAreEqual $m.Name "Anton"
+		TestAreEqual $m.Age 27
 	}
 
 
@@ -194,11 +194,11 @@ class MergeObjectsTests {
 		$a = @{ Name = "Anton"; Age = 27 }
 		$b = @{ Name = "Kurt" }
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestAreEqual $a.Keys.Count 2
-		TestAreEqual $a.Name "Kurt"
-		TestAreEqual $a.Age 27
+		TestAreEqual $m.Keys.Count 2
+		TestAreEqual $m.Name "Kurt"
+		TestAreEqual $m.Age 27
 	}
 
 	[TestMethod()]
@@ -206,14 +206,14 @@ class MergeObjectsTests {
 		$a = @{ Name = "Washington"; Seattle = @{ Area = 142 } }
 		$b = @{ Seattle = @{ Population = 608660 } }
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestAreEqual $a.Keys.Count 2
-		TestAreEqual $a.Name "Washington"
+		TestAreEqual $m.Keys.Count 2
+		TestAreEqual $m.Name "Washington"
 
-		TestAreEqual $a.Seattle.Keys.Count 2
-		TestAreEqual $a.Seattle.Area 142
-		TestAreEqual $a.Seattle.Population 608660
+		TestAreEqual $m.Seattle.Keys.Count 2
+		TestAreEqual $m.Seattle.Area 142
+		TestAreEqual $m.Seattle.Population 608660
 	}
 
 	[TestMethod()]
@@ -221,12 +221,12 @@ class MergeObjectsTests {
 		$a = @{ Name = "Seattle";       ZipCodes = @(98101, 98103) }
 		$b = @{ Demonym = "Seattleite"; ZipCodes = @(98102, 98104, 98105) }
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestAreEqual $a.Keys.Count 3
-		TestAreEqual $a.Name "Seattle"
-		TestAreEqual $a.Demonym "Seattleite"
-		TestTuplesAreEqual $a.ZipCodes (98101, 98102, 98103, 98104, 98105)
+		TestAreEqual $m.Keys.Count 3
+		TestAreEqual $m.Name "Seattle"
+		TestAreEqual $m.Demonym "Seattleite"
+		TestTuplesAreEqual $m.ZipCodes (98101, 98102, 98103, 98104, 98105)
 	}
 
 	[TestMethod()]
@@ -234,19 +234,34 @@ class MergeObjectsTests {
 		$a = @{ Name = "Portland";      ZipCodes = (97086, 97088, 97090) },      @{ Name = "Seattle";       ZipCodes = (98101, 98103) }
 		$b = @{ Demonym = "Portlander"; ZipCodes = (97087, 97089) },             @{ Demonym = "Seattleite"; ZipCodes = (98102, 98104, 98105) }
 
-		MergeObjects ([ref] $a) $b
+		$m = MergeObjects $a $b
 
-		TestAreEqual $a.Count 2
+		TestAreEqual $m.Count 2
 
-		TestAreEqual $a[0].Keys.Count 3
-		TestAreEqual $a[0].Name "Portland"
-		TestAreEqual $a[0].Demonym "Portlander"
-		TestTuplesAreEqual $a[0].ZipCodes (97086, 97087, 97088, 97089, 97090)
+		TestAreEqual $m[0].Keys.Count 3
+		TestAreEqual $m[0].Name "Portland"
+		TestAreEqual $m[0].Demonym "Portlander"
+		TestTuplesAreEqual $m[0].ZipCodes (97086, 97087, 97088, 97089, 97090)
 		
-		TestAreEqual $a[1].Keys.Count 3
-		TestAreEqual $a[1].Name "Seattle"
-		TestAreEqual $a[1].Demonym "Seattleite"
-		TestTuplesAreEqual $a[1].ZipCodes (98101, 98102, 98103, 98104, 98105)
+		TestAreEqual $m[1].Keys.Count 3
+		TestAreEqual $m[1].Name "Seattle"
+		TestAreEqual $m[1].Demonym "Seattleite"
+		TestTuplesAreEqual $m[1].ZipCodes (98101, 98102, 98103, 98104, 98105)
+	}
+
+	[TestMethod()]
+	[void] MergeObjects_ThreeObjects() {
+		$a = @{ Name = "Portland";      ZipCodes = (97086, 97088, 97090) }
+		$b = @{ Demonym = "Portlander"; ZipCodes = (97087, 97089) }
+		$c = @{ State = "Oregon" }
+
+		$m = MergeObjects $a $b $c
+
+		TestAreEqual $m.Keys.Count 4
+		TestAreEqual $m.Name "Portland"
+		TestAreEqual $m.Demonym "Portlander"
+		TestAreEqual $m.State "Oregon"
+		TestTuplesAreEqual $m.ZipCodes (97086, 97087, 97088, 97089, 97090)
 	}
 }
 
