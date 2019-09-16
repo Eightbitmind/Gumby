@@ -1,3 +1,5 @@
+using module Path
+
 <#
 .SYNOPSIS
 	.
@@ -63,18 +65,33 @@ function FindStringInJSSourceFiles([string] $Pattern, [string] $FilePath = ".") 
 
 <#
 .SYNOPSIS
-	.
+Looks for an executable in the directories listed in the PATH environment variable.
 
-.PARAMETER Text
-	.
+.PARAMETER ExecutableName
+Name of the executable to look for. If the name does not contain an extension, common executable
+extensions (.exe, .bat ...) are being tried.
+
+.OUTPUTS
+Path names of existing executables.
 #>
 function FindExecutableInPath([string] $ExecutableName) {
-	if (!$ExecutableName.EndsWith(".exe")) { $ExecutableName += ".exe" }
-	foreach($dir in ($env:path).Split(';'))	{
+	$extensions = $null
+
+	if (![IO.Path]::HasExtension($ExecutableName)) {
+		$extensions = '.exe', '.bat', '.cmd', '.ps1'
+	}
+
+	foreach ($dir in ($env:path).Split(';')) {
 		if ([string]::IsNullOrEmpty($dir)) { continue }
-		$tentative = Join-Path $dir $ExecutableName
-		if (Test-Path $tentative) { echo "$tentative" }
+
+		if ($extensions -ne $null) {
+			foreach ($extension in $extensions) {
+				$tentative = PathJoin -Directories $dir -BaseName $ExecutableName -Extension $extension
+				if (Test-Path $tentative) { Write-Output "$tentative" }
+			}
+		} else {
+			$tentative = PathJoin -Directories $dir -BaseName $ExecutableName
+			if (Test-Path $tentative) { Write-Output "$tentative" }
+		}
 	}
 }
-
-Export-ModuleMember -Function FindStringInCppSourceFiles, FindStringInJSSourceFiles, FindExecutableInPath
