@@ -119,6 +119,41 @@ class TestRunner {
 		foreach ($testClass in $this.TestClasses) { $this.RunTestClass($testClass) }
 		[Log]::Listeners.Remove($this.fileLogListener)
 
+		# Alternative displays:
+		# 51 executed, 51 succeeded, 0 failed, 0 errors, 0 warnings
+		# 51/51 succeeded
+
+		$totalTestMethodCount = $this.successCount + $this.failureCount + $this.errorCount + $this.warningCount
+		$totalResult = $true
+		Write-Host "$totalTestMethodCount test method$(('', 's')[$totalTestMethodCount -gt 0]) got executed"
+
+		if ($this.successCount -gt 0) {
+			Write-Host -ForegroundColor Green "$($this.successCount) succeeded"
+		} else {
+			Write-Host -ForegroundColor Red "$($this.successCount) succeeded"
+			$totalResult = $false
+		}
+
+		if ($this.failureCount -eq 0) {
+			Write-Host -ForegroundColor Green "$($this.failureCount) failed"
+		} else {
+			Write-Host -ForegroundColor Red "$($this.failureCount) failed"
+			$totalResult = $false
+		}
+
+		if ($this.errorCount -eq 0) {
+			Write-Host -ForegroundColor Green "$($this.errorCount) resulted in an error"
+		} else {
+			Write-Host -ForegroundColor Red "$($this.errorCount) resulted in an error"
+			$totalResult = $false
+		}
+
+		if ($this.warningCount -eq 0) {
+			Write-Host -ForegroundColor Green "$($this.warningCount) resulted in a warning"
+		} else {
+			Write-Host -ForegroundColor Yellow "$($this.warningCount) resulted in a warning"
+		}
+
 		$this.successCount = 0
 		$this.failureCount = 0
 		$this.errorCount = 0
