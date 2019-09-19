@@ -1,3 +1,4 @@
+using module Assert
 using module ListBox
 using module Log
 using module Window
@@ -74,7 +75,9 @@ class SimpleObjectTVItem : TVItemBase {
 class FileTVItem : TVItemBase {
 	FileTVItem([IO.FileSystemInfo] $fsInfo) {
 		$this.fsInfo = $fsInfo
-		# TODO: determine level
+		# splitting the full name is between 4 and 6 times faster than a parent walk
+		$this._level = $fsInfo.FullName.Split((PathSeparator)).Count - 2
+Write-Host "L: $($this._level)"
 	}
 
 	hidden FileTVItem([IO.FileSystemInfo] $fsInfo, [uint32] $level) : base($level) {
@@ -598,7 +601,7 @@ class TreeView : ListBox {
 
 	TreeView(
 		[object[]] $items,
-		[object] <# TypeInfo? #> $itemType,
+		[object] <# TypeInfo? #> $tvItemType,
 		[int] $left,
 		[int] $top,
 		[int] $width,
@@ -614,10 +617,14 @@ class TreeView : ListBox {
 		$foregroundColor,
 		$backgroundColor
 	) {
-		$this.itemType = $itemType
-
-		foreach ($item in $items) {
-			$this.Items.Add($itemType::new($item)) | Out-Null
+		for ($i = 0; $i -lt $items.Count; ++$i) {
+			$tvItem = $tvItemType::new($items[$i])
+			if ($i -eq 0) {
+				$this.topLevelInView = $tvItem.Level()
+			} else {
+				assert ($tvItem.Level() -eq $this.topLevelInView)
+			}
+			$this.Items.Add($tvItem) | Out-Null
 		}
 	}
 
@@ -1012,7 +1019,6 @@ class TreeView : ListBox {
 		}
 	}
 
-	hidden [object] <# TypeInfo? #> $itemType
 	hidden [uint32] $topLevelInView = 0
 }
 

@@ -25,7 +25,7 @@ function SetLocationVisually($startDir = (Get-Location)) {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$tv = [FileTreeView]::new($sd, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$tv = [TreeView]::new($sd, ([FileTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Folder'
 
 	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
