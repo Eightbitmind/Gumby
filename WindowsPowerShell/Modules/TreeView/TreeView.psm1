@@ -76,8 +76,7 @@ class FileTVItem : TVItemBase {
 	FileTVItem([IO.FileSystemInfo] $fsInfo) {
 		$this.fsInfo = $fsInfo
 		# splitting the full name is between 4 and 6 times faster than a parent walk
-		$this._level = $fsInfo.FullName.Split((PathSeparator)).Count - 2
-Write-Host "L: $($this._level)"
+		$this._level = $fsInfo.FullName.Split((PathSeparator)).Count - 1
 	}
 
 	hidden FileTVItem([IO.FileSystemInfo] $fsInfo, [uint32] $level) : base($level) {
@@ -745,7 +744,7 @@ class TreeView : ListBox {
 	}
 
 	[void] Expand() {
-		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex)")
+		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
 
 		do { # curb nesting depth
 
@@ -794,8 +793,7 @@ class TreeView : ListBox {
 				# I0-1
 
 				# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
-
-				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.SelectedItem().Level() - 1)
+				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.SelectedItem().Level() - $this.MaxLevelCount + 1)
 				[Log]::Trace("TV.Expand: first=$first, last=$last")
 
 				# Prune every item outside of [$first, $last]
@@ -953,11 +951,11 @@ class TreeView : ListBox {
 
 		} while ($false)
 
-		[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex)")
+		[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
 	}
 
 	[void] Collapse() {
-		[Log]::BeginSection("TV.Collapse")
+		[Log]::BeginSection("TV.Collapse, SIx=$($this.SelectedIndex), TLIV=$($this.topLevelInView)")
 		try {
 
 			# Going up deepens the displayed tree. Is there a way to return it to the depth we started
@@ -969,6 +967,8 @@ class TreeView : ListBox {
 			# could create more than MaxLevelCount levels.
 
 			if ($this.SelectedItem().Level() -gt $this.topLevelInView) {
+				[Log]::Trace("TV.Collapse.ParentPresent")
+
 				[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex, 0)
 
 				# remove collapsed items (iterating backwards for index consistency)
@@ -979,6 +979,7 @@ class TreeView : ListBox {
 				$this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
 				$this.DisplayItems()
 			} else {
+				[Log]::Trace("TV.Collapse.NeedToFetchParent")
 				$parent = $this.SelectedItem().Parent()
 
 				if ($parent -eq $null) { return }
@@ -992,30 +993,56 @@ class TreeView : ListBox {
 					if ($i -eq 0) { break }
 				}
 
-				
 				$this.Items.Insert(0, $parent)
+				$this.SelectedIndex = 0
+				$this.FirstIndexInView = 0
 				--$this.topLevelInView # equivalent to assigning '$parent.Level()'
 
-				if ($parent.Parent() -ne $null) {
+				$grandParent = $parent.Parent()
+				if ($grandParent -ne $null) {
+					# insert the parent's siblings
 					[uint32] $insertPosition = 0
 
-					foreach ($grandParentChild in $parent.Parent().Children()) {
-						if ($grandParentChild.Name -eq $parent.Name) {
+					foreach ($grandParentChild in $grandParent.Children()) {
+
+						#TODO: Name comparison might not be sufficient (it assumes unique names per level).
+						# Perhaps we need an 'Equals' method on tree view items.
+
+						if ($grandParentChild.Name() -eq $parent.Name()) {
 							# item has already been inserted per the line above
 							$this.SelectedIndex = $insertPosition
-							$this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
+							# $this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
 							$insertPosition = $this.Items.Count
 						} else {
 							$this.Items.Insert($insertPosition++, $grandParentChild)
 						}
+					}
+
+					if ($this.SelectedIndex -ge $this.ClientHeight()) {
+
+						#   +
+						# 0 | I0-01    ClientHeight = 3
+						# 1 | I0-02
+						# 2 | I0-03
+						# 3 + I0-04
+						# 4   I0-05 *
+						# 5       I1-01
+
+						# 0   I0-01
+						# 1 + I0-02
+						# 2 | I0-03
+						# 3 | I0-04
+						# 4 | I0-05 *
+						# 5 +      I1-01
+
+						$this.FirstIndexInView = $this.SelectedIndex - $this.ClientHeight() + 1
 					}
 				}
 
 				$this.DisplayItems()
 			}
 		} finally {
-
-			[Log]::EndSection("TV.Collapse")
+			[Log]::EndSection("TV.Collapse, SIx=$($this.SelectedIndex), TLIV=$($this.topLevelInView)")
 		}
 	}
 
