@@ -11,6 +11,7 @@ class TVItemBase {
 	}
 
 	[string] Name() { throw "abstract" }
+	[object] Value() { throw "abstract" }
 	[uint32] Level() {return $this._level }
 	[bool] IsContainer() { throw "abstract" }
 	[bool] IsExpanded() { return $this._isExpanded }
@@ -31,28 +32,30 @@ class TVItemBase {
 
 class SimpleObjectTVItem : TVItemBase {
 	SimpleObjectTVItem([object] $simpleObject) {
-		$this.simpleObject = $simpleObject
+		$this._simpleObject = $simpleObject
 	}
 
 	hidden SimpleObjectTVItem([object] $simpleObject, [TVItemBase] $parent, [uint32] $level) : base($level) {
-		$this.simpleObject = $simpleObject
+		$this._simpleObject = $simpleObject
 		$this._parent = $parent
 	}
 
-	[string] Name() { return $this.simpleObject.Name }
+	[string] Name() { return $this._simpleObject.Name }
+
+	[object] Value() { return $this._simpleObject }
 
 	[bool] IsContainer() {
-		return $this.simpleObject.ContainsKey('Children') -and
-			$this.simpleObject.Children.Count -gt 0
+		return $this._simpleObject.ContainsKey('Children') -and
+			$this._simpleObject.Children.Count -gt 0
 	}
 
 	[TVItemBase] Parent() {return $this._parent }
 
 	[Collections.Generic.IList`1[TVItemBase]] Children() {
 		if ($this._children -eq $null) {
-			if ($this.simpleObject.ContainsKey('Children')) {
-				$this._children = [Collections.Generic.List`1[TVItemBase]]::new($this.simpleObject.Children.Count)
-				foreach ($simpleChild in $this.simpleObject.Children) {
+			if ($this._simpleObject.ContainsKey('Children')) {
+				$this._children = [Collections.Generic.List`1[TVItemBase]]::new($this._simpleObject.Children.Count)
+				foreach ($simpleChild in $this._simpleObject.Children) {
 					$this._children.Add([SimpleObjectTVItem]::new($simpleChild, $this, $this.Level() + 1)) | Out-Null
 				}
 			} else {
@@ -63,37 +66,35 @@ class SimpleObjectTVItem : TVItemBase {
 		return $this._children
 	}
 
-	[object] Object() {
-		return $this.simpleObject
-	}
-
-	hidden [object] $simpleObject
+	hidden [object] $_simpleObject
 	hidden [TVItemBase] $_parent = $null
 	hidden [Collections.Generic.IList`1[TVItemBase]] $_children = $null
 }
 
 class FileTVItem : TVItemBase {
 	FileTVItem([IO.FileSystemInfo] $fsInfo) {
-		$this.fsInfo = $fsInfo
+		$this._fsInfo = $fsInfo
 		# splitting the full name is between 4 and 6 times faster than a parent walk
 		$this._level = $fsInfo.FullName.Split((PathSeparator)).Count - 1
 	}
 
 	hidden FileTVItem([IO.FileSystemInfo] $fsInfo, [uint32] $level) : base($level) {
-		$this.fsInfo = $fsInfo
+		$this._fsInfo = $fsInfo
 	}
 
-	[string] Name() { return $this.fsInfo.Name }
+	[string] Name() { return $this._fsInfo.Name }
+
+	[object] Value() { return $this._fsInfo }
 
 	[bool] IsContainer() {
-		return ($this.fsInfo -is [System.IO.DirectoryInfo])
+		return ($this._fsInfo -is [System.IO.DirectoryInfo])
 	}
 
 	[TVItemBase] Parent() {
-		$fsParent = if ($this.fsInfo -is [System.IO.DirectoryInfo]) {
-			$this.fsInfo.Parent
+		$fsParent = if ($this._fsInfo -is [System.IO.DirectoryInfo]) {
+			$this._fsInfo.Parent
 		} else {
-			$this.fsInfo.Directory
+			$this._fsInfo.Directory
 		}
 
 		if ($fsParent -ne $null) {
@@ -116,7 +117,7 @@ class FileTVItem : TVItemBase {
 
 			$this._children = [Collections.Generic.List`1[TVItemBase]]::new()
 
-			$fsDirInfo = $this.fsInfo -as [System.IO.DirectoryInfo]
+			$fsDirInfo = $this._fsInfo -as [System.IO.DirectoryInfo]
 
 			if ($fsDirInfo -ne $null) {
 				foreach ($fsChildDirInfo in $fsDirInfo.GetDirectories()) {
@@ -136,11 +137,12 @@ class FileTVItem : TVItemBase {
 		return $this._children
 	}
 
-	hidden [IO.FileSystemInfo] $fsInfo
+	hidden [IO.FileSystemInfo] $_fsInfo
 	hidden [TVItemBase] $_parent = $null
 	hidden [Collections.Generic.IList`1[TVItemBase]] $_children = $null
 }
 
+#TODO: delete
 class FileTreeView : ListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 

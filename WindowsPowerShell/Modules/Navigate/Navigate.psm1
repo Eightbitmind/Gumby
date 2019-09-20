@@ -29,7 +29,7 @@ function SetLocationVisually($startDir = (Get-Location)) {
 	$tv.Title = 'Select Folder'
 
 	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
-		Set-Location $tv.SelectedItem().Value.FullName
+		Set-Location $tv.SelectedItem().Value().FullName
 	}
 
 	if ($fll -ne $null) { [Log]::Listeners.Remove($fll) }
@@ -51,7 +51,7 @@ function SelectVisually($startDir = (Get-Location)) {
 	$tv.Title = 'Select File'
 
 	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
-		return $tv.SelectedItem().Value.FullName
+		return $tv.SelectedItem().Value().FullName
 	}
 }
 
@@ -87,6 +87,6 @@ function ProcessShortcuts($shortcuts) {
 	$tv.Title = 'Select Shortcut'
 
 	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
-		return $tv.SelectedItem().Object().Action.Invoke()
+		return $tv.SelectedItem().Value().Action.Invoke()
 	}
 }
