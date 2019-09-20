@@ -712,7 +712,43 @@ class TreeView : ListBox {
 		}
 	}
 
-	[int[]] GetAncestralSiblingRange([uint32] $itemIndex, [uint32] $levelCount) {
+	<#
+	.SYNOPSIS
+	Gets the range of items that are - along the ancestor axis - within a "level distance" of a
+	start item.
+
+	.PARAMETER startIndex
+	Index of the item to get range for.
+
+	.PARAMETER levelDistance
+	Number of levels determining the size of the range (relative to the level of the start item).
+
+	.DESCRIPTION
+	Given the tree ...
+
+	    0   1   2   3   4         level
+	        |<--:---|             level distance 2
+	00: A1  |   :   |
+	01:     B1  :   |          <- first return value
+	02:     B2  :   |
+	03:         C1  |
+	04:             D1
+	05:             |   E1
+	06:         C2  |
+	07:             D2
+	08:             D3         <- startIndex
+	09:             D4
+	10:         C3
+	11:     B3                 <- second return value
+	12: A2
+
+	... calling this method the start item index 8 (item D3) and a level distance of 2 would return
+	(1, 11).
+
+	.OUTPUTS
+	Pair of item indices, the first marking the start of the range, the second its end.
+	#>
+	[int[]] GetAncestralSiblingRange([uint32] $startIndex, [uint32] $levelDistance) {
 		function GetFirstAtLevel([uint32] $i) {
 			[uint32] $level = $this.Items[$i].Level()
 			for (; ($i -gt 0) -and ($this.Items[$i - 1].Level() -ge $level); --$i) {}
@@ -725,16 +761,16 @@ class TreeView : ListBox {
 			return $i
 		}
 
-		[uint32] $first = GetFirstAtLevel $itemIndex
-		[uint32] $last = GetLastAtLevel $itemIndex
+		[uint32] $first = GetFirstAtLevel $startIndex
+		[uint32] $last = GetLastAtLevel $startIndex
 
-		for ([uint32] $i = 1; $i -le $levelCount; ++$i) {
-			if (($first -gt 0) -and ($this.Items[$first - 1].Level() -eq $this.Items[$itemIndex].Level() - $i)) {
+		for ([uint32] $i = 1; $i -le $levelDistance; ++$i) {
+			if (($first -gt 0) -and ($this.Items[$first - 1].Level() -eq $this.Items[$startIndex].Level() - $i)) {
 				# assert($this.Items[$first - 1].Level() -eq $this.Items[$first].Level() - 1)
 				$first = GetFirstAtLevel ($first - 1)
 			}
 
-			if (($last -lt $this.Items.Count - 1) -and ($this.Items[$last + 1].Level() -eq $this.Items[$itemIndex].Level() - $i)) {
+			if (($last -lt $this.Items.Count - 1) -and ($this.Items[$last + 1].Level() -eq $this.Items[$startIndex].Level() - $i)) {
 				# assert($this.Items[$last + 1].Level() -lt $this.Items[$last].Level())
 				$last = GetLastAtLevel ($last + 1)
 			}
@@ -746,25 +782,25 @@ class TreeView : ListBox {
 	[void] Expand() {
 		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
 
-		do { # curb nesting depth
+		try {
 
 			# Can the item be expanded?
 			if (!$this.SelectedItem().IsContainer()) {
 				[console]::Beep(300, 100)
-				break
+				return
 			}
 
 			# Is the item already expanded?
 			if ($this.SelectedItem().IsExpanded()) {
 				[console]::Beep(300, 100)
-				break
+				return
 			}
 
 			$children = $this.SelectedItem().Children()
 
 			if ($children.Count -eq 0) {
 				[console]::Beep(300, 100)
-				break
+				return
 			}
 
 			#region fix up data
@@ -793,7 +829,7 @@ class TreeView : ListBox {
 				# I0-1
 
 				# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
-				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.SelectedItem().Level() - $this.MaxLevelCount + 1)
+				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
 				[Log]::Trace("TV.Expand: first=$first, last=$last")
 
 				# Prune every item outside of [$first, $last]
@@ -809,7 +845,7 @@ class TreeView : ListBox {
 				# "un-abbreviated". Therefore, we'll just re-render everything.
 
 				$this.DisplayItems()
-				break
+				return
 			}
 
 			#endregion fix up data
@@ -949,15 +985,14 @@ class TreeView : ListBox {
 			}
 			#endregion
 
-		} while ($false)
-
-		[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+		} finally {
+			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+		}
 	}
 
 	[void] Collapse() {
 		[Log]::BeginSection("TV.Collapse, SIx=$($this.SelectedIndex), TLIV=$($this.topLevelInView)")
 		try {
-
 			# Going up deepens the displayed tree. Is there a way to return it to the depth we started
 			# at? Perhaps we can have a "sliding window" of the last n ancestral levels?
 
@@ -1011,7 +1046,8 @@ class TreeView : ListBox {
 						if ($grandParentChild.Name() -eq $parent.Name()) {
 							# item has already been inserted per the line above
 							$this.SelectedIndex = $insertPosition
-							# $this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
+
+							# continue inserting grand parent children after the current items
 							$insertPosition = $this.Items.Count
 						} else {
 							$this.Items.Insert($insertPosition++, $grandParentChild)
@@ -1048,4 +1084,3 @@ class TreeView : ListBox {
 
 	hidden [uint32] $topLevelInView = 0
 }
-

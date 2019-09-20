@@ -36,7 +36,7 @@ function SetLocationVisually($startDir = (Get-Location)) {
 }
 
 function SelectVisually($startDir = (Get-Location)) {
-	$sd = Get-Item $startDir
+	$items = Get-ChildItem $startDir
 
 	$horizontalPercent = 0.8
 	$verticalPercent = 0.8
@@ -47,7 +47,7 @@ function SelectVisually($startDir = (Get-Location)) {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$tv = [FileTreeView]::new($sd, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$tv = [TreeView]::new($items, ([FileTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select File'
 
 	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
