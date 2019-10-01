@@ -1,9 +1,8 @@
 using module ListBox
 using module Window
 
-#$dirHistory = New-Object 'System.Collections.Generic.Queue`1[System.String]'
-$dirHistory = New-Object 'System.Collections.ArrayList'
-$dirHistorySize = 10
+# an ICollection implementation as required by ListBox, but treated here as a stack
+$dirHistory = New-Object 'System.Collections.ArrayList' -ArgumentList <# history size #> 30
 
 <#
 .SYNOPSIS
@@ -16,12 +15,16 @@ function DirHistoryPush($Directory) {
 	$index = $dirHistory.IndexOf($Directory)
 
 	if ($index -lt 0) {
-		$dirHistory.Add($Directory) | Out-Null
-		while ($dirHistory.Count -gt $dirHistorySize) { $dirHistory.RemoveAt(0) }
-	} elseif ($index -lt $dirHistory.Count - 1) {
-		$temp = $dirHistory[$index]
-		$dirHistory[$index] = $dirHistory[$dirHistory.Count - 1]
-		$dirHistory[$dirHistory.Count - 1] = $temp
+		if ($dirHistory.Count -eq ($dirHistory.Capacity - 1)) {
+			# we'd overflow the max size
+			$dirHistory.RemoveAt($dirHistory.Count - 1)
+		}
+		$dirHistory.Insert(0, $Directory)
+
+	} elseif ($index -ne 0) {
+		# directory is already in the history, but not at the top of the stack
+		$dirHistory[$index] = $dirHistory[0]
+		$dirHistory[0] = $Directory
 	}
 }
 
@@ -46,5 +49,3 @@ function DirHistorySelect() {
 		Set-Location $lb.SelectedItem()
 	}
 }
-
-Export-ModuleMember -Function DirHistoryPush, DirHistorySelect
