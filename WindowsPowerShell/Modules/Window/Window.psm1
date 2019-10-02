@@ -6,6 +6,52 @@ enum WindowResult {
 	Cancel
 }
 
+<#
+class TextBuffer {
+
+	[void] SetScreenBuffer([Management.Automation.Host.Rectangle] $targetArea, [Management.Automation.Host.Coordinates] $sourceOrigin) {
+		$xs = $this.GetBufferList($targetArea, $sourceOrigin)
+
+
+		foreach($x in $xs) {
+			$Global:Host.UI.RawUI.SetBufferContents($x.Coordinates, $x.BufferCellArray)
+		}
+	}
+
+	# for unit testing
+
+	[object] GetBufferList([Management.Automation.Host.Rectangle] $targetArea, [Management.Automation.Host.Coordinates] $sourceOrigin) {
+
+		$list = New-Object Collections.ArrayList
+
+
+		foreach($line in $this._lines) {
+
+		$Global:Host.UI.RawUI.NewBufferCellArray(
+				@(EnsureStringLength $text ($this._rect.Right - $this._rect.Left - 1)),
+				$foregroundColor, $backgroundColor)
+		}
+
+		return $list
+	}
+
+
+	[void] AddLine([string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
+		$this._lines.Add(@{Text = $text; ForegroundColor = $foregroundColor; BackgroundColor = $backgroundColor}) | Out-File
+	}
+
+	[void] RemoveLine([int] $lineNumber) {
+		$this._lines.RemoveAt($lineNumber)
+	}
+
+	[void] Clear() {
+		$this._lines.Clear()
+	}
+
+	hidden [Collections.ArrayList] $_lines = New-Object Collections.ArrayList
+}
+#>
+
 class Window {
 	Window(
 		[int] $left,
