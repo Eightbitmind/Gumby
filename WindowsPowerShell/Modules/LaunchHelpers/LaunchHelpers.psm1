@@ -1,4 +1,11 @@
 
+function SelectFirstExisting($CandidateList) {
+	foreach ($candidate in $CandidateList) {
+		if (Test-Path $candidate) { return $candidate }
+	}
+	throw "none of the options in $CandidateList can be found"
+}
+
 <#
 .SYNOPSIS
 	Starts AccEvent.
@@ -132,7 +139,7 @@ function OpenWithVisualStudio([string] $fileName, [switch] $newVSInstance) {
 	.
 #>
 function OpenWithVisualStudioCode([switch] $NewInstance) {
-	$app = "${env:ProgramFiles}\Microsoft VS Code\bin\code.cmd"
+	$app = SelectFirstExisting "$HOME\AppData\Local\Programs\Microsoft VS Code\bin\code.cmd", "${env:ProgramFiles}\Microsoft VS Code\bin\code.cmd"
 	$reuse = if ($NewInstance) { '' } else { '-r' }
 	&$app $reuse $args
 }
