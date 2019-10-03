@@ -6,33 +6,49 @@ enum WindowResult {
 	Cancel
 }
 
-<#
+
 class TextBuffer {
 
-	[void] SetScreenBuffer([Management.Automation.Host.Rectangle] $targetArea, [Management.Automation.Host.Coordinates] $sourceOrigin) {
-		$xs = $this.GetBufferList($targetArea, $sourceOrigin)
+	[void] SetScreenBuffer(
+		[System.Management.Automation.Host.Rectangle] $targetArea,
+		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
 
-
-		foreach($x in $xs) {
-			$Global:Host.UI.RawUI.SetBufferContents($x.Coordinates, $x.BufferCellArray)
+		$stripes = $this.GetStripes($targetArea, $sourceOrigin)
+		foreach ($stripe in $stripes) {
+			$Global:Host.UI.RawUI.SetBufferContents($stripe.Coordinates, $stripe.BufferCells)
 		}
 	}
 
 	# for unit testing
 
-	[object] GetBufferList([Management.Automation.Host.Rectangle] $targetArea, [Management.Automation.Host.Coordinates] $sourceOrigin) {
+	[object] GetStripes(
+		[System.Management.Automation.Host.Rectangle] $targetArea,
+		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
 
-		$list = New-Object Collections.ArrayList
+		$stripes = New-Object Collections.ArrayList
 
+		$targetWidth = $targetArea.Right - $targetArea.Left + 1
+		$targetHeight = $targetArea.Bottom - $targetArea.Top + 1
 
-		foreach($line in $this._lines) {
+		for ($i = 0; $i -lt $targetHeight; ++$i) {
+			$stripe = $null
 
-		$Global:Host.UI.RawUI.NewBufferCellArray(
-				@(EnsureStringLength $text ($this._rect.Right - $this._rect.Left - 1)),
-				$foregroundColor, $backgroundColor)
+			if (($i -lt $sourceOrigin.Y) -or (($sourceOrigin.Y + $i) -ge $this._lines.Count)) {
+				$stripe = @{
+					Coordinates = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)
+					BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $this.DefaultForegroundColor, $this.DefaultBackgroundColor)
+				}
+			} else {
+				$line = $this._lines[$sourceOrigin.Y + $i]
+				$stripe = @{
+					Coordinates = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)
+					BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray(@(EnsureStringLength $line.Text.Substring($sourceOrigin.X) $targetWidth), $line.ForegroundColor, $line.BackgroundColor)
+				}
+			}
+			$stripes.Add($stripe) | Out-Null
 		}
 
-		return $list
+		return $stripes
 	}
 
 
@@ -48,9 +64,11 @@ class TextBuffer {
 		$this._lines.Clear()
 	}
 
-	hidden [Collections.ArrayList] $_lines = New-Object Collections.ArrayList
+	[ConsoleColor] $DefaultForegroundColor = $Global:Host.UI.RawUI.ForegroundColor
+	[ConsoleColor] $DefaultBackgroundColor = $Global:Host.UI.RawUI.BackgroundColor
+
+	hidden [Collections.ArrayList] $_lines = [System.Collections.ArrayList]::new()
 }
-#>
 
 class Window {
 	Window(
