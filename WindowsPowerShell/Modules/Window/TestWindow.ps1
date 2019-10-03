@@ -7,109 +7,446 @@ function coords($X, $Y) { return [System.Management.Automation.Host.Coordinates]
 function rect($Left, $Top, $Right, $Bottom) { return [System.Management.Automation.Host.Rectangle]::new($Left, $Top, $Right, $Bottom) }
 function white() {return ([ConsoleColor]::White)}
 function black() {return ([ConsoleColor]::Black)}
-
+function bca($text, $foregroundColor, $backgroundColor){ return $Host.UI.RawUI.NewBufferCellArray(@($text), $foregroundColor, $backgroundColor) }
 
 [TestClass()]
 class TextBufferTests {
 
 	[TestMethod()]
-	[void] CongruentTextAndTarget(){
-		
+	[void] CongruentTextAndTarget_Source_m1_m1(){
 		$b = [TextBuffer]::new()
-		$b.AddLine("aaa", (white), (black))
-		$b.AddLine("bbb", (white), (black))
-		$b.AddLine("ccc", (white), (black))
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords -1 -1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " ab" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca " de" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_m1_0(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords -1 0))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca " ab" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " de" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca " gh" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_m1_p1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca " de" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " gh" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "   " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_0_m1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 0 -1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "abc" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "def" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_0_0(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 0 0))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "abc" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "def" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "ghi" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_0_p1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 0 1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "def" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "ghi" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "   " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_p1_m1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 1 -1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "bc " (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "ef " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_p1_0(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 1 0))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "bc " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "ef " (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "hi " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] CongruentTextAndTarget_Source_p1_p1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 1 1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 12 34)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "ef " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 12 35)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "hi " (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 12 36)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "   " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextLargerThanTarget_Source_m1_m1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 -1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " ab" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca " ef" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextLargerThanTarget_Source_m1_0(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 0))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca " ab" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " ef" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca " ij" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextLargerThanTarget_Source_m1_p1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca " ef" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " ij" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca " mn" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextLargerThanTarget_Source_0_m1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 0 -1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "abc" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "efg" (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextLargerThanTarget_Source_0_0(){
+		$b = [TextBuffer]::new()
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 0 0))
 
-		TestTuplesAreEqual $stripes $tvi.Name() "Flintstone"
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "abc" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "efg" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "ijk" (white) (black))
 	}
 
 	[TestMethod()]
-	[void] Level_Root_AsExpected(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Level() 0
+	[void] TextLargerThanTarget_Source_0_p1(){
+		$b = [TextBuffer]::new()
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 0 1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "efg" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "ijk" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "mno" (white) (black))
 	}
 
 	[TestMethod()]
-	[void] IsContainer_Root_IsTrue(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsTrue $tvi.IsContainer()
+	[void] TextLargerThanTarget_Source_p1_m1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 1 -1))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "bcd" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "fgh" (white) (black))
 	}
 
 	[TestMethod()]
-	[void] IsExpanded_RootInitially_IsFalse(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsFalse $tvi.IsExpanded()
+	[void] TextLargerThanTarget_Source_p1_0(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
+
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 1 0))
+
+		TestAreEqual $stripes.Count 3
+
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "bcd" (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "fgh" (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "jkl" (white) (black))
 	}
 
 	[TestMethod()]
-	[void] IsExpanded_RootAfterExpansion_IsTrue(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		$tvi.Expand()
-		TestIsTrue $tvi.IsExpanded()
-	}
+	[void] TextLargerThanTarget_Source_p1_p1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
 
-	[TestMethod()]
-	[void] IsExpanded_RootAfterCollapse_IsTrue(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		$tvi.Expand()
-		$tvi.Collapse()
-		TestIsFalse $tvi.IsExpanded()
-	}
+		$b.AddLine("abcd", (white), (black))
+		$b.AddLine("efgh", (white), (black))
+		$b.AddLine("ijkl", (white), (black))
+		$b.AddLine("mnop", (white), (black))
 
-	[TestMethod()]
-	[void] Parent_Root_IsNull() {
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsNull $tvi.Parent()
-	}
+		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 1 1))
 
-	[TestMethod()]
-	[void] ChildrenCount_Root_AsExpected() {
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children().Count 3
-	}
+		TestAreEqual $stripes.Count 3
 
-	[TestMethod()]
-	[void] Name_FirstChild_AsExpected(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Name() "Fred"
-	}
+		TestAreEqual $stripes[0].Coordinates (coords 0 0)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "fgh" (white) (black))
 
-	[TestMethod()]
-	[void] Level_FirstChild_AsExpected(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Level() 1
-	}
+		TestAreEqual $stripes[1].Coordinates (coords 0 1)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "jkl" (white) (black))
 
-	[TestMethod()]
-	[void] IsContainer_FirstChild_IsFalse(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsFalse $tvi.Children()[0].IsContainer()
-	}
-
-	[TestMethod()]
-	[void] IsExpanded_FirstChild_IsFalse(){
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsFalse $tvi.IsExpanded()
-	}
-
-	[TestMethod()]
-	[void] Parent_FirstChild_IsNotNull() {
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsNotNull $tvi.Children()[0].Parent()
-	}
-
-	[TestMethod()]
-	[void] Parent_FirstChild_HasExpectedName() {
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Parent().Name() "Flintstone"
-	}
-
-	[TestMethod()]
-	[void] ChildrenCount_FirstChild_AsExpected() {
-		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Children().Count 0
+		TestAreEqual $stripes[2].Coordinates (coords 0 2)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "nop" (white) (black))
 	}
 }
 
