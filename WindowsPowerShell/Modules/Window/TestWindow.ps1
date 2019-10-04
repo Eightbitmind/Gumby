@@ -448,6 +448,105 @@ class TextBufferTests {
 		TestAreEqual $stripes[2].Coordinates (coords 0 2)
 		TestTuplesAreEqual $stripes[2].BufferCells (bca "nop" (white) (black))
 	}
+
+	[TestMethod()]
+	[void] TextSmallerThanTarget_Source_0_0(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 10 20 15 25), (coords 0 0))
+
+		TestAreEqual $stripes.Count 6
+
+		TestAreEqual $stripes[0].Coordinates (coords 10 20)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "abc   " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 10 21)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "def   " (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 10 22)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "ghi   " (white) (black))
+
+		TestAreEqual $stripes[3].Coordinates (coords 10 23)
+		TestTuplesAreEqual $stripes[3].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[4].Coordinates (coords 10 24)
+		TestTuplesAreEqual $stripes[4].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[5].Coordinates (coords 10 25)
+		TestTuplesAreEqual $stripes[5].BufferCells (bca "      " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextSmallerThanTarget_Source_m1_m1(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 10 20 15 25), (coords -1 -1))
+
+		TestAreEqual $stripes.Count 6
+
+		TestAreEqual $stripes[0].Coordinates (coords 10 20)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 10 21)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca " abc  " (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 10 22)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca " def  " (white) (black))
+
+		TestAreEqual $stripes[3].Coordinates (coords 10 23)
+		TestTuplesAreEqual $stripes[3].BufferCells (bca " ghi  " (white) (black))
+
+		TestAreEqual $stripes[4].Coordinates (coords 10 24)
+		TestTuplesAreEqual $stripes[4].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[5].Coordinates (coords 10 25)
+		TestTuplesAreEqual $stripes[5].BufferCells (bca "      " (white) (black))
+	}
+
+	[TestMethod()]
+	[void] TextSmallerThanTarget_Source_m5_m5(){
+		$b = [TextBuffer]::new()
+		$b.DefaultForegroundColor = (white)
+		$b.DefaultBackgroundColor = (black)
+
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+
+		$stripes = $b.GetStripes((rect 10 20 15 25), (coords -5 -5))
+
+		TestAreEqual $stripes.Count 6
+
+		TestAreEqual $stripes[0].Coordinates (coords 10 20)
+		TestTuplesAreEqual $stripes[0].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[1].Coordinates (coords 10 21)
+		TestTuplesAreEqual $stripes[1].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[2].Coordinates (coords 10 22)
+		TestTuplesAreEqual $stripes[2].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[3].Coordinates (coords 10 23)
+		TestTuplesAreEqual $stripes[3].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[4].Coordinates (coords 10 24)
+		TestTuplesAreEqual $stripes[4].BufferCells (bca "      " (white) (black))
+
+		TestAreEqual $stripes[5].Coordinates (coords 10 25)
+		TestTuplesAreEqual $stripes[5].BufferCells (bca "     a" (white) (black))
+	}
 }
 
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
