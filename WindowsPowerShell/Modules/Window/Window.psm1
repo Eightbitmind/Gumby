@@ -38,33 +38,28 @@ class TextBuffer {
 		$targetHeight = $targetArea.Bottom - $targetArea.Top + 1
 
 		for ($i = 0; $i -lt $targetHeight; ++$i) {
-			$stripe = $null
+			$stripe = @{Coordinates = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)}
+			$line = $this._lines[$sourceOrigin.Y + $i]
 
-			if ((($sourceOrigin.Y + $i) -lt 0) -or (($sourceOrigin.Y + $i) -ge $this._lines.Count)) {
-				$stripe = @{
-					Coordinates = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)
-					BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $this.DefaultForegroundColor, $this.DefaultBackgroundColor)
-				}
+			if (($sourceOrigin.Y + $i -lt 0) <# above the text #> -or 
+				($sourceOrigin.Y + $i -ge $this._lines.Count) <# below the text #> -or
+				($sourceOrigin.X + $targetWidth -lt 0) <# to the left of the text #> -or
+				($sourceOrigin.X -gt $line.Text.Length) <# to the right of the right#>) {
+				$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $this.DefaultForegroundColor, $this.DefaultBackgroundColor)
 			} else {
-				$line = $this._lines[$sourceOrigin.Y + $i]
-				
 				$text = if ($sourceOrigin.X -lt 0) {
 					EnsureStringLength ((" " * -$sourceOrigin.X) + $line.Text) $targetWidth
 				} else {
 					EnsureStringLength $line.Text.Substring($sourceOrigin.X) $targetWidth
 				}
 
-				$stripe = @{
-					Coordinates = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)
-					BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray(@($text), $line.ForegroundColor, $line.BackgroundColor)
-				}
+				$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray(@($text), $line.ForegroundColor, $line.BackgroundColor)
 			}
 			$stripes.Add($stripe) | Out-Null
 		}
 
 		return $stripes
 	}
-
 
 	[void] AddLine([string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
 		$this._lines.Add(@{Text = $text; ForegroundColor = $foregroundColor; BackgroundColor = $backgroundColor}) | Out-Null
