@@ -37,7 +37,7 @@ function CmdHistorySelect($Count = 30) {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$lb = [ListBox]::new($cmdHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$lb = [SVListBox]::new($cmdHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Command History'
 
 	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex -lt $lb.Items.Count)) {

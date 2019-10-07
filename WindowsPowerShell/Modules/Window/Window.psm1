@@ -73,6 +73,10 @@ class TextBuffer {
 		$this._lines.Clear()
 	}
 
+	[object] GetLine([int] $lineNumber) {
+		return $this._lines[$lineNumber]
+	}
+
 	[ConsoleColor] $DefaultForegroundColor = $Global:Host.UI.RawUI.ForegroundColor
 	[ConsoleColor] $DefaultBackgroundColor = $Global:Host.UI.RawUI.BackgroundColor
 
@@ -117,6 +121,14 @@ class Window {
 		[int] $absX = $this._rect.Left + 1 + $x
 		[int] $absY = $this._rect.Top + 1 + $y
 		return (New-Object System.Management.Automation.Host.Coordinates $absX, $absY)
+	}
+
+	[System.ConsoleColor] ForegroundColor() {
+		return $this._foregroundColor
+	}
+
+	[System.ConsoleColor] BackgroundColor() {
+		return $this._backgroundColor
 	}
 
 	[void] WriteLine([int] $y, [string] $text, $foregroundColor, $backgroundColor) {
@@ -438,8 +450,8 @@ class Window {
 
 	hidden [bool] $_running = $true
 	hidden [Management.Automation.Host.Rectangle] $_rect
-	hidden [ConsoleColor] $_foregroundColor
-	hidden [ConsoleColor] $_backgroundColor
+	hidden [System.ConsoleColor] $_foregroundColor
+	hidden [System.ConsoleColor] $_backgroundColor
 	hidden [Management.Automation.Host.BufferCell[,]] $_originalBufferContent
 }
 
@@ -457,33 +469,40 @@ class ScrollView : Window {
 		$this._textBuffer = [TextBuffer]::new($foregroundColor, $backgroundColor)
 	}
 
+	[int] $FirstColumnInView = 0
+	[int] $FirstRowInView = 0
+
 	[void] AddLine([string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
 		$this._textBuffer.AddLine($text, $foregroundColor, $backgroundColor)
 	}
 
+	[object] GetLine([int] $lineNumber) {
+		return $this._textBuffer.GetLine($lineNumber)
+	}
+
 	hidden [void] DrawClientArea() {
-		$this._textBuffer.SetScreenBuffer($this.ClientRectangle(), [System.Management.Automation.Host.Coordinates]::new($this._firstColumnInView, $this._firstRowInView))
+		$this._textBuffer.SetScreenBuffer($this.ClientRectangle(), [System.Management.Automation.Host.Coordinates]::new($this.FirstColumnInView, $this.FirstRowInView))
 	}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
 		switch ($key.Key) {
 			([System.ConsoleKey]::A) {
-				--$this._firstColumnInView
+				--$this.FirstColumnInView
 				$this.DrawClientArea()
 			}
 
 			([System.ConsoleKey]::D) {
-				++$this._firstColumnInView
+				++$this.FirstColumnInView
 				$this.DrawClientArea()
 			}
 
 			([System.ConsoleKey]::W) {
-				--$this._firstRowInView
+				--$this.FirstRowInView
 				$this.DrawClientArea()
 			}
 
 			([System.ConsoleKey]::X) {
-				++$this._firstRowInView
+				++$this.FirstRowInView
 				$this.DrawClientArea()
 			}
 
@@ -494,6 +513,4 @@ class ScrollView : Window {
 	}
 
 	hidden [TextBuffer] $_textBuffer
-	hidden [int] $_firstColumnInView = 0
-	hidden [int] $_firstRowInView = 0
 }

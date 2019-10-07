@@ -42,7 +42,7 @@ function DirHistorySelect() {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$lb = [ListBox]::new($dirHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$lb = [SVListBox]::new($dirHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Directory History'
 
 	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex -lt $lb.Items.Count)) {
