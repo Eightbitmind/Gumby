@@ -452,9 +452,15 @@ class Window {
 	hidden [void] OnShown() {}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
-		#$key.Key
-		#$key.KeyChar
-		#$key.Modifiers
+		# [Log]::Comment("Window.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers), KeyChar=$($key.KeyChar)")
+
+		# We do not receive:
+		#   Alt+Home
+		#   Ctrl+Home
+		#   Shift+Home
+		#   Alt+(Left|Right|Up|Down)
+		#   Ctrl+(Left|Right|Up|Down)
+		#   Shift+(Left|Right|Up|Down)
 
 		switch ($key.Key) {
 			([ConsoleKey]::Escape) {
@@ -510,6 +516,7 @@ class ScrollView : Window {
 	}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
+		# [Log]::Comment("SV.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
 		switch ($key.Key) {
 			([System.ConsoleKey]::A) {
 				if ($this.FirstColumnInView -eq 0) { break }
