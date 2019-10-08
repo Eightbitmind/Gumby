@@ -11,6 +11,69 @@ function bca($text, $foregroundColor, $backgroundColor){ return $Host.UI.RawUI.N
 
 [TestClass()]
 class TextBufferTests {
+	[TestMethod()]
+	[void] AddLine(){
+		$b = [TextBuffer]::new((white), (black))
+		TestAreEqual $b.LineCount() 0
+		
+		$b.AddLine("abc", (white), (black))
+		TestAreEqual $b.LineCount() 1
+		TestAreEqual $b.GetLine(0).Text "abc"
+		
+		$b.AddLine("def", (white), (black))
+		TestAreEqual $b.LineCount() 2
+		TestAreEqual $b.GetLine(0).Text "abc"
+		TestAreEqual $b.GetLine(1).Text "def"
+		
+		$b.AddLine("ghi", (white), (black))
+		TestAreEqual $b.LineCount() 3
+		TestAreEqual $b.GetLine(0).Text "abc"
+		TestAreEqual $b.GetLine(1).Text "def"
+		TestAreEqual $b.GetLine(2).Text "ghi"
+	}
+
+	[TestMethod()]
+	[void] RemoveLine(){
+		$b = [TextBuffer]::new((white), (black))
+		
+		$b.AddLine("abc", (white), (black))
+		$b.AddLine("def", (white), (black))
+		$b.AddLine("ghi", (white), (black))
+		TestAreEqual $b.LineCount() 3
+
+		$b.RemoveLine(0)
+		TestAreEqual $b.LineCount() 2
+		TestAreEqual $b.GetLine(0).Text "def"
+		TestAreEqual $b.GetLine(1).Text "ghi"
+		
+		$b.RemoveLine(1)
+		TestAreEqual $b.LineCount() 1
+		TestAreEqual $b.GetLine(0).Text "def"
+
+		$b.RemoveLine(0)
+		TestAreEqual $b.LineCount() 0
+	}
+
+	[TestMethod()]
+	[void] ColumnCount(){
+		$b = [TextBuffer]::new((white), (black))
+		TestAreEqual $b.ColumnCount() 0
+		
+		$b.AddLine("", (white), (black))
+		TestAreEqual $b.ColumnCount() 0
+
+		$b.AddLine("a", (white), (black))
+		TestAreEqual $b.ColumnCount() 1
+
+		$b.AddLine("bbb", (white), (black))
+		TestAreEqual $b.ColumnCount() 3
+
+		$b.RemoveLine(2)
+		TestAreEqual $b.ColumnCount() 1
+
+		$b.RemoveLine(1)
+		TestAreEqual $b.ColumnCount() 0
+	}
 
 	[TestMethod()]
 	[void] CongruentTextAndTarget_Source_m1_m1(){
