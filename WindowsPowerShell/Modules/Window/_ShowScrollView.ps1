@@ -25,7 +25,7 @@ $sv.AddLine('Saint Francis of Assisi Receiving the Stigmata is the name given to
 $sv.AddLine('The panels are nearly identical, apart from a considerable difference in size.', $bc, $fc)
 $sv.AddLine('Both are small paintings: the larger measures 29.3 cm x 33.4 cm and is in the Sabauda Gallery in Turin, Italy; the smaller panel is 12.7 cm x 14.6 cm and in the Philadelphia Museum of Art.', $bc, $fc)
 $sv.AddLine("The earliest documentary evidence is in the 1470 inventory of Anselme Adornes of Bruges's will; he may have owned both panels.", $bc, $fc)
-$sv.AddLine('The paintings show a famous incident from the life of Saint Francis of Assisi, who is shown kneeling by a rock as he receives the stigmata of the crucified Christ on the palms of his hands and soles of his feet. ', $bc, $fc)
+$sv.AddLine('The paintings show a famous incident from the life of Saint Francis of Assisi, who is shown kneeling by a rock as he receives the stigmata of the crucified Christ on the palms of his hands and soles of his feet.', $bc, $fc)
 $sv.AddLine('Behind him are rock formations, shown in great detail, and a panoramic landscape that seems to relegate the figures to secondary importance. ', $bc, $fc)
 $sv.AddLine('This treatment of Francis is the first such to appear in northern Renaissance art.', $bc, $fc)
 $sv.AddLine('The arguments attributing the works to van Eyck are circumstantial and based mainly on the style and quality of the panels.', $bc, $fc)

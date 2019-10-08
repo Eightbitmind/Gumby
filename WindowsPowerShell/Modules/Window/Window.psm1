@@ -16,6 +16,9 @@ class TextBuffer {
 		$this.DefaultBackgroundColor = $defaultBackgroundColor
 	}
 
+	[int] LineCount() { return $this._lines.Count }
+	[int] ColumnCount() { return $this._lines[$this._maxLengthLineNumber].Text.Length }
+
 	[void] SetScreenBuffer(
 		[System.Management.Automation.Host.Rectangle] $targetArea,
 		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
@@ -62,15 +65,21 @@ class TextBuffer {
 	}
 
 	[void] AddLine([string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
-		$this._lines.Add(@{Text = $text; ForegroundColor = $foregroundColor; BackgroundColor = $backgroundColor}) | Out-Null
+		$i = $this._lines.Add(@{Text = $text; ForegroundColor = $foregroundColor; BackgroundColor = $backgroundColor})
+
+		if (($this._maxLengthLineNumber -eq -1) -or ($text.Length -gt $this._lines[$this._maxLengthLineNumber].Text.Length)) {
+			$this._maxLengthLineNumber = $i
+		}
 	}
 
 	[void] RemoveLine([int] $lineNumber) {
 		$this._lines.RemoveAt($lineNumber)
+		if ($lineNumber -eq $this._maxLengthLineNumber) { $this.DetermineMaxLengthLineNumber() }
 	}
 
 	[void] Clear() {
 		$this._lines.Clear()
+		$this._maxLengthLineNumber = -1
 	}
 
 	[object] GetLine([int] $lineNumber) {
@@ -80,7 +89,19 @@ class TextBuffer {
 	[ConsoleColor] $DefaultForegroundColor = $Global:Host.UI.RawUI.ForegroundColor
 	[ConsoleColor] $DefaultBackgroundColor = $Global:Host.UI.RawUI.BackgroundColor
 
+	hidden [void] DetermineMaxLengthLineNumber() {
+		$this._maxLengthLineNumber = -1
+		$maxLength = -1
+		for ($i = 0; $i -lt $this._lines.Count; ++$i) {
+			if ($this._lines[$i].Text.Length -gt $maxLength) {
+				$maxLength = $this._lines[$i].Text.Length
+				$this._maxLengthLineNumber = $i
+			}
+		}
+	}
+
 	hidden [System.Collections.ArrayList] $_lines = [System.Collections.ArrayList]::new()
+	hidden [int] $_maxLengthLineNumber = -1
 }
 
 class Window {
@@ -111,6 +132,10 @@ class Window {
 
 	[Management.Automation.Host.Rectangle] ClientRectangle() {
 		return (New-Object System.Management.Automation.Host.Rectangle ($this._rect.Left + 1), ($this._rect.Top + 1), ($this._rect.Right - 1), ($this._rect.Bottom - 1))
+	}
+
+	[int] ClientWidth() {
+		return $this._rect.Right - $this._rect.Left - 1;
 	}
 
 	[int] ClientHeight() {
@@ -427,9 +452,15 @@ class Window {
 	hidden [void] OnShown() {}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
-		#$key.Key
-		#$key.KeyChar
-		#$key.Modifiers
+		# [Log]::Comment("Window.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers), KeyChar=$($key.KeyChar)")
+
+		# We do not receive:
+		#   Alt+Home
+		#   Ctrl+Home
+		#   Shift+Home
+		#   Alt+(Left|Right|Up|Down)
+		#   Ctrl+(Left|Right|Up|Down)
+		#   Shift+(Left|Right|Up|Down)
 
 		switch ($key.Key) {
 			([ConsoleKey]::Escape) {
@@ -485,24 +516,45 @@ class ScrollView : Window {
 	}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
+		# [Log]::Comment("SV.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
 		switch ($key.Key) {
 			([System.ConsoleKey]::A) {
+				if ($this.FirstColumnInView -eq 0) { break }
 				--$this.FirstColumnInView
 				$this.DrawClientArea()
 			}
 
 			([System.ConsoleKey]::D) {
+				if ($this.FirstColumnInView + $this.ClientWidth() -eq $this._textBuffer.ColumnCount()) { break }
 				++$this.FirstColumnInView
 				$this.DrawClientArea()
 			}
 
 			([System.ConsoleKey]::W) {
+				if ($this.FirstRowInView -eq 0) { break }
 				--$this.FirstRowInView
 				$this.DrawClientArea()
 			}
 
 			([System.ConsoleKey]::X) {
+				if ($this.FirstRowInView + $this.ClientHeight() -eq $this._textBuffer.LineCount()) { break }
 				++$this.FirstRowInView
+				$this.DrawClientArea()
+			}
+
+			([System.ConsoleKey]::Home) {
+				$this.FirstColumnInView = 0
+				if ($key.Modifiers -eq ([System.ConsoleModifiers]::Control)) {
+					$this.FirstRowInView = 0
+				}
+				$this.DrawClientArea()
+			}
+
+			([System.ConsoleKey]::End) {
+				$this.FirstColumnInView = [System.Math]::Max(0, $this._textBuffer.ColumnCount() - $this.ClientWidth())
+				if ($key.Modifiers -eq ([System.ConsoleModifiers]::Control)) {
+					$this.FirstRowInView = [System.Math]::Max(0, $this._textBuffer.LineCount() - $this.ClientHeight())
+				}
 				$this.DrawClientArea()
 			}
 
