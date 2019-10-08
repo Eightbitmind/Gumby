@@ -516,7 +516,7 @@ class ScrollView : Window {
 	}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
-		# [Log]::Comment("SV.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
+		#[Log]::Comment("SV.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
 		switch ($key.Key) {
 			([System.ConsoleKey]::A) {
 				if ($this.FirstColumnInView -eq 0) { break }
@@ -543,6 +543,16 @@ class ScrollView : Window {
 			}
 
 			([System.ConsoleKey]::Home) {
+				# We do not receive Alt+Home, Ctrl+Home and Shift+Home :(
+				$this.FirstColumnInView = 0
+				if ($key.Modifiers -eq ([System.ConsoleModifiers]::Control)) {
+					$this.FirstRowInView = 0
+				}
+				$this.DrawClientArea()
+			}
+
+			# Alternative for 'Home' key to enable modifier key combinations.
+			([System.ConsoleKey]::Q) {
 				$this.FirstColumnInView = 0
 				if ($key.Modifiers -eq ([System.ConsoleModifiers]::Control)) {
 					$this.FirstRowInView = 0
@@ -551,6 +561,14 @@ class ScrollView : Window {
 			}
 
 			([System.ConsoleKey]::End) {
+				# We do not receive Alt+End, Ctrl+End and Shift+End :(
+				$this.FirstColumnInView = [System.Math]::Max(0, $this._textBuffer.ColumnCount() - $this.ClientWidth())
+				$this.FirstRowInView = [System.Math]::Max(0, $this._textBuffer.LineCount() - $this.ClientHeight())
+				$this.DrawClientArea()
+			}
+
+			# Alternative for 'End' key to enable modifier key combinations.
+			([System.ConsoleKey]::Z) {
 				$this.FirstColumnInView = [System.Math]::Max(0, $this._textBuffer.ColumnCount() - $this.ClientWidth())
 				if ($key.Modifiers -eq ([System.ConsoleModifiers]::Control)) {
 					$this.FirstRowInView = [System.Math]::Max(0, $this._textBuffer.LineCount() - $this.ClientHeight())
