@@ -96,5 +96,13 @@ class PathJoinTests {
 	}
 }
 
+[TestClass()]
+class PathAsUriTests {
+	[TestMethod()]
+	[void] PathAsUri_Example1() {
+		TestAreEqual (PathAsUri "C:\foo\bar") "file:C:/foo/bar"
+	}
+}
+
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
-RunTests $standaloneLogFilePath ([PathNormalizeTests]) ([PathFileBaseNameTests]) ([PathJoinTests])
+RunTests $standaloneLogFilePath ([PathNormalizeTests]) ([PathFileBaseNameTests]) ([PathJoinTests]) ([PathAsUriTests])

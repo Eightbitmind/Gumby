@@ -93,3 +93,7 @@ function PathJoin([string[]]$Directories, [string] $BaseName, [string] $Extensio
 
 	return $sb.ToString()
 }
+
+function PathAsUri($Path) {
+	return "file:$($Path.Replace('\', '/'))"
+}
