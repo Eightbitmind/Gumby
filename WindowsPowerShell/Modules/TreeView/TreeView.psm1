@@ -3,15 +3,13 @@ using module ListBox
 using module Log
 using module Window
 
-class TVItemBase {
+class TVItemBase : LBItemBase {
 	TVItemBase() {}
 
 	hidden TVItemBase([uint32] $level) {
 		$this._level = $level
 	}
 
-	[string] Name() { throw "abstract" }
-	[object] Value() { throw "abstract" }
 	[uint32] Level() {return $this._level }
 	[bool] IsContainer() { throw "abstract" }
 	[bool] IsExpanded() { return $this._isExpanded }
@@ -1087,12 +1085,11 @@ class TreeView : ListBox {
 	hidden [uint32] $topLevelInView = 0
 }
 
-class SVTreeView : ListBox {
+class SVTreeView : SVListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 
 	SVTreeView(
-		[object[]] $items,
-		[object] <# TypeInfo? #> $tvItemType,
+		[TVItemBase[]] $items,
 		[int] $left,
 		[int] $top,
 		[int] $width,
@@ -1100,7 +1097,7 @@ class SVTreeView : ListBox {
 		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
 		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
 	) : base(
-		(New-Object System.Collections.ArrayList),
+		$null,
 		$left,
 		$top,
 		$width,
@@ -1109,71 +1106,33 @@ class SVTreeView : ListBox {
 		$backgroundColor
 	) {
 		for ($i = 0; $i -lt $items.Count; ++$i) {
-			$tvItem = $tvItemType::new($items[$i])
+			$item = $items[$i]
 			if ($i -eq 0) {
-				$this.topLevelInView = $tvItem.Level()
+				$this.topLevelInView = $item.Level()
 			} else {
-				assert ($tvItem.Level() -eq $this.topLevelInView)
+				assert ($item.Level() -eq $this.topLevelInView)
 			}
-			$this.Items.Add($tvItem) | Out-Null
+			$this.AddItem($item)
 		}
 	}
 
 	[void] TraceItems() {
-		for ($i = 0; $i -lt $this.Items.Count; ++$i) {
-			if ($i -eq $this.FirstIndexInView) { $fiiv = ", FIIV" } else { $fiiv = "" }
-			if ($i -eq $this.SelectedIndex) { $sii = ", SII" } else { $sii = "" }
+		for ($i = 0; $i -lt $this.ItemsCount(); ++$i) {
+			$item = $this.GetItem($i)
+			if ($i -eq $this.FirstRowInView) { $firstInView = ", firstInView" } else { $firstInView = "" }
+			if ($i -eq $this.SelectedIndex) { $selected = ", selected" } else { $selected = "" }
 			[Log]::Trace(("{0}: `"{1}`" L={2}{3}{4}" -f
 				$i,
-				$this.GetItemLabel($i),
-				$this.Items[$i].Level(),
-				$fiiv,
-				$sii))
+				$this.GetItemLabel($item),
+				$item.Level(),
+				$firstInView,
+				$selected))
 		}
 	}
 
-	[void] OnShown() {
-		for ($i = 0; $i -lt [Math]::Min($this.Items.Count, $this.ClientHeight()); ++$i) {
-
-			if ($i -eq $this.SelectedIndex) {
-				$fc = $this._backgroundColor
-				$bc = $this._foregroundColor
-			} else {
-				$fc = $this._foregroundColor
-				$bc = $this._backgroundColor
-			}
-
-			$this.WriteLine($i, $this.GetItemLabel($i), $fc, $bc)
-		}
-
-		$si = if ($this.Items.Count -gt 0) { $this.SelectedIndex + 1 } else { 0 }
-		$this.WriteStatusBar("$si/$($this.Items.Count)")
-
-		# skipping ListBox.OnShown()
-		([Window]$this).OnShown()
-	}
-
-	[void] DisplayItems() {
-		for ($y = 0; $y -lt $this.ClientHeight(); ++$y) {
-			if ($this.FirstIndexInView + $y -lt $this.Items.Count) {
-				if ($this.FirstIndexInView + $y -eq $this.SelectedIndex) {
-					$fc = $this._backgroundColor
-					$bc = $this._foregroundColor
-				} else {
-					$fc = $this._foregroundColor
-					$bc = $this._backgroundColor
-				}
-
-				$this.WriteLine($y, $this.GetItemLabel($this.FirstIndexInView + $y), $fc, $bc)
-			} else {
-				$this.WriteLine($y, "", $this._foregroundColor, $this._backgroundColor)
-			}
-		}
-	}
-
-	[string] GetItemLabel($itemIndex) {
-		[char] $icon = if ($this.Items[$itemIndex].IsContainer()) {
-			if ($this.Items[$itemIndex].IsExpanded()) {
+	[string] GetItemLabel([object] $item) {
+		[char] $icon = if ($item.IsContainer()) {
+			if ($item.IsExpanded()) {
 				<# black down-pointing triangle #> 0x25BC
 			} else {
 				<# black right-pointing pointer #> 0x25BA
@@ -1183,7 +1142,7 @@ class SVTreeView : ListBox {
 			<# black small square #> 0x25AA
 		}
 
-		return (' ' * 4 * ($this.Items[$itemIndex].Level() - $this.topLevelInView)) + $icon + ' ' + $this.Items[$itemIndex].Name()
+		return ((' ' * 4 * ($item.Level() - $this.topLevelInView)) + $icon + ' ' + $item.Name())
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
@@ -1242,14 +1201,14 @@ class SVTreeView : ListBox {
 	#>
 	[int[]] GetAncestralSiblingRange([uint32] $startIndex, [uint32] $levelDistance) {
 		function GetFirstAtLevel([uint32] $i) {
-			[uint32] $level = $this.Items[$i].Level()
-			for (; ($i -gt 0) -and ($this.Items[$i - 1].Level() -ge $level); --$i) {}
+			[uint32] $level = $this.GetItem($i).Level()
+			for (; ($i -gt 0) -and ($this.GetItem($i - 1).Level() -ge $level); --$i) {}
 			return $i
 		}
 
 		function GetLastAtLevel([uint32] $i) {
-			[uint32] $level = $this.Items[$i].Level()
-			for (; ($i -lt $this.Items.Count - 1) -and ($this.Items[$i + 1].Level() -ge $level); ++$i) {}
+			[uint32] $level = $this.GetItem($i).Level()
+			for (; ($i -lt $this.ItemsCount() - 1) -and ($this.GetItems($i + 1).Level() -ge $level); ++$i) {}
 			return $i
 		}
 
@@ -1257,12 +1216,12 @@ class SVTreeView : ListBox {
 		[uint32] $last = GetLastAtLevel $startIndex
 
 		for ([uint32] $i = 1; $i -le $levelDistance; ++$i) {
-			if (($first -gt 0) -and ($this.Items[$first - 1].Level() -eq $this.Items[$startIndex].Level() - $i)) {
+			if (($first -gt 0) -and ($this.GetItem($first - 1).Level() -eq $this.GetItem($startIndex).Level() - $i)) {
 				# assert($this.Items[$first - 1].Level() -eq $this.Items[$first].Level() - 1)
 				$first = GetFirstAtLevel ($first - 1)
 			}
 
-			if (($last -lt $this.Items.Count - 1) -and ($this.Items[$last + 1].Level() -eq $this.Items[$startIndex].Level() - $i)) {
+			if (($last -lt $this.ItemCount() - 1) -and ($this.GetItem($last + 1).Level() -eq $this.GetItem($startIndex).Level() - $i)) {
 				# assert($this.Items[$last + 1].Level() -lt $this.Items[$last].Level())
 				$last = GetLastAtLevel ($last + 1)
 			}
@@ -1272,7 +1231,7 @@ class SVTreeView : ListBox {
 	}
 
 	[void] Expand() {
-		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
 
 		try {
 
@@ -1299,7 +1258,7 @@ class SVTreeView : ListBox {
 
 			[uint32] $ii = $this.SelectedIndex
 			foreach ($child in $children) {
-				$this.Items.Insert(++$ii, $child)
+				$this.InsertItem(++$ii, $child)
 			}
 
 			if (($this.SelectedItem().Level() - $this.topLevelInView) -eq ($this.MaxLevelCount - 1)) {
@@ -1325,8 +1284,8 @@ class SVTreeView : ListBox {
 				[Log]::Trace("TV.Expand: first=$first, last=$last")
 
 				# Prune every item outside of [$first, $last]
-				for ($i = $this.Items.Count - 1; $i -gt $last; --$i) { $this.Items.RemoveAt($i) }
-				for ($i = $first; $i -gt 0; --$i) { $this.Items.RemoveAt($i - 1) }
+				for ($i = $this.Items.Count - 1; $i -gt $last; --$i) { $this.RemoveItem($i) }
+				for ($i = $first; $i -gt 0; --$i) { $this.RemoveItem($i - 1) }
 
 				++$this.topLevelInView
 
@@ -1337,6 +1296,9 @@ class SVTreeView : ListBox {
 				# "un-abbreviated". Therefore, we'll just re-render everything.
 
 				$this.DisplayItems()
+
+
+				# CONTINUE HERE
 				return
 			}
 

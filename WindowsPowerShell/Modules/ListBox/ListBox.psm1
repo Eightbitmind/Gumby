@@ -1,5 +1,22 @@
 using module Window
 
+class LBItemBase {
+	[string] Name() { throw "abstract" }
+	[object] Value() { throw "abstract" }
+}
+
+class StringLBItem {
+	StringLBItem([string] $value) {
+		$this._value = $value
+	}
+
+	[string] Name() { return $this._value }
+	[string] Value() { return $this._value }
+
+	hidden [string] $_value
+}
+
+
 class ListBox : Window {
 	ListBox(
 		[System.Collections.ICollection] $items,
@@ -114,7 +131,7 @@ class ListBox : Window {
 
 class SVListBox : ScrollView {
 	SVListBox(
-		[System.Collections.ICollection] $items,
+		[LBItemBase[]] $items,
 		[int] $left,
 		[int] $top,
 		[int] $width,
@@ -122,39 +139,62 @@ class SVListBox : ScrollView {
 		[System.ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
 		[System.ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
 	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
-		$this.Items = $items
-		for ($i = 0; $i -lt $this.Items.Count; ++$i) {
-			if ($i -eq $this.SelectedIndex) {
-				$this.AddLine($this.GetItemLabel($i), $this.BackgroundColor(), $this.ForegroundColor())
-			} else {
-				$this.AddLine($this.GetItemLabel($i), $this.ForegroundColor(), $this.BackgroundColor())
+
+		if ($null -ne $items) {
+			for ($i = 0; $i -lt $items.Count; ++$i) {
+				$item = $items[$i]
+				$this._items.Add($item) | Out-Null
+
+				if ($i -eq $this.SelectedIndex) {
+					$this.AddLine($this.GetItemLabel($item), $this.BackgroundColor(), $this.ForegroundColor())
+				} else {
+					$this.AddLine($this.GetItemLabel($item), $this.ForegroundColor(), $this.BackgroundColor())
+				}
 			}
 		}
 	}
 
-	[object] SelectedItem() {
-		return $this.Items[$this.SelectedIndex]
+	[int] ItemCount() { return $this._items.Count }
+
+	[void] AddItem([object] $item) {
+		$this._items.Add($item) | Out-Null
+		$this.AddLine($this.GetItemLabel($item), $this.ForegroundColor(), $this.BackgroundColor())
+	}
+
+	[void] InsertItem([int] $index, [object] $item) {
+		$this._items.Insert($index, $item)
+		$this.InsertLine($index, $this.GetItemLabel($item), $this.ForegroundColor(), $this.BackgroundColor())
+	}
+
+	[void] RemoveItem([int] $index) {
+		if ($index -eq $this.SelectedIndex) { $this.SelectedIndex = -1 }
+		$this._items.RemoveAt($index)
+		$this.RemoveLine($index)
+	}
+
+	[LBItemBase] GetItem([int] $index) { return $this._items[$index] }
+
+	[LBItemBase] SelectedItem() {
+		return $this._items[$this.SelectedIndex]
 	}
 
 	hidden DrawClientArea() {
 		([ScrollView]$this).DrawClientArea()
-		$si = if ($this.Items.Count -gt 0) { $this.SelectedIndex + 1 } else { 0 }
-		$this.WriteStatusBar("$si/$($this.Items.Count)")
+		$si = if ($this._items.Count -gt 0) { $this.SelectedIndex + 1 } else { 0 }
+		$this.WriteStatusBar("$si/$($this._items.Count)")
 	}
 
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
-		#$key.Key
-		#$key.KeyChar
-		#$key.Modifiers
+		#[Log]::Comment("SVListBox.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
 
 		switch ($key.Key) {
 			([ConsoleKey]::DownArrow) {
-				if ($this.Items.Count -eq 0) {
+				if ($this._items.Count -eq 0) {
 					# empty list
 					break
 				}
 
-				if ($this.SelectedIndex -eq ($this.Items.Count - 1)) {
+				if ($this.SelectedIndex -eq ($this._items.Count - 1)) {
 					# at end of list, no change
 					break
 				}
@@ -206,10 +246,10 @@ class SVListBox : ScrollView {
 		}
 	}
 
-	hidden [string] GetItemLabel($itemIndex) {
-		return $this.Items[$itemIndex]
+	hidden [string] GetItemLabel([object]$item) {
+		return $item.Name()
 	}
 
-	[System.Collections.ICollection] $Items
 	[int] $SelectedIndex = 0
+	hidden [System.Collections.ICollection] $_items = ([System.Collections.ArrayList]::new())
 }
