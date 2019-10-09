@@ -186,7 +186,7 @@ function SelectSimpleData($data) {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$tv = [TreeView]::new($data, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$tv = [SVTreeView]::new($data, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Data'
 
 	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
