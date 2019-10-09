@@ -77,7 +77,7 @@ class TextBuffer {
 		if ($lineNumber -eq $this._maxLengthLineNumber) { $this.DetermineMaxLengthLineNumber() }
 	}
 
-	[void] Clear() {
+	[void] ClearLines() {
 		$this._lines.Clear()
 		$this._maxLengthLineNumber = -1
 	}
@@ -509,6 +509,12 @@ class ScrollView : Window {
 
 	[object] GetLine([int] $lineNumber) {
 		return $this._textBuffer.GetLine($lineNumber)
+	}
+
+	[void] ClearLines() {
+		$this._textBuffer.ClearLines()
+		$this.FirstColumnInView = 0
+		$this.FirstRowInView = 0
 	}
 
 	hidden [void] DrawClientArea() {

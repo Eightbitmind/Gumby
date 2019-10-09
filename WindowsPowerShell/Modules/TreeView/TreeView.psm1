@@ -1130,6 +1130,12 @@ class SVTreeView : SVListBox {
 		}
 	}
 
+	<#
+	.PARAMETER item
+	The item to get a label for. The type of this parameter is 'object' rather than a more specific
+	type like 'LBItemBase' or 'TVItemBase' to avoid method overloading and allow for method
+	overriding.
+	#>
 	[string] GetItemLabel([object] $item) {
 		[char] $icon = if ($item.IsContainer()) {
 			if ($item.IsExpanded()) {
@@ -1230,7 +1236,7 @@ class SVTreeView : SVListBox {
 		return $first, $last
 	}
 
-	[void] Expand() {
+	[void] _Expand() {
 		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
 
 		try {
@@ -1438,6 +1444,93 @@ class SVTreeView : SVListBox {
 				++$this.SelectedIndex
 			}
 			#endregion
+
+		} finally {
+			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+		}
+	}
+
+	[void] Expand() {
+		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+
+		try {
+
+			# Can the item be expanded?
+			if (!$this.SelectedItem().IsContainer()) {
+				[console]::Beep(300, 100)
+				return
+			}
+
+			# Is the item already expanded?
+			if ($this.SelectedItem().IsExpanded()) {
+				[console]::Beep(300, 100)
+				return
+			}
+
+			$children = $this.SelectedItem().Children()
+
+			if ($children.Count -eq 0) {
+				[console]::Beep(300, 100)
+				return
+			}
+
+			# TODO: Somewhere in here we need to change the expand-collapse state of the originally
+			# selected item.g
+
+			if (($this.SelectedItem().Level() - $this.topLevelInView) -eq ($this.MaxLevelCount - 1)) {
+				# Level we're about to expand would exceed maximum levels.
+				# Prune ancestors and unindent remaining items.
+
+				if ([Log]::Listeners.Count -gt 0) {
+					[Log]::Trace("TV.Expand: MaxLevel overflow")
+					$this.TraceItems()
+				}
+
+				# I0-00
+				#     I1-00 <-- first
+				#     I1-01
+				#         I2-00
+				#         I2-01
+				#             I3-00 *
+				#                 ... (items about to get expanded)
+				#             I3-01
+				#         I2-02
+				#     I1-02 <-- last
+				# I0-1
+
+				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
+				[Log]::Trace("TV.Expand.MaxLevelOverflow: first=$first, last=$last")
+
+				# Prune every item outside of [$first, $last]
+				for ($i = $this.ItemCount() - 1; $i -gt $last; --$i) { $this.RemoveItem($i) }
+				for ($i = $first; $i -gt 0; --$i) { $this.RemoveItem($i - 1) }
+
+				++$this.topLevelInView
+
+				$this.SelectedIndex -= $first - 1
+				$this.FirstRowInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight() + 1)
+
+				# As indentation has changed due to the pruning above, we need to re-render the
+				# text buffer.
+
+				$this.ClearLines()
+				for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
+					$this.AddLine($this.GetItemLabel($this.GetItem($i)))
+
+					if ($i -eq $this.SelectedIndex) {
+						$this.AddLine($this.GetItemLabel($this.GetItem($i)), $this.BackgroundColor(), $this.ForegroundColor())
+					} else {
+						$this.AddLine($this.GetItemLabel($this.GetItem($i)), $this.ForegroundColor(), $this.BackgroundColor())
+					}
+				}
+			}
+
+			[uint32] $ii = $this.SelectedIndex
+			foreach ($child in $children) {
+				$this.InsertItem(++$ii, $child)
+			}
+
+			$this.DrawClientArea()
 
 		} finally {
 			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
