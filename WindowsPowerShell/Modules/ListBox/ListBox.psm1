@@ -172,6 +172,21 @@ class SVListBox : ScrollView {
 		$this.RemoveLine($index)
 	}
 
+	# TODO: change 'SelectedIndex' to a read-only accessor
+	[void] SelectItem([int] $index) {
+		if ($index -ne $this.SelectedIndex) {
+			# deselect currently selected item
+			$this.GetLine($this.SelectedIndex).ForegroundColor = $this.ForegroundColor()
+			$this.GetLine($this.SelectedIndex).BackgroundColor = $this.BackgroundColor()
+
+			# select new item
+			$this.GetLine($index).ForegroundColor = $this.BackgroundColor()
+			$this.GetLine($index).BackgroundColor = $this.ForegroundColor()
+
+			$this.SelectedIndex = $index
+		}
+	}
+
 	[LBItemBase] GetItem([int] $index) { return $this._items[$index] }
 
 	[LBItemBase] SelectedItem() {

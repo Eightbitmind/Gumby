@@ -1474,11 +1474,8 @@ class SVTreeView : SVListBox {
 				return
 			}
 
-			# TODO: Somewhere in here we need to change the expand-collapse state of the originally
-			# selected item.g
-
 			if (($this.SelectedItem().Level() - $this.topLevelInView) -eq ($this.MaxLevelCount - 1)) {
-				# Level we're about to expand would exceed maximum levels.
+				# With the level we're about to expand, we would exceed the maximum level count.
 				# Prune ancestors and unindent remaining items.
 
 				if ([Log]::Listeners.Count -gt 0) {
@@ -1486,17 +1483,17 @@ class SVTreeView : SVListBox {
 					$this.TraceItems()
 				}
 
-				# I0-00
-				#     I1-00 <-- first
-				#     I1-01
-				#         I2-00
-				#         I2-01
-				#             I3-00 *
-				#                 ... (items about to get expanded)
-				#             I3-01
-				#         I2-02
-				#     I1-02 <-- last
-				# I0-1
+				# 00: I0-00
+				# 01:    I1-00 <-- first
+				# 02:    I1-01
+				# 03:        I2-00
+				# 04:        I2-01
+				# 05:            I3-00 *
+				# 06:                ... (items about to get expanded)
+				# 07:            I3-01
+				# 08:        I2-02
+				# 09:    I1-02 <-- last
+				# 10: I0-1
 
 				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
 				[Log]::Trace("TV.Expand.MaxLevelOverflow: first=$first, last=$last")
@@ -1507,8 +1504,8 @@ class SVTreeView : SVListBox {
 
 				++$this.topLevelInView
 
-				$this.SelectedIndex -= $first - 1
-				$this.FirstRowInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight() + 1)
+				$this.SelectedIndex -= $first # should still point to the item that is getting expanded, not its first child
+				$this.FirstRowInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight())
 
 				# As indentation has changed due to the pruning above, we need to re-render the
 				# text buffer.
@@ -1525,10 +1522,14 @@ class SVTreeView : SVListBox {
 				}
 			}
 
+			$this.SelectedItem().Expand() # only changes the state of the item itself, does not add or remove children
+
 			[uint32] $ii = $this.SelectedIndex
 			foreach ($child in $children) {
 				$this.InsertItem(++$ii, $child)
 			}
+
+			$this.SelectItem($this.SelectedIndex + 1)
 
 			$this.DrawClientArea()
 
