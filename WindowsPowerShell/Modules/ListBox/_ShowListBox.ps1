@@ -54,7 +54,7 @@ $items =
 	"South Dakota",
 	"Washington"
 
-$sv = [SVListBox]::new($items, $left, $top, $width, $height, $bc, $fc)
+$sv = [SVListBox]::new($items, ([StringLBItem]), $left, $top, $width, $height, $bc, $fc)
 $sv.Title = "Select a state"
 
 $sv.Run()

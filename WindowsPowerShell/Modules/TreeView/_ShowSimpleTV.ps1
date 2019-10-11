@@ -4,7 +4,6 @@ using module TreeView
 using module Window
 
 [bool] $debug = $true
-$ScriptPath = $MyInvocation.MyCommand.Path
 
 $tree =
 @{
@@ -171,14 +170,14 @@ $tree =
 function SelectSimpleData($data) {
 	$fll = $null
 	if ($debug) {
-		$logFileName = "$env:TEMP\$(PathFileBaseName $ScriptPath).log"
+		$logFileName = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
 		if (Test-Path $logFileName) { Remove-Item $logFileName }
 		$fll = [FileLogListener]::new($logFileName)
 		[Log]::Listeners.Add($fll) | Out-Null
 	}
 
 	$horizontalPercent = 0.8
-	$verticalPercent = 0.8
+	$verticalPercent = 0.5
 
 	$width = [console]::WindowWidth * $horizontalPercent
 	$left = [int](([console]::WindowWidth - $width) / 2)
@@ -189,7 +188,7 @@ function SelectSimpleData($data) {
 	$tv = [SVTreeView]::new($data, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Data'
 
-	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
+	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex() -lt $tv.ItemCount())) {
 		Write-Host $tv.SelectedItem().Name()
 	}
 

@@ -16,9 +16,6 @@ class TextBuffer {
 		$this.DefaultBackgroundColor = $defaultBackgroundColor
 	}
 
-	[int] LineCount() { return $this._lines.Count }
-	[int] ColumnCount() { return $this._lines[$this._maxLengthLineNumber].Text.Length }
-
 	[void] SetScreenBuffer(
 		[System.Management.Automation.Host.Rectangle] $targetArea,
 		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
@@ -64,6 +61,9 @@ class TextBuffer {
 		return $stripes
 	}
 
+	[int] LineCount() { return $this._lines.Count }
+	[int] ColumnCount() { return $this._lines[$this._maxLengthLineNumber].Text.Length }
+
 	[void] AddLine([string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
 		$i = $this._lines.Add(@{Text = $text; ForegroundColor = $foregroundColor; BackgroundColor = $backgroundColor})
 
@@ -71,6 +71,16 @@ class TextBuffer {
 			$this._maxLengthLineNumber = $i
 		}
 	}
+
+	[void] InsertLine([int] $lineNumber, [string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
+		if (($this._maxLengthLineNumber -eq -1) -or ($text.Length -gt $this._lines[$this._maxLengthLineNumber].Text.Length)) {
+			$this._maxLengthLineNumber = $lineNumber
+		}
+
+		$this._lines.Insert($lineNumber, @{Text = $text; ForegroundColor = $foregroundColor; BackgroundColor = $backgroundColor})
+	}
+
+	[object] GetLine([int] $lineNumber) { return $this._lines[$lineNumber] }
 
 	[void] RemoveLine([int] $lineNumber) {
 		$this._lines.RemoveAt($lineNumber)
@@ -80,10 +90,6 @@ class TextBuffer {
 	[void] ClearLines() {
 		$this._lines.Clear()
 		$this._maxLengthLineNumber = -1
-	}
-
-	[object] GetLine([int] $lineNumber) {
-		return $this._lines[$lineNumber]
 	}
 
 	[ConsoleColor] $DefaultForegroundColor = $Global:Host.UI.RawUI.ForegroundColor
@@ -503,12 +509,28 @@ class ScrollView : Window {
 	[int] $FirstColumnInView = 0
 	[int] $FirstRowInView = 0
 
+	[int] LineCount() { return $this._textBuffer.LineCount() }
+
 	[void] AddLine([string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
 		$this._textBuffer.AddLine($text, $foregroundColor, $backgroundColor)
 	}
 
+	[void] InsertLine([int] $lineNumber, [string] $text, [ConsoleColor] $foregroundColor, [ConsoleColor] $backgroundColor) {
+		# FirstRowInView should remain valid under all circumstances
+		$this._textBuffer.InsertLine($lineNumber, $text, $foregroundColor, $backgroundColor)
+	}
+
 	[object] GetLine([int] $lineNumber) {
 		return $this._textBuffer.GetLine($lineNumber)
+	}
+
+	[void] RemoveLine([int] $lineNumber) {
+		# if FirstRowInView < LineCount - 1:
+		#     if lineNumber <= FirstRowInView: line removal causes FirstRowInView to point to the next line
+		#     if lineNumber > FirstRowInView: line removal does not affect validity of FirstRowInView
+		if ($this.FirstRowInView -eq ($this.LineCount() - 1)) { $this.FirstRowInView = -1 }
+
+		$this._textBuffer.RemoveLine($lineNumber)
 	}
 
 	[void] ClearLines() {

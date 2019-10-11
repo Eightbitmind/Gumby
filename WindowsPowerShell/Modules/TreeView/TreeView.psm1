@@ -1089,38 +1089,51 @@ class SVTreeView : SVListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 
 	SVTreeView(
-		[TVItemBase[]] $items,
 		[int] $left,
 		[int] $top,
 		[int] $width,
 		[int] $height,
 		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
 		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
-	) : base(
-		$null,
-		$left,
-		$top,
-		$width,
-		$height,
-		$foregroundColor,
-		$backgroundColor
-	) {
-		for ($i = 0; $i -lt $items.Count; ++$i) {
-			$item = $items[$i]
+	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
+	}
+
+	SVTreeView(
+		[System.Collections.Generic.IEnumerable`1[TVItemBase]] $tvItems,
+		[int] $left,
+		[int] $top,
+		[int] $width,
+		[int] $height,
+		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
+		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
+	) : base($tvItems, $left, $top, $width, $height, $foregroundColor, $backgroundColor) {
+	}
+
+	SVTreeView(
+		[System.Collections.IEnumerable] $items,
+		[System.Reflection.TypeInfo] $tvItemType,
+		[int] $left,
+		[int] $top,
+		[int] $width,
+		[int] $height,
+		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
+		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
+	) : base($items, $tvItemType, $left, $top, $width, $height, $foregroundColor, $backgroundColor) {
+		for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
 			if ($i -eq 0) {
-				$this.topLevelInView = $item.Level()
+				$this.topLevelInView = $this.GetItem($i).Level()
 			} else {
-				assert ($item.Level() -eq $this.topLevelInView)
+				assert ($this.GetItem($i).Level() -eq $this.topLevelInView)
 			}
-			$this.AddItem($item)
 		}
 	}
 
-	[void] TraceItems() {
-		for ($i = 0; $i -lt $this.ItemsCount(); ++$i) {
+	# for debugging purposes
+	hidden [void] TraceItems() {
+		for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
 			$item = $this.GetItem($i)
 			if ($i -eq $this.FirstRowInView) { $firstInView = ", firstInView" } else { $firstInView = "" }
-			if ($i -eq $this.SelectedIndex) { $selected = ", selected" } else { $selected = "" }
+			if ($i -eq $this.SelectedIndex()) { $selected = ", selected" } else { $selected = "" }
 			[Log]::Trace(("{0}: `"{1}`" L={2}{3}{4}" -f
 				$i,
 				$this.GetItemLabel($item),
@@ -1152,7 +1165,7 @@ class SVTreeView : SVListBox {
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
-		[Log]::Trace("TV.OnKey: SII=$($this.SelectedIndex); SIN='$($this.SelectedItem().Name())'; K=$($key.Key)")
+		[Log]::Trace("TV.OnKey: SII=$($this.SelectedIndex()); SIN='$($this.SelectedItem().Name())'; K=$($key.Key)")
 
 		switch ($key.Key) {
 			([ConsoleKey]::RightArrow) {
@@ -1164,7 +1177,7 @@ class SVTreeView : SVListBox {
 			}
 
 			default {
-				([ListBox]$this).OnKey($key)
+				([SVListBox]$this).OnKey($key)
 			}
 		}
 	}
@@ -1214,7 +1227,7 @@ class SVTreeView : SVListBox {
 
 		function GetLastAtLevel([uint32] $i) {
 			[uint32] $level = $this.GetItem($i).Level()
-			for (; ($i -lt $this.ItemsCount() - 1) -and ($this.GetItems($i + 1).Level() -ge $level); ++$i) {}
+			for (; ($i -lt $this.ItemCount() - 1) -and ($this.GetItem($i + 1).Level() -ge $level); ++$i) {}
 			return $i
 		}
 
@@ -1236,222 +1249,8 @@ class SVTreeView : SVListBox {
 		return $first, $last
 	}
 
-	[void] _Expand() {
-		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
-
-		try {
-
-			# Can the item be expanded?
-			if (!$this.SelectedItem().IsContainer()) {
-				[console]::Beep(300, 100)
-				return
-			}
-
-			# Is the item already expanded?
-			if ($this.SelectedItem().IsExpanded()) {
-				[console]::Beep(300, 100)
-				return
-			}
-
-			$children = $this.SelectedItem().Children()
-
-			if ($children.Count -eq 0) {
-				[console]::Beep(300, 100)
-				return
-			}
-
-			#region fix up data
-
-			[uint32] $ii = $this.SelectedIndex
-			foreach ($child in $children) {
-				$this.InsertItem(++$ii, $child)
-			}
-
-			if (($this.SelectedItem().Level() - $this.topLevelInView) -eq ($this.MaxLevelCount - 1)) {
-				if ([Log]::Listeners.Count -gt 0) {
-					[Log]::Trace("TV.Expand: MaxLevel overflow")
-					$this.TraceItems()
-				}
-
-				# I0-00
-				#     I1-00 <-- first
-				#     I1-01
-				#         I2-00
-				#         I2-01
-				#             I3-00 *
-				#                 ... (items about to get expanded)
-				#             I3-01
-				#         I2-02
-				#     I1-02 <-- last
-				# I0-1
-
-				# Level we're about to expand would exceed maximum levels. "Left-shift" levels.
-				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
-				[Log]::Trace("TV.Expand: first=$first, last=$last")
-
-				# Prune every item outside of [$first, $last]
-				for ($i = $this.Items.Count - 1; $i -gt $last; --$i) { $this.RemoveItem($i) }
-				for ($i = $first; $i -gt 0; --$i) { $this.RemoveItem($i - 1) }
-
-				++$this.topLevelInView
-
-				$this.SelectedIndex -= $first - 1
-				$this.FirstIndexInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight() + 1)
-
-				# Scrolling left doesn't make sense as abbreviated items would need to get
-				# "un-abbreviated". Therefore, we'll just re-render everything.
-
-				$this.DisplayItems()
-
-
-				# CONTINUE HERE
-				return
-			}
-
-			#endregion fix up data
-
-			#region fix up visuals
-
-			# ==========================================================================================
-			# Scenarios:
-			#
-			# Terminology:
-			#   Ix-yy     tree item at depth x with child index yy
-			#   *         marks selected item
-			#
-			# Scenario 1:
-			#
-			#       Before                  After
-			#       +---                    +---
-			#  00:  | I1-05   ^             | I1-05       ^
-			#  01:  | I1-06   | a           | I1-06       | a
-			#  02:  | I1-07*  v             | I1-07       v
-			#  03:  | I1-08   ^             |    I2-00*   ^
-			#  04:  | I1-09   |             |    I2-01    | c
-			#  05:  | I1-10   | b           |    I2-02    v
-			#  06:  | I1-11   |             | I1-08       ^
-			#  07:  | I1-12   |             | I1-09       | d = b - c
-			#  08:  | I1-13   v             | I1-10       v
-			#       +---                    +---
-			#
-			# Scenario 2:
-			#
-			#       Before                  After
-			#       +---                    +---
-			#  00:  | I1-05   ^             | I1-05       ^
-			#  01:  | I1-06   |             | I1-06       |
-			#  02:  | I1-07   | a           | I1-07       | a
-			#  03:  | I1-08   |             | I1-08       |
-			#  04:  | I1-09   |             | I1-09       |
-			#  05:  | I1-10*  v             | I1-10       v
-			#  06:  | I1-11   ^             |    I2-00*   ^
-			#  07:  | I1-12   | b           |    I2-01    | c (might be less than child count)
-			#  08:  | I1-13   v             |    I2-02    v
-			#       +---                    +---
-			#
-			# Scenario 3:
-			#
-			#       Before                  After
-			#       +---                    +---
-			#  00:  | I1-05   ^             | I1-06       ^
-			#  01:  | I1-06   |             | I1-07       |
-			#  02:  | I1-07   |             | I1-08       |
-			#  03:  | I1-08   |             | I1-09       | a - 1
-			#  04:  | I1-09   | a           | I1-10       |
-			#  05:  | I1-10   |             | I1-11       |
-			#  06:  | I1-11   |             | I1-12       |
-			#  07:  | I1-12   |             | I1-13       v
-			#  08:  | I1-13*  v             |    I2-00*
-			#       +---                    +---
-			#
-
-			$a = $this.SelectedIndex - $this.FirstIndexInView + 1
-			$b = $this.ClientHeight() - $a;
-			$c = [Math]::Min($children.Count, $b)
-			$d = $b - $c
-
-			if ($b -gt 0) {
-				# scenarios 1, 2
-				[Log]::Trace("TV.Expand: Scen1and2")
-
-				if ($b -gt $c) {
-					[Log]::Trace("TV.Expand: Scen1")
-
-					# scenario 1
-
-					# un-invert the selected item and change its icon to indicate expansion
-					$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex), $this._foregroundColor, $this._backgroundColor)
-
-					# make room for child items
-					$this.ScrollAreaVertically($a, $this.ClientHeight() - 1, $c)
-
-					# render child items
-					for ($i = 0; $i -lt $c; ++$i) {
-
-						if ($i -eq 0) {
-							$fc = $this._backgroundColor
-							$bc = $this._foregroundColor
-						} else {
-							$fc = $this._foregroundColor
-							$bc = $this._backgroundColor
-						}
-
-						$this.WriteLine($a + $i, $this.GetItemLabel($this.SelectedIndex + $i + 1), $fc, $bc)
-					}
-
-					++$this.SelectedIndex
-
-				} else {
-					# scenario 2
-					[Log]::Trace("TV.Expand: Scen2")
-
-					# un-invert the selected item and change its icon to indicate expansion
-					$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex), $this._foregroundColor, $this._backgroundColor)
-
-					# render child items
-					for ($i = 0; $i -lt $c; ++$i) {
-
-						if ($i -eq 0) {
-							$fc = $this._backgroundColor
-							$bc = $this._foregroundColor
-						} else {
-							$fc = $this._foregroundColor
-							$bc = $this._backgroundColor
-						}
-
-						$this.WriteLine($a + $i, $this.GetItemLabel($this.SelectedIndex + $i + 1), $fc, $bc)
-					}
-
-					++$this.SelectedIndex
-				}
-				
-			} else {
-				[Log]::Trace("TV.Expand: Scen3")
-				
-				assert ($b -eq 0)
-				
-				# scenario 3
-				
-				# un-invert the selected item and change its icon to indicate expansion
-				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex), $this._foregroundColor, $this._backgroundColor)
-				
-				# make room for child items
-				$this.ScrollAreaVertically(1, $this.ClientHeight() - 1, -1)
-
-				$this.WriteLine($a - 1, $this.GetItemLabel($this.SelectedIndex + 1), $this._backgroundColor, $this._foregroundColor)
-
-				++$this.FirstIndexInView
-				++$this.SelectedIndex
-			}
-			#endregion
-
-		} finally {
-			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
-		}
-	}
-
 	[void] Expand() {
-		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex()); TLIV=$($this.topLevelInView)")
 
 		try {
 
@@ -1495,7 +1294,7 @@ class SVTreeView : SVListBox {
 				# 09:    I1-02 <-- last
 				# 10: I0-1
 
-				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex, $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
+				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex(), $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
 				[Log]::Trace("TV.Expand.MaxLevelOverflow: first=$first, last=$last")
 
 				# Prune every item outside of [$first, $last]
@@ -1504,42 +1303,38 @@ class SVTreeView : SVListBox {
 
 				++$this.topLevelInView
 
-				$this.SelectedIndex -= $first # should still point to the item that is getting expanded, not its first child
-				$this.FirstRowInView = [Math]::Max(0, $this.SelectedIndex - $this.ClientHeight())
+				$this._selectedIndex -= $first - 1 # should still point to the item that is getting expanded, not its first child
+				$this.FirstRowInView = [Math]::Max(0, $this._selectedIndex - $this.ClientHeight())
 
 				# As indentation has changed due to the pruning above, we need to re-render the
 				# text buffer.
 
 				$this.ClearLines()
 				for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
-					$this.AddLine($this.GetItemLabel($this.GetItem($i)))
-
-					if ($i -eq $this.SelectedIndex) {
-						$this.AddLine($this.GetItemLabel($this.GetItem($i)), $this.BackgroundColor(), $this.ForegroundColor())
-					} else {
-						$this.AddLine($this.GetItemLabel($this.GetItem($i)), $this.ForegroundColor(), $this.BackgroundColor())
-					}
+					# We can ignore the selected item here as we'll change that below.
+					$this.AddLine($this.GetItemLabel($this.GetItem($i)), $this.ForegroundColor(), $this.BackgroundColor())
 				}
 			}
 
+			# [Log]::Trace("TV.Expand.SelectedItemExpand, Name='$($this.SelectedItem().Name())', IsExpanded=$($this.SelectedItem().IsExpanded()), IsContainer=$($this.SelectedItem().IsContainer())")
 			$this.SelectedItem().Expand() # only changes the state of the item itself, does not add or remove children
 
-			[uint32] $ii = $this.SelectedIndex
+			[uint32] $ii = $this.SelectedIndex()
 			foreach ($child in $children) {
 				$this.InsertItem(++$ii, $child)
 			}
 
-			$this.SelectItem($this.SelectedIndex + 1)
+			$this.SelectItem($this.SelectedIndex() + 1)
 
 			$this.DrawClientArea()
 
 		} finally {
-			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex); TLIV=$($this.topLevelInView)")
+			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex()); TLIV=$($this.topLevelInView)")
 		}
 	}
 
 	[void] Collapse() {
-		[Log]::BeginSection("TV.Collapse, SIx=$($this.SelectedIndex), TLIV=$($this.topLevelInView)")
+		[Log]::BeginSection("TV.Collapse, SIx=$($this.SelectedIndex()), TLIV=$($this.topLevelInView)")
 		try {
 			# Going up deepens the displayed tree. Is there a way to return it to the depth we started
 			# at? Perhaps we can have a "sliding window" of the last n ancestral levels?
@@ -1552,34 +1347,47 @@ class SVTreeView : SVListBox {
 			if ($this.SelectedItem().Level() -gt $this.topLevelInView) {
 				[Log]::Trace("TV.Collapse.ParentPresent")
 
-				[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex, 0)
+				[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex(), 0)
 
 				# remove collapsed items (iterating backwards for index consistency)
-				for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) { $this.Items.RemoveAt($i) }
+				for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) { $this.RemoveItem($i) }
 
-				$this.SelectedIndex = $firstSibling - 1
+				$this.SelectItem($firstSibling - 1)
 
-				$this.FirstIndexInView = [Math]::Min($this.FirstIndexInView, $this.SelectedIndex)
-				$this.DisplayItems()
+				$this.SelectedItem().Collapse() # only changes expand/collapse state, does not manipulate children
+
+				# re-render text for expansion-state indicating icon
+				$this.GetLine($this.SelectedIndex()).Text = $this.GetItemLabel($this.SelectedItem())
+
+				$this.FirstRowInView = [Math]::Min($this.FirstRowInView, $this.SelectedIndex())
+
 			} else {
-				[Log]::Trace("TV.Collapse.NeedToFetchParent")
+				[Log]::Trace("TV.Collapse.NeedToFetchParent: Name='$($this.SelectedItem().Name())'")
 				$parent = $this.SelectedItem().Parent()
 
 				if ($parent -eq $null) { return }
 
-				# As we're expanding the tree view toward the root, trim the nodes that would exceed the
+				--$this.topLevelInView # equivalent to assigning '$parent.Level()'
+
+				# As we're expanding the tree view toward the root, prune the nodes that would exceed the
 				# maximum view depth.
-				for ([uint32] $i = $this.Items.Count - 1; ; --$i) {
-					if (($this.Items[$i].Level() - $this.topLevelInView) -ge ($this.MaxLevelCount - 1)) {
-						$this.Items.RemoveAt($i)
+				for ([int] $i = $this.ItemCount() - 1; $i -ge 0; --$i) {
+					# [Log]::Trace("TV.Collapse.PruneReindentLoop: Name=$($this.GetItem($i).Name()), Level=$($this.GetItem($i).Level()), TLIV=$($this.topLevelInView)")
+					if (($this.GetItem($i).Level() - $this.topLevelInView) -ge $this.MaxLevelCount) {
+						# prune item as it would exceed maximum view depth
+						$this.RemoveItem($i)
+					} else {
+						# re-render text to capture increased indentation
+						# [Log]::Trace("TV.Collapse.Reindent: Name=$($this.GetItem($i).Name())")
+						$this.GetLine($i).Text = $this.GetItemLabel($this.GetItem($i))
 					}
-					if ($i -eq 0) { break }
 				}
 
-				$this.Items.Insert(0, $parent)
-				$this.SelectedIndex = 0
-				$this.FirstIndexInView = 0
-				--$this.topLevelInView # equivalent to assigning '$parent.Level()'
+				$this.InsertItem(0, $parent)
+				$this.SelectItem(0)
+				$this.FirstRowInView = 0
+
+				# [Log]::Trace("TV.Collapse.FillInParentSiblings: TLIV=$($this.topLevelInView)")
 
 				$grandParent = $parent.Parent()
 				if ($grandParent -ne $null) {
@@ -1593,40 +1401,23 @@ class SVTreeView : SVListBox {
 
 						if ($grandParentChild.Name() -eq $parent.Name()) {
 							# item has already been inserted per the line above
-							$this.SelectedIndex = $insertPosition
+							$this.SelectItem($insertPosition)
 
 							# continue inserting grand parent children after the current items
-							$insertPosition = $this.Items.Count
+							$insertPosition = $this.ItemCount()
 						} else {
-							$this.Items.Insert($insertPosition++, $grandParentChild)
+							$this.InsertItem($insertPosition++, $grandParentChild)
 						}
 					}
 
-					if ($this.SelectedIndex -ge $this.ClientHeight()) {
-
-						#   +
-						# 0 | I0-01    ClientHeight = 3
-						# 1 | I0-02
-						# 2 | I0-03
-						# 3 + I0-04
-						# 4   I0-05 *
-						# 5       I1-01
-
-						# 0   I0-01
-						# 1 + I0-02
-						# 2 | I0-03
-						# 3 | I0-04
-						# 4 | I0-05 *
-						# 5 +      I1-01
-
-						$this.FirstIndexInView = $this.SelectedIndex - $this.ClientHeight() + 1
-					}
+					$this.FirstRowInView = [Math]::Max(0, $this.SelectedIndex() - $this.ClientHeight() + 1)
 				}
-
-				$this.DisplayItems()
 			}
+
+			$this.DrawClientArea()
+
 		} finally {
-			[Log]::EndSection("TV.Collapse, SIx=$($this.SelectedIndex), TLIV=$($this.topLevelInView)")
+			[Log]::EndSection("TV.Collapse, SIx=$($this.SelectedIndex()), TLIV=$($this.topLevelInView)")
 		}
 	}
 
