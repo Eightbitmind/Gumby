@@ -142,18 +142,6 @@ class ListBox : ScrollView {
 	}
 
 	ListBox(
-		[System.Collections.Generic.IEnumerable`1[LBItemBase]] $lbItems,
-		[int] $left,
-		[int] $top,
-		[int] $width,
-		[int] $height,
-		[System.ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
-		[System.ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
-	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
-		$this.InitializeItems($lbItems)
-	}
-
-	ListBox(
 		[System.Collections.IEnumerable] $items,
 		[System.Reflection.TypeInfo] $lbItemType,
 		[int] $left,

@@ -1113,17 +1113,6 @@ class TreeView : ListBox {
 	}
 
 	TreeView(
-		[System.Collections.Generic.IEnumerable`1[TVItemBase]] $tvItems,
-		[int] $left,
-		[int] $top,
-		[int] $width,
-		[int] $height,
-		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
-		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
-	) : base($tvItems, $left, $top, $width, $height, $foregroundColor, $backgroundColor) {
-	}
-
-	TreeView(
 		[System.Collections.IEnumerable] $items,
 		[System.Reflection.TypeInfo] $tvItemType,
 		[int] $left,
@@ -1132,14 +1121,25 @@ class TreeView : ListBox {
 		[int] $height,
 		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
 		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor
-	) : base($items, $tvItemType, $left, $top, $width, $height, $foregroundColor, $backgroundColor) {
-		for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
-			if ($i -eq 0) {
-				$this.topLevelInView = $this.GetItem($i).Level()
+	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
+
+		# We cannot pass the items collection to the base class as it would layout the text prior
+		# to having determined the top indentation level.
+
+		$i = 0
+		$tvItems = [System.Collections.Generic.List`1[LBItemBase]]::new()
+		foreach ($item in $items) {
+			$tvItem = $tvItemType::new($item)
+			$tvItems.Add($tvItem) | Out-Null
+
+			if ($i++ -eq 0) {
+				$this.topLevelInView = $tvItem.Level()
 			} else {
-				assert ($this.GetItem($i).Level() -eq $this.topLevelInView)
+				assert ($tvItem.Level() -eq $this.topLevelInView)
 			}
 		}
+
+		$this.InitializeItems($tvItems)
 	}
 
 	# for debugging purposes
