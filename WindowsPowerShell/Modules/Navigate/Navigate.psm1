@@ -28,7 +28,7 @@ function SetLocationVisually($startDir = (Get-Location)) {
 	$tv = [TreeView]::new($items, ([FileTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Folder'
 
-	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
+	if (($tv.Run() -eq [WindowResult]::OK) -and ($tv.SelectedIndex() -lt $tv.ItemCount())) {
 		Set-Location $tv.SelectedItem().Value().FullName
 	}
 
@@ -50,7 +50,7 @@ function SelectVisually($startDir = (Get-Location)) {
 	$tv = [TreeView]::new($items, ([FileTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select File'
 
-	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
+	if ($tv.Run() -eq [WindowResult]::OK  -and ($tv.SelectedIndex() -lt $tv.ItemCount())) {
 		return $tv.SelectedItem().Value().FullName
 	}
 }
@@ -86,7 +86,7 @@ function ProcessShortcuts($shortcuts) {
 	$tv = [TreeView]::new($tvItems, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$tv.Title = 'Select Shortcut'
 
-	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex -lt $tv.Items.Count)) {
+	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex() -lt $tv.ItemCount())) {
 		return $tv.SelectedItem().Value().Action.Invoke()
 	}
 }

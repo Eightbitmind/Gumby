@@ -19,7 +19,7 @@ function CmdHistorySelect($Count = 30) {
 	# Not using 'Get-Unique' cmdlet here as it requires alphabetical sorting, and I want to preserve
 	# the historic order of commands.
 
-	$cmdHistory = New-Object 'System.Collections.ArrayList'
+	$cmdHistory = [System.Collections.ArrayList]::new()
 
 	for ($i = $rawCmdHistory.Count - 1; $i -ge 0; --$i) {
 		if (($omittedCommands -notcontains $rawCmdHistory[$i].CommandLine) -and
@@ -37,10 +37,10 @@ function CmdHistorySelect($Count = 30) {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$lb = [SVListBox]::new($cmdHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$lb = [ListBox]::new($cmdHistory, ([StringLBItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Command History'
 
-	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex -lt $lb.Items.Count)) {
-		Invoke-Expression $lb.SelectedItem()
+	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex() -lt $lb.ItemCount())) {
+		Invoke-Expression $lb.SelectedItem().Value()
 	}
 }

@@ -1,8 +1,8 @@
 using module ListBox
 using module Window
 
-# an ICollection implementation as required by ListBox, but treated here as a stack
-$dirHistory = New-Object 'System.Collections.ArrayList' -ArgumentList <# history size #> 30
+# an IEnumerable implementation as required by ListBox, but treated here as a stack
+$dirHistory = [System.Collections.ArrayList]::new(<# history size #> 30)
 
 <#
 .SYNOPSIS
@@ -42,10 +42,10 @@ function DirHistorySelect() {
 	$height = [console]::WindowHeight * $verticalPercent
 	$top = [int](([console]::WindowHeight - $height) / 2)
 
-	$lb = [SVListBox]::new($dirHistory, $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+	$lb = [ListBox]::new($dirHistory, ([StringLBItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
 	$lb.Title = 'Directory History'
 
-	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex -lt $lb.Items.Count)) {
-		Set-Location $lb.SelectedItem()
+	if (($lb.Run() -eq [WindowResult]::OK) -and ($lb.SelectedIndex() -lt $lb.ItemCount())) {
+		Set-Location $lb.SelectedItem().Value()
 	}
 }

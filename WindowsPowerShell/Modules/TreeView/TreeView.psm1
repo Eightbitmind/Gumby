@@ -16,11 +16,24 @@ class TVItemBase : LBItemBase {
 	[TVItemBase] Parent() { throw "abstract" }
 	[Collections.Generic.IList`1[TVItemBase]] Children() { throw "abstract" }
 	[void] Expand() {
-		if (!$this.IsContainer() -or $this.IsExpanded()) { throw "invalid operation" }
+		if (!$this.IsContainer()) {
+			$errorMessage = "Item `"$($this.Name())`" is not a container."
+			[Log]::Error($errorMessage)
+			throw $errorMessage
+		}
+		if ($this.IsExpanded()) {
+			$errorMessage = "Item `"$($this.Name())`" is already expanded."
+			[Log]::Error($errorMessage)
+			throw $errorMessage
+		}
 		$this._isExpanded = $true
 	}
 	[void] Collapse() {
-		if (!$this.IsExpanded()) { throw "invalid operation" }
+		if (!$this.IsExpanded()) {
+			$errorMessage = "Item `"$($this.Name())`" is not expanded."
+			[Log]::Error($errorMessage)
+			throw $errorMessage
+		}
 		$this._isExpanded = $false
 	}
 
@@ -595,10 +608,11 @@ class FileTreeView : ListBox {
 	}
 }
 
-class TreeView : ListBox {
+# TODO: delete
+class OldTreeView : OldListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 
-	TreeView(
+	OldTreeView(
 		[object[]] $items,
 		[object] <# TypeInfo? #> $tvItemType,
 		[int] $left,
@@ -707,7 +721,7 @@ class TreeView : ListBox {
 			}
 
 			default {
-				([ListBox]$this).OnKey($key)
+				([OldListBox]$this).OnKey($key)
 			}
 		}
 	}
@@ -1085,10 +1099,10 @@ class TreeView : ListBox {
 	hidden [uint32] $topLevelInView = 0
 }
 
-class SVTreeView : SVListBox {
+class TreeView : ListBox {
 	<# const #> [uint32] $MaxLevelCount = 4
 
-	SVTreeView(
+	TreeView(
 		[int] $left,
 		[int] $top,
 		[int] $width,
@@ -1098,7 +1112,7 @@ class SVTreeView : SVListBox {
 	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
 	}
 
-	SVTreeView(
+	TreeView(
 		[System.Collections.Generic.IEnumerable`1[TVItemBase]] $tvItems,
 		[int] $left,
 		[int] $top,
@@ -1109,7 +1123,7 @@ class SVTreeView : SVListBox {
 	) : base($tvItems, $left, $top, $width, $height, $foregroundColor, $backgroundColor) {
 	}
 
-	SVTreeView(
+	TreeView(
 		[System.Collections.IEnumerable] $items,
 		[System.Reflection.TypeInfo] $tvItemType,
 		[int] $left,
@@ -1143,6 +1157,11 @@ class SVTreeView : SVListBox {
 		}
 	}
 
+	# for debugging purposes
+	[string] TraceInfo() {
+		return "Name=`"$($this.SelectedItem().Name())`"; SIx=$($this.SelectedIndex()); FRIV=$($this.FirstRowInView); TLIV=$($this.topLevelInView)"
+	}
+
 	<#
 	.PARAMETER item
 	The item to get a label for. The type of this parameter is 'object' rather than a more specific
@@ -1165,7 +1184,7 @@ class SVTreeView : SVListBox {
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
-		[Log]::Trace("TV.OnKey: SII=$($this.SelectedIndex()); SIN='$($this.SelectedItem().Name())'; K=$($key.Key)")
+		[Log]::Trace("TV.OnKey: Name=`"$($this.SelectedItem().Name())`"; SII=$($this.SelectedIndex()); K=$($key.Key)")
 
 		switch ($key.Key) {
 			([ConsoleKey]::RightArrow) {
@@ -1177,7 +1196,7 @@ class SVTreeView : SVListBox {
 			}
 
 			default {
-				([SVListBox]$this).OnKey($key)
+				([ListBox]$this).OnKey($key)
 			}
 		}
 	}
@@ -1250,7 +1269,7 @@ class SVTreeView : SVListBox {
 	}
 
 	[void] Expand() {
-		[Log]::BeginSection("TV.Expand: FIIV=$($this.FirstRowInView); SII=$($this.SelectedIndex()); TLIV=$($this.topLevelInView)")
+		[Log]::BeginSection("TV.Expand: $($this.TraceInfo())")
 
 		try {
 
@@ -1309,15 +1328,19 @@ class SVTreeView : SVListBox {
 				# As indentation has changed due to the pruning above, we need to re-render the
 				# text buffer.
 
-				$this.ClearLines()
 				for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
-					# We can ignore the selected item here as we'll change that below.
-					$this.AddLine($this.GetItemLabel($this.GetItem($i)), $this.ForegroundColor(), $this.BackgroundColor())
+					# We deal with the selected item below.
+					if ($i -ne $this.SelectedIndex()) {
+						$this.GetLine($i).Text = $this.GetItemLabel($this.GetItem($i));
+					}
 				}
 			}
 
 			# [Log]::Trace("TV.Expand.SelectedItemExpand, Name='$($this.SelectedItem().Name())', IsExpanded=$($this.SelectedItem().IsExpanded()), IsContainer=$($this.SelectedItem().IsContainer())")
 			$this.SelectedItem().Expand() # only changes the state of the item itself, does not add or remove children
+
+			# re-render text for expansion state icon
+			$this.GetLine($this.SelectedIndex()).Text = $this.GetItemLabel($this.GetItem($this.SelectedIndex()));
 
 			[uint32] $ii = $this.SelectedIndex()
 			foreach ($child in $children) {
@@ -1326,15 +1349,27 @@ class SVTreeView : SVListBox {
 
 			$this.SelectItem($this.SelectedIndex() + 1)
 
+			# ensure selected item is in view
+			#
+			# 00:
+			# 01: +-
+			# 02: | FirstRowInView
+			# 03: |
+			# 04: |
+			# 05: +- SelectedIndex
+			if (($this.SelectedIndex() - $this.FirstRowInView) -ge $this.ClientHeight()) {
+				$this.FirstRowInView = $this.SelectedIndex() - $this.ClientHeight() + 1
+			}
+
 			$this.DrawClientArea()
 
 		} finally {
-			[Log]::EndSection("TV.Expand: FIIV=$($this.FirstIndexInView); SII=$($this.SelectedIndex()); TLIV=$($this.topLevelInView)")
+			[Log]::EndSection("TV.Expand: $($this.TraceInfo())")
 		}
 	}
 
 	[void] Collapse() {
-		[Log]::BeginSection("TV.Collapse, SIx=$($this.SelectedIndex()), TLIV=$($this.topLevelInView)")
+		[Log]::BeginSection("TV.Collapse: $($this.TraceInfo())")
 		try {
 			# Going up deepens the displayed tree. Is there a way to return it to the depth we started
 			# at? Perhaps we can have a "sliding window" of the last n ancestral levels?
@@ -1350,7 +1385,13 @@ class SVTreeView : SVListBox {
 				[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex(), 0)
 
 				# remove collapsed items (iterating backwards for index consistency)
-				for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) { $this.RemoveItem($i) }
+				for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) {
+					if ($this.GetItem($i).IsExpanded()) {
+						# otherwise the icon is wrong if we re-use the item
+						$this.GetItem($i).Collapse()
+					}
+					$this.RemoveItem($i)
+				}
 
 				$this.SelectItem($firstSibling - 1)
 
@@ -1417,7 +1458,7 @@ class SVTreeView : SVListBox {
 			$this.DrawClientArea()
 
 		} finally {
-			[Log]::EndSection("TV.Collapse, SIx=$($this.SelectedIndex()), TLIV=$($this.topLevelInView)")
+			[Log]::EndSection("TV.Collapse: $($this.TraceInfo())")
 		}
 	}
 

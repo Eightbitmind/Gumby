@@ -16,8 +16,9 @@ class StringLBItem : LBItemBase {
 	hidden [string] $_value
 }
 
-class ListBox : Window {
-	ListBox(
+# TODO: delete
+class OldListBox : Window {
+	OldListBox(
 		[System.Collections.ICollection] $items,
 		[int] $left,
 		[int] $top,
@@ -128,9 +129,9 @@ class ListBox : Window {
 	[int] $SelectedIndex = 0
 }
 
-class SVListBox : ScrollView {
+class ListBox : ScrollView {
 
-	SVListBox(
+	ListBox(
 		[int] $left,
 		[int] $top,
 		[int] $width,
@@ -140,7 +141,7 @@ class SVListBox : ScrollView {
 	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
 	}
 
-	SVListBox(
+	ListBox(
 		[System.Collections.Generic.IEnumerable`1[LBItemBase]] $lbItems,
 		[int] $left,
 		[int] $top,
@@ -152,7 +153,7 @@ class SVListBox : ScrollView {
 		$this.InitializeItems($lbItems)
 	}
 
-	SVListBox(
+	ListBox(
 		[System.Collections.IEnumerable] $items,
 		[System.Reflection.TypeInfo] $lbItemType,
 		[int] $left,

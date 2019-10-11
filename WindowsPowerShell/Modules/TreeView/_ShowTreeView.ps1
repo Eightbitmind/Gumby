@@ -167,32 +167,29 @@ $tree =
 		}
 }
 
-function SelectSimpleData($data) {
-	$fll = $null
-	if ($debug) {
-		$logFileName = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
-		if (Test-Path $logFileName) { Remove-Item $logFileName }
-		$fll = [FileLogListener]::new($logFileName)
-		[Log]::Listeners.Add($fll) | Out-Null
-	}
 
-	$horizontalPercent = 0.8
-	$verticalPercent = 0.5
-
-	$width = [console]::WindowWidth * $horizontalPercent
-	$left = [int](([console]::WindowWidth - $width) / 2)
-
-	$height = [console]::WindowHeight * $verticalPercent
-	$top = [int](([console]::WindowHeight - $height) / 2)
-
-	$tv = [SVTreeView]::new($data, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
-	$tv.Title = 'Select Data'
-
-	if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex() -lt $tv.ItemCount())) {
-		Write-Host $tv.SelectedItem().Name()
-	}
-
-	if ($fll -ne $null) { [Log]::Listeners.Remove($fll) }
+$fll = $null
+if ($debug) {
+	$logFileName = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+	if (Test-Path $logFileName) { Remove-Item $logFileName }
+	$fll = [FileLogListener]::new($logFileName)
+	[Log]::Listeners.Add($fll) | Out-Null
 }
 
-SelectSimpleData $tree
+$horizontalPercent = 0.8
+$verticalPercent = 0.5
+
+$width = [console]::WindowWidth * $horizontalPercent
+$left = [int](([console]::WindowWidth - $width) / 2)
+
+$height = [console]::WindowHeight * $verticalPercent
+$top = [int](([console]::WindowHeight - $height) / 2)
+
+$tv = [TreeView]::new($tree, ([SimpleObjectTVItem]), $left, $top, $width, $height, ([console]::BackgroundColor), ([console]::ForegroundColor))
+$tv.Title = 'Select Item'
+
+if ($tv.Run() -eq [WindowResult]::OK -and ($tv.SelectedIndex() -lt $tv.ItemCount())) {
+	Write-Host $tv.SelectedItem().Name()
+}
+
+if ($fll -ne $null) { [Log]::Listeners.Remove($fll) }
