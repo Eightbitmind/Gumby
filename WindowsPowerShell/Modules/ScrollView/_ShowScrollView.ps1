@@ -1,5 +1,5 @@
 using module Log
-using module Window
+using module ScrollView
 
 $fll = $null
 $logFileName = "$env:TEMP\_ShowScrollView.log"

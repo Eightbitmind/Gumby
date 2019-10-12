@@ -1,4 +1,5 @@
-using module Window
+using module ScrollView
+using module Window # TODO: remove once OldListBox is gone
 
 class LBItemBase {
 	[string] Name() { throw "abstract" }
