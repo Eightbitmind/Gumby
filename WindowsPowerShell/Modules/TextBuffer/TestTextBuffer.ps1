@@ -1,6 +1,6 @@
 using module Path
 using module TestUtils
-using module Window
+using module TextBuffer
 
 # notational shorthands
 function coords($X, $Y) { return [System.Management.Automation.Host.Coordinates]::new($X, $Y) }
