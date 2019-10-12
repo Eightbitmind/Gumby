@@ -15,27 +15,39 @@ class Window {
 		[int] $width,
 		[int] $height,
 		
-		[ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
-		[ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor) {
-		$this._rect = New-Object System.Management.Automation.Host.Rectangle ([console]::WindowLeft + $left), ([console]::WindowTop + $top), ([console]::WindowLeft + $left + $width - 1), ([console]::WindowTop + $top + $height - 1)
+		[System.ConsoleColor] $foregroundColor = $Global:Host.UI.RawUI.BackgroundColor,
+		[System.ConsoleColor] $backgroundColor = $Global:Host.UI.RawUI.ForegroundColor) {
+		$this._rect = [System.Management.Automation.Host.Rectangle]::new(
+			[console]::WindowLeft + $left,
+			[console]::WindowTop + $top,
+			[console]::WindowLeft + $left + $width - 1,
+			[console]::WindowTop + $top + $height - 1)
 		$this._foregroundColor = $foregroundColor
 		$this._backgroundColor = $backgroundColor
 	}
 
-	[Management.Automation.Host.Coordinates] WindowCoordinates() {
+	[System.Management.Automation.Host.Coordinates] WindowCoordinates() {
 		return [System.Management.Automation.Host.Coordinates]::new($this._rect.left, $this._rect.Top)
 	}
 
-	[Management.Automation.Host.Rectangle] WindowRectangle() {
+	[System.Management.Automation.Host.Rectangle] WindowRectangle() {
 		return $this._rect
 	}
 
-	[Management.Automation.Host.Coordinates] ClientCoordinates() {
-		return (New-Object System.Management.Automation.Host.Coordinates $this._rect.left + 1, $this._rect.Top + 1)
+	[int] WindowWidth() {
+		return $this._rect.Right - $this._rect.Left + 1;
 	}
 
-	[Management.Automation.Host.Rectangle] ClientRectangle() {
-		return (New-Object System.Management.Automation.Host.Rectangle ($this._rect.Left + 1), ($this._rect.Top + 1), ($this._rect.Right - 1), ($this._rect.Bottom - 1))
+	[int] WindowHeight() {
+		return $this._rect.Bottom - $this._rect.Top + 1;
+	}
+
+	[System.Management.Automation.Host.Coordinates] ClientCoordinates() {
+		return [System.Management.Automation.Host.Coordinates]::new($this._rect.left + 1, $this._rect.Top + 1)
+	}
+
+	[System.Management.Automation.Host.Rectangle] ClientRectangle() {
+		return [System.Management.Automation.Host.Rectangle]::new($this._rect.Left + 1, $this._rect.Top + 1, $this._rect.Right - 1, $this._rect.Bottom - 1)
 	}
 
 	[int] ClientWidth() {
@@ -46,10 +58,10 @@ class Window {
 		return $this._rect.Bottom - $this._rect.Top - 1;
 	}
 
-	[Management.Automation.Host.Coordinates] GetClientCoordinates([int] $x, [int] $y) {
+	[System.Management.Automation.Host.Coordinates] GetClientCoordinates([int] $x, [int] $y) {
 		[int] $absX = $this._rect.Left + 1 + $x
 		[int] $absY = $this._rect.Top + 1 + $y
-		return (New-Object System.Management.Automation.Host.Coordinates $absX, $absY)
+		return [System.Management.Automation.Host.Coordinates]::new($absX, $absY)
 	}
 
 	[System.ConsoleColor] ForegroundColor() {
@@ -60,25 +72,25 @@ class Window {
 		return $this._backgroundColor
 	}
 
-	[void] WriteLine([int] $y, [string] $text, $foregroundColor, $backgroundColor) {
-		assert ($y -lt ($this._rect.Bottom - $this._rect.Top - 1)) "line index outside of client area"
-		[Management.Automation.Host.BufferCell[,]] $buffer = 
+	[void] WriteLine([int] $lineNumber, [string] $text, $foregroundColor, $backgroundColor) {
+		assert ($lineNumber -lt $this.ClientHeight()) "line number outside of client area"
+		[System.Management.Automation.Host.BufferCell[,]] $buffer = 
 			$Global:Host.UI.RawUI.NewBufferCellArray(
-				@(EnsureStringLength $text ($this._rect.Right - $this._rect.Left - 1)),
+				@(EnsureStringLength $text $this.ClientWidth()),
 				$foregroundColor, $backgroundColor)
 
-		$Global:Host.UI.RawUI.SetBufferContents($this.GetClientCoordinates(0, $y), $buffer)
+		$Global:Host.UI.RawUI.SetBufferContents($this.GetClientCoordinates(0, $lineNumber), $buffer)
 	}
 
 	[void] WriteStatusBar($text) {
-		$windowWidth = $this._rect.Right - $this._rect.Left + 1
+		$windowWidth = $this.WindowWidth()
 		$t = $text.Substring(0, [math]::Min($text.Length, $windowWidth - 4))
-		$cell = New-Object System.Management.Automation.Host.BufferCell ' ', $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		[Management.Automation.Host.BufferCell[,]] $buffer = $Global:Host.UI.RawUI.NewBufferCellArray($windowWidth - 2, 1, $cell)
+		$cell = [System.Management.Automation.Host.BufferCell]::new(' ', $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		[System.Management.Automation.Host.BufferCell[,]] $buffer = $Global:Host.UI.RawUI.NewBufferCellArray($windowWidth - 2, 1, $cell)
 
-		$hBar = New-Object System.Management.Automation.Host.BufferCell ([char]0x2500), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$t90 = New-Object System.Management.Automation.Host.BufferCell ([char]0x2524), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$t270 = New-Object System.Management.Automation.Host.BufferCell ([char]0x251C), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
+		$hBar = [System.Management.Automation.Host.BufferCell]::new([char]0x2500, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$t90 = [System.Management.Automation.Host.BufferCell]::new([char]0x2524, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$t270 = [System.Management.Automation.Host.BufferCell]::new([char]0x251C, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
 
 		[int] $a = 0
 		[int] $b = 0
@@ -110,28 +122,30 @@ class Window {
 		}
 
 		$x = 0
-		for($i = 0; $i -lt $a; ++$i) { $buffer[0, $x++] = $hBar }
+		for ($i = 0; $i -lt $a; ++$i) { $buffer[0, $x++] = $hBar }
 		$buffer[0, $x++]= $t90
-		for($i = 0; $i -lt $t.Length; ++$i) { $buffer[0, $x++] = (New-Object System.Management.Automation.Host.BufferCell ($t[$i]), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)) }
+		for ($i = 0; $i -lt $t.Length; ++$i) {
+			$buffer[0, $x++] = [System.Management.Automation.Host.BufferCell]::new($t[$i], $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		}
 		$buffer[0, $x++]= $t270
-		for($i = 0; $i -lt $b; ++$i) { $buffer[0, $x++] = $hBar }
+		for ($i = 0; $i -lt $b; ++$i) { $buffer[0, $x++] = $hBar }
 
-		$p = New-Object System.Management.Automation.Host.Coordinates ($this._rect.Left + 1), $this._rect.Bottom
+		$p = [System.Management.Automation.Host.Coordinates]::new($this._rect.Left + 1, $this._rect.Bottom)
 		$Global:Host.UI.RawUI.SetBufferContents($p, $buffer)
 	}
 
 	[void] ScrollAreaVertically([UInt32] $top, [UInt32] $bottom, [int] $amount) {
-		[Management.Automation.Host.Rectangle] $source = $this.ClientRectangle()
+		[System.Management.Automation.Host.Rectangle] $source = $this.ClientRectangle()
 		$bufferTop = $source.Top + $top
 		$bufferBottom = $source.Top + $bottom
 		$source.Top = $bufferTop
 		$source.Bottom = $bufferBottom
 
-		[Management.Automation.Host.Rectangle] $clip = $this.ClientRectangle()
+		[System.Management.Automation.Host.Rectangle] $clip = $this.ClientRectangle()
 
-		[Management.Automation.Host.Coordinates] $destination = $this.GetClientCoordinates(0, $top + $amount)
+		[System.Management.Automation.Host.Coordinates] $destination = $this.GetClientCoordinates(0, $top + $amount)
 
-		[Management.Automation.Host.BufferCell] $fill = New-Object System.Management.Automation.Host.BufferCell ' ', $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
+		[System.Management.Automation.Host.BufferCell] $fill = [System.Management.Automation.Host.BufferCell]::new(' ', $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
 
 		$Global:Host.UI.RawUI.ScrollBufferContents($source, $destination, $clip, $fill)
 	}
@@ -151,8 +165,8 @@ class Window {
 	}
 
 	hidden [void] DrawFrame() {
-		$windowWidth = $this._rect.Right - $this._rect.Left + 1
-		$windowHeight = $this._rect.Bottom - $this._rect.Top + 1
+		$windowWidth = $this.WindowWidth()
+		$windowHeight = $this.WindowHeight()
 
 		<#
 		0x2500: ─
@@ -284,17 +298,17 @@ class Window {
 		0x257E: ╾
 		#>
 
-		$cell = New-Object System.Management.Automation.Host.BufferCell ' ', $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		[Management.Automation.Host.BufferCell[,]] $buffer = $Global:Host.UI.RawUI.NewBufferCellArray($windowWidth, $windowHeight, $cell)
+		$cell = [System.Management.Automation.Host.BufferCell]::new(' ', $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete))
+		[System.Management.Automation.Host.BufferCell[,]] $buffer = $Global:Host.UI.RawUI.NewBufferCellArray($windowWidth, $windowHeight, $cell)
 
-		$horizontalBar = New-Object System.Management.Automation.Host.BufferCell ([char]0x2500), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$verticalBar = New-Object System.Management.Automation.Host.BufferCell ([char]0x2502), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$topLeftCorner = New-Object System.Management.Automation.Host.BufferCell ([char]0x250C), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$topRightCorner = New-Object System.Management.Automation.Host.BufferCell ([char]0x2510), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$bottomLeftCorner = New-Object System.Management.Automation.Host.BufferCell ([char]0x2514), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$bottomRightCorner = New-Object System.Management.Automation.Host.BufferCell ([char]0x2518), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$t90 = New-Object System.Management.Automation.Host.BufferCell ([char]0x2524), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
-		$t270 = New-Object System.Management.Automation.Host.BufferCell ([char]0x251C), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)
+		$horizontalBar = [System.Management.Automation.Host.BufferCell]::new([char]0x2500, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$verticalBar = [System.Management.Automation.Host.BufferCell]::new([char]0x2502, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$topLeftCorner = [System.Management.Automation.Host.BufferCell]::new([char]0x250C, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$topRightCorner = [System.Management.Automation.Host.BufferCell]::new([char]0x2510, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$bottomLeftCorner = [System.Management.Automation.Host.BufferCell]::new([char]0x2514, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$bottomRightCorner = [System.Management.Automation.Host.BufferCell]::new([char]0x2518, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$t90 = [System.Management.Automation.Host.BufferCell]::new([char]0x2524, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
+		$t270 = [System.Management.Automation.Host.BufferCell]::new([char]0x251C, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
 
 		if ($this.Title) {
 			assert ($this.Title.Length -lt ($windowWidth - 3)) "title too wide for window"
@@ -330,11 +344,13 @@ class Window {
 			}
 
 			$x = 1
-			for($i = 0; $i -lt $a; ++$i) { $buffer[0, $x++] = $horizontalBar }
+			for ($i = 0; $i -lt $a; ++$i) { $buffer[0, $x++] = $horizontalBar }
 			$buffer[0, $x++]= $t90
-			for($i = 0; $i -lt $t.Length; ++$i) { $buffer[0, $x++] = (New-Object System.Management.Automation.Host.BufferCell ($t[$i]), $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete)) }
+			for ($i = 0; $i -lt $t.Length; ++$i) {
+				$buffer[0, $x++] = [System.Management.Automation.Host.BufferCell]::new($t[$i], $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete))
+			}
 			$buffer[0, $x++]= $t270
-			for($i = 0; $i -lt $b; ++$i) { $buffer[0, $x++] = $horizontalBar }
+			for ($i = 0; $i -lt $b; ++$i) { $buffer[0, $x++] = $horizontalBar }
 		} else {
 			for ($i = 1; $i -lt ($this._rect.Right - $this._rect.Left); ++$i) { $buffer[0, $i] = $horizontalBar }
 		}
@@ -384,8 +400,8 @@ class Window {
 	[string] $Title = $null
 
 	hidden [bool] $_running = $true
-	hidden [Management.Automation.Host.Rectangle] $_rect
+	hidden [System.Management.Automation.Host.Rectangle] $_rect
 	hidden [System.ConsoleColor] $_foregroundColor
 	hidden [System.ConsoleColor] $_backgroundColor
-	hidden [Management.Automation.Host.BufferCell[,]] $_originalBufferContent
+	hidden [System.Management.Automation.Host.BufferCell[,]] $_originalBufferContent
 }
