@@ -151,16 +151,17 @@ class Window {
 	}
 
 	[WindowResult] Run() {
-		$this._originalBufferContent = $Global:Host.UI.RawUI.GetBufferContents($this._rect)
+		$this.SaveOriginalWindowArea()
 		$this.DrawFrame()
 		$this.DrawClientArea()
 		$this.OnShown()
 
 		while ($this._running) {
-			$this.OnKey([console]::ReadKey([Management.Automation.Host.ReadKeyOptions]::NoEcho))
+			$this.OnKey([console]::ReadKey([System.Management.Automation.Host.ReadKeyOptions]::NoEcho))
 		}
 
-		$Global:Host.UI.RawUI.SetBufferContents($this.WindowCoordinates(), $this._originalBufferContent)
+		$this.RestoreOriginalWindowArea()
+
 		return $this.Result
 	}
 
@@ -368,6 +369,13 @@ class Window {
 	}
 
 	hidden [void] DrawClientArea() {}
+
+	hidden [void] SaveOriginalWindowArea() {
+		$this._originalBufferContent = $Global:Host.UI.RawUI.GetBufferContents($this._rect)
+	}
+	hidden [void] RestoreOriginalWindowArea() {
+		$Global:Host.UI.RawUI.SetBufferContents($this.WindowCoordinates(), $this._originalBufferContent)
+	}
 
 	hidden [void] OnShown() {}
 

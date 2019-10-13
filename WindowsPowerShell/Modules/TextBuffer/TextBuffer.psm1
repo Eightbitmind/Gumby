@@ -8,6 +8,14 @@ class TextBuffer {
 		$this.DefaultBackgroundColor = $defaultBackgroundColor
 	}
 
+	# Can we speed things up by doing buffer "block" operations instead?
+	#   $cell = [System.Management.Automation.Host.BufferCell]::new(' ', $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete))
+	#   [System.Management.Automation.Host.BufferCell[,]] $buffer = $Global:Host.UI.RawUI.NewBufferCellArray($windowWidth, $windowHeight, $cell)
+	#   $buffer[($this._rect.Bottom - $this._rect.Top), $i] = $horizontalBar
+	#   $Global:Host.UI.RawUI.SetBufferContents($this.WindowCoordinates(), $buffer)
+	# Unlikely if we'd have to make individual BufferCell allocations for every character - but what
+	# if we'd assign to the 'Character' property of the block-allocated BufferCell array?
+
 	[void] SetScreenBuffer(
 		[System.Management.Automation.Host.Rectangle] $targetArea,
 		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
