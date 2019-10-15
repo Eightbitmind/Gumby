@@ -38,23 +38,23 @@ $horizontalScrollSteps = $cols - 1
 
 $startTime = [datetime]::Now
 
-for ($rep = 0; $rep -lt 1; ++$rep) {
+for ($rep = 0; $rep -lt 5; ++$rep) {
 
-	# for ($i = 0; $i -lt $verticalScrollSteps; ++$i) {
-	# 	$lb.OnKey($cursorDown)
-	# }
-
-	for ($i = 0; $i -lt $horizontalScrollSteps; ++$i) {
-		$lb.OnKey($cursorRight)
+	for ($i = 0; $i -lt $verticalScrollSteps; ++$i) {
+		$lb.OnKey($cursorDown)
 	}
 
-	# for ($i = 0; $i -lt $verticalScrollSteps; ++$i) {
-	# 	$lb.OnKey($cursorUp)
+	# for ($i = 0; $i -lt $horizontalScrollSteps; ++$i) {
+	# 	$lb.OnKey($cursorRight)
 	# }
 
-	for ($i = 0; $i -lt $horizontalScrollSteps; ++$i) {
-		$lb.OnKey($cursorLeft)
+	for ($i = 0; $i -lt $verticalScrollSteps; ++$i) {
+		$lb.OnKey($cursorUp)
 	}
+
+	# for ($i = 0; $i -lt $horizontalScrollSteps; ++$i) {
+	# 	$lb.OnKey($cursorLeft)
+	# }
 }
 
 $endTime = [datetime]::Now

@@ -1,3 +1,4 @@
+using module Log
 using module String
 
 class TextBuffer {
@@ -8,14 +9,6 @@ class TextBuffer {
 		$this.DefaultBackgroundColor = $defaultBackgroundColor
 	}
 
-	# Can we speed things up by doing buffer "block" operations instead?
-	#   $cell = [System.Management.Automation.Host.BufferCell]::new(' ', $this._foregroundColor, $this._backgroundColor, ([Management.Automation.Host.BufferCellType]::Complete))
-	#   [System.Management.Automation.Host.BufferCell[,]] $buffer = $Global:Host.UI.RawUI.NewBufferCellArray($windowWidth, $windowHeight, $cell)
-	#   $buffer[($this._rect.Bottom - $this._rect.Top), $i] = $horizontalBar
-	#   $Global:Host.UI.RawUI.SetBufferContents($this.WindowCoordinates(), $buffer)
-	# Unlikely if we'd have to make individual BufferCell allocations for every character - but what
-	# if we'd assign to the 'Character' property of the block-allocated BufferCell array?
-
 	[void] SetScreenBuffer(
 		[System.Management.Automation.Host.Rectangle] $targetArea,
 		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
@@ -25,6 +18,133 @@ class TextBuffer {
 			$Global:Host.UI.RawUI.SetBufferContents($stripe.Coordinates, $stripe.BufferCells)
 		}
 	}
+
+	# If BufferCell.ForegroundColor and BufferCell.BackgroundColor were settable, we could use an
+	# implementation like the one below.
+	<#
+	[void] SetScreenBuffer(
+		[System.Management.Automation.Host.Rectangle] $targetArea,
+		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
+
+		$targetAreaStringList = [System.Collections.ArrayList]::new()
+
+		$targetWidth = $targetArea.Right - $targetArea.Left + 1
+		$targetHeight = $targetArea.Bottom - $targetArea.Top + 1
+
+		for ($i = 0; $i -lt $targetHeight; ++$i) {
+
+			if (($sourceOrigin.Y + $i -lt 0) <!# above the text #!> -or 
+				($sourceOrigin.Y + $i -ge $this._lines.Count) <!# below the text #!> -or
+				($sourceOrigin.X + $targetWidth -lt 0) <!# to the left of the text #!> -or
+				($sourceOrigin.X -gt $this._lines[$sourceOrigin.Y + $i].Text.Length) <!# to the right of the right #!>) {
+				$targetAreaString = ' ' * $targetWidth
+			} else {
+
+				$line = $this._lines[$sourceOrigin.Y + $i]
+
+				$targetAreaString = if ($sourceOrigin.X -lt 0) {
+					EnsureStringLength ((" " * -$sourceOrigin.X) + $line.Text) $targetWidth
+				} else {
+					EnsureStringLength $line.Text.Substring($sourceOrigin.X) $targetWidth
+				}
+			}
+			$targetAreaStringList.Add($targetAreaString) | Out-Null
+		}
+
+		$targetAreaStringArray = $targetAreaStringList.ToArray()
+
+		[System.Management.Automation.Host.BufferCell[,]] $bufferCells = $Global:Host.UI.RawUI.NewBufferCellArray($targetAreaStringArray, $this.DefaultForegroundColor, $this.DefaultBackgroundColor)
+
+		# correct colors
+		for ($i = 0; $i -lt $targetHeight; ++$i) {
+			[Log]::Trace("TB.SetScreenBuffer.CorrectColors: i=$i")
+			if ($sourceOrigin.Y + $i -lt 0) { <!# above the text #!> continue }
+			if ($sourceOrigin.Y + $i -ge $this._lines.Count) {<!# below the text #!> break }
+			$line = $this._lines[$sourceOrigin.Y + $i]
+			[Log]::Trace("TB.SetScreenBuffer.CorrectColors: FC=$($line.ForegroundColor); BC=$($line.BackgroundColor)")
+			for ($j = 0; $j -lt $targetWidth; ++$j) {
+				[Log]::Trace("TB.SetScreenBuffer.CorrectColors: [$i, $j].FC=$($bufferCells[$i, $j].ForegroundColor); line.FC=$($line.ForegroundColor)")
+				
+				$bufferCells[$i, $j].ForegroundColor = $line.ForegroundColor
+				$bufferCells[$i, $j].BackgroundColor = $line.BackgroundColor
+
+				[Log]::Trace("TB.SetScreenBuffer.CorrectColors: [$i, $j].FC=$($bufferCells[$i, $j].ForegroundColor)")
+			}
+		}
+
+		$targetOrigin = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top)
+		$Global:Host.UI.RawUI.SetBufferContents($targetOrigin, $bufferCells)
+	}
+	#>
+
+	# The implementation below is an attempt to allocate a BufferCell array with a single allocation.
+	# It results in about the same performance as the original implementation.
+	<#
+	[void] SetScreenBuffer(
+		[System.Management.Automation.Host.Rectangle] $targetArea,
+		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
+
+		# The structure of the code below is based on the fact the BufferCell.ForegroundColor and
+		# BufferCell.BackgroundColor properties appear to be read-only.
+
+		$targetAreaStringList = [System.Collections.ArrayList]::new()
+
+		$targetWidth = $targetArea.Right - $targetArea.Left + 1
+		$targetHeight = $targetArea.Bottom - $targetArea.Top + 1
+
+		for ($i = 0; $i -lt $targetHeight; ++$i) {
+			if (($sourceOrigin.Y + $i -lt 0) <!# above the text #!> -or
+				($sourceOrigin.Y + $i -ge $this._lines.Count) <!# below the text #!> -or
+				($sourceOrigin.X + $targetWidth -lt 0) <!# to the left of the text #!> -or
+				($sourceOrigin.X -gt $this._lines[$sourceOrigin.Y + $i].Text.Length) <!# to the right of the right #!>) {
+
+				$targetAreaString = ' ' * $targetWidth
+
+			} else {
+
+				$line = $this._lines[$sourceOrigin.Y + $i]
+
+				$targetAreaString = if ($sourceOrigin.X -lt 0) {
+					EnsureStringLength ((" " * -$sourceOrigin.X) + $line.Text) $targetWidth
+				} else {
+					EnsureStringLength $line.Text.Substring($sourceOrigin.X) $targetWidth
+				}
+			}
+			$targetAreaStringList.Add($targetAreaString) | Out-Null
+		}
+
+		$targetAreaStringArray = $targetAreaStringList.ToArray()
+		$targetOrigin = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top)
+		[System.Management.Automation.Host.BufferCell[,]] $bufferCells =
+			$Global:Host.UI.RawUI.NewBufferCellArray(
+				$targetAreaStringArray,
+				$this.DefaultForegroundColor,
+				$this.DefaultBackgroundColor)
+		$Global:Host.UI.RawUI.SetBufferContents($targetOrigin, $bufferCells)
+
+		# correct colors
+		for ($i = 0; $i -lt $targetHeight; ++$i) {
+			if ($sourceOrigin.Y + $i -lt 0 <!# above the text #!>) { continue }
+			if ($sourceOrigin.Y + $i -ge $this._lines.Count <!# below the text #!>) { break }
+
+			$line = $this._lines[$sourceOrigin.Y + $i]
+
+			if ($line.ForegroundColor -ne $this.DefaultForegroundColor -or
+				$line.BackgroundColor -ne $this.DefaultBackgroundColor) {
+
+				$targetOrigin = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)
+
+				[System.Management.Automation.Host.BufferCell[,]] $bufferCells =
+					$Global:Host.UI.RawUI.NewBufferCellArray(
+						@($targetAreaStringArray[$i]),
+						$line.ForegroundColor,
+						$line.BackgroundColor)
+
+				$Global:Host.UI.RawUI.SetBufferContents($targetOrigin, $bufferCells)
+			}
+		}
+	}
+	#>
 
 	# for unit testing
 
