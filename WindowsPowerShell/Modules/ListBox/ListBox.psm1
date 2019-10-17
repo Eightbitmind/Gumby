@@ -248,48 +248,64 @@ class ListBox : ScrollView {
 		#[Log]::Comment("SVListBox.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
 
 		switch ($key.Key) {
-			([ConsoleKey]::DownArrow) {
-				if ($this._items.Count -eq 0) {
-					# empty list
-					break
-				}
+			([ConsoleKey]::DownArrow) { $this.MoveSelectionDown() }
 
-				if ($this._selectedIndex -eq ($this._items.Count - 1)) {
-					# at end of list, no change
-					break
-				}
-
-				if (($this._selectedIndex - $this.FirstRowInView) -ge ($this.ClientHeight() - 1)) {
-					# last line is selected, scroll up one line
-					++$this.FirstRowInView
-				}
-
-				$this.SelectItem($this._selectedIndex + 1)
-
-				$this.DrawClientArea()
-			}
-
-			([ConsoleKey]::UpArrow) {
-				if ($this._selectedIndex -eq 0) {
-					# at start of list, no change
-					# also handles empty list
-					break
-				}
-
-				if ($this._selectedIndex -eq $this.FirstRowInView) {
-					# first line is selected, scroll down one line
-					--$this.FirstRowInView
-				}
-
-				$this.SelectItem($this._selectedIndex - 1)
-
-				$this.DrawClientArea()
-			}
+			([ConsoleKey]::UpArrow) { $this.MoveSelectionUp() }
 
 			default {
 				([ScrollView]$this).OnKey($key)
 			}
 		}
+	}
+
+	hidden [void] MoveSelectionDown() {
+		if ($this._items.Count -eq 0) {
+			# empty list
+			return
+		}
+
+		if ($this._selectedIndex -eq ($this._items.Count - 1)) {
+			# at end of list, no change
+			return
+		}
+
+		if (($this._selectedIndex - $this.FirstRowInView) -ge ($this.ClientHeight() - 1)) {
+			# last line is selected, scroll up one line
+
+			# 0		1
+			# 1		2
+			# 2		3
+			# 3*	4*
+
+			$this.ScrollAreaVertically(0, $this.ClientHeight() - 2, 1)
+			++$this.FirstRowInView
+		}
+
+		$previouslySelectedIndex = $this._selectedIndex
+		$this.SelectItem($this._selectedIndex + 1)
+		$this.DrawItem($previouslySelectedIndex)
+		$this.DrawItem($this._selectedIndex)
+	}
+
+	hidden [void] DrawItem($index) {
+
+	}
+
+	hidden [void] MoveSelectionUp() {
+		if ($this._selectedIndex -eq 0) {
+			# at start of list, no change
+			# also handles empty list
+			return
+		}
+
+		if ($this._selectedIndex -eq $this.FirstRowInView) {
+			# first line is selected, scroll down one line
+			--$this.FirstRowInView
+		}
+
+		$this.SelectItem($this._selectedIndex - 1)
+
+		$this.DrawClientArea()
 	}
 
 	hidden [string] GetItemLabel([object]$item) {

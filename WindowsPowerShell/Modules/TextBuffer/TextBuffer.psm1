@@ -9,7 +9,6 @@ class TextBuffer {
 		$this.DefaultBackgroundColor = $defaultBackgroundColor
 	}
 
-	<#
 	[void] SetScreenBuffer(
 		[System.Management.Automation.Host.Rectangle] $targetArea,
 		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
@@ -19,11 +18,10 @@ class TextBuffer {
 			$Global:Host.UI.RawUI.SetBufferContents($stripe.Coordinates, $stripe.BufferCells)
 		}
 	}
-	#>
 
-	# If BufferCell.ForegroundColor and BufferCell.BackgroundColor were settable, we could use an
-	# implementation like the one below.
-
+	# The implementation below is an attempt to allocate a BufferCell array with a single allocation.
+	# It results in about the same performance as the original implementation.
+	<#
 	[void] SetScreenBuffer(
 		[System.Management.Automation.Host.Rectangle] $targetArea,
 		[System.Management.Automation.Host.Coordinates] $sourceOrigin) {
@@ -35,10 +33,10 @@ class TextBuffer {
 
 		for ($i = 0; $i -lt $targetHeight; ++$i) {
 
-			if (($sourceOrigin.Y + $i -lt 0) <# above the text #> -or 
-				($sourceOrigin.Y + $i -ge $this._lines.Count) <# below the text #> -or
-				($sourceOrigin.X + $targetWidth -lt 0) <# to the left of the text #> -or
-				($sourceOrigin.X -gt $this._lines[$sourceOrigin.Y + $i].Text.Length) <# to the right of the right #>) {
+			if (($sourceOrigin.Y + $i -lt 0) </# above the text #/> -or 
+				($sourceOrigin.Y + $i -ge $this._lines.Count) </# below the text #/> -or
+				($sourceOrigin.X + $targetWidth -lt 0) </# to the left of the text #/> -or
+				($sourceOrigin.X -gt $this._lines[$sourceOrigin.Y + $i].Text.Length) </# to the right of the right #/>) {
 				$targetAreaString = ' ' * $targetWidth
 			} else {
 
@@ -60,8 +58,8 @@ class TextBuffer {
 		# correct colors
 		for ($i = 0; $i -lt $targetHeight; ++$i) {
 			[Log]::Trace("TB.SetScreenBuffer.CorrectColors: i=$i")
-			if ($sourceOrigin.Y + $i -lt 0) { <# above the text #> continue }
-			if ($sourceOrigin.Y + $i -ge $this._lines.Count) {<# below the text #> break }
+			if ($sourceOrigin.Y + $i -lt 0) { </# above the text #/> continue }
+			if ($sourceOrigin.Y + $i -ge $this._lines.Count) {</# below the text #/> break }
 			$line = $this._lines[$sourceOrigin.Y + $i]
 			[Log]::Trace("TB.SetScreenBuffer.CorrectColors: FC=$($line.ForegroundColor); BC=$($line.BackgroundColor)")
 			for ($j = 0; $j -lt $targetWidth; ++$j) {
@@ -82,7 +80,7 @@ class TextBuffer {
 		$targetOrigin = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top)
 		$Global:Host.UI.RawUI.SetBufferContents($targetOrigin, $bufferCells)
 	}
-
+	#>
 
 	# The implementation below is an attempt to allocate a BufferCell array with a single allocation.
 	# It results in about the same performance as the original implementation.
