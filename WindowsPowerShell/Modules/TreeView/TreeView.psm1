@@ -1146,12 +1146,16 @@ class TreeView : ListBox {
 	hidden [void] TraceItems() {
 		for ($i = 0; $i -lt $this.ItemCount(); ++$i) {
 			$item = $this.GetItem($i)
+			
+			if ($item.IsExpanded()) { $expansionState = "expanded" } else { $expansionState = "collapsed" }
 			if ($i -eq $this.FirstRowInView) { $firstInView = ", firstInView" } else { $firstInView = "" }
 			if ($i -eq $this.SelectedIndex()) { $selected = ", selected" } else { $selected = "" }
-			[Log]::Trace(("{0}: `"{1}`" L={2}{3}{4}" -f
+
+			[Log]::Trace(("{0}: N=`"{1}`"; L={2}; {3}{4}{5}" -f
 				$i,
 				$this.GetItemLabel($item),
 				$item.Level(),
+				$expansionState,
 				$firstInView,
 				$selected))
 		}
@@ -1181,6 +1185,14 @@ class TreeView : ListBox {
 		}
 
 		return ((' ' * 4 * ($item.Level() - $this.topLevelInView)) + $icon + ' ' + $item.Name())
+	}
+
+	[void] RemoveItem([int] $index) {
+		if ($this.GetItem($index).IsExpanded()) {
+			# otherwise the icon is wrong if we re-use the item
+			$this.GetItem($index).Collapse()
+		}
+		([ListBox]$this).RemoveItem($index)
 	}
 
 	[void] OnKey([System.ConsoleKeyInfo] $key) {
@@ -1292,14 +1304,11 @@ class TreeView : ListBox {
 				return
 			}
 
+			if ([Log]::Listeners.Count -gt 0) { $this.TraceItems() }
+
 			if (($this.SelectedItem().Level() - $this.topLevelInView) -eq ($this.MaxLevelCount - 1)) {
 				# With the level we're about to expand, we would exceed the maximum level count.
 				# Prune ancestors and unindent remaining items.
-
-				if ([Log]::Listeners.Count -gt 0) {
-					[Log]::Trace("TV.Expand: MaxLevel overflow")
-					$this.TraceItems()
-				}
 
 				# 00: I0-00
 				# 01:    I1-00 <-- first
@@ -1314,16 +1323,15 @@ class TreeView : ListBox {
 				# 10: I0-1
 
 				$first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex(), $this.MaxLevelCount - <# one for gaps vs. items, another one for the add'l level inserted above #> 2)
-				[Log]::Trace("TV.Expand.MaxLevelOverflow: first=$first, last=$last")
+				#[Log]::Trace("TV.Expand.MaxLevelOverflow2: first=$first, last=$last")
 
 				# Prune every item outside of [$first, $last]
 				for ($i = $this.ItemCount() - 1; $i -gt $last; --$i) { $this.RemoveItem($i) }
 				for ($i = $first; $i -gt 0; --$i) { $this.RemoveItem($i - 1) }
 
 				++$this.topLevelInView
-
-				$this._selectedIndex -= $first - 1 # should still point to the item that is getting expanded, not its first child
 				$this.FirstRowInView = [Math]::Max(0, $this._selectedIndex - $this.ClientHeight())
+				#[Log]::Trace("TV.Expand.MaxLevelOverflow3: SIx=$($this._selectedIndex); FRIV=$($this.FirstRowInView); TLIV=$($this.topLevelInView)")
 
 				# As indentation has changed due to the pruning above, we need to re-render the
 				# text buffer.
@@ -1371,6 +1379,8 @@ class TreeView : ListBox {
 	[void] Collapse() {
 		[Log]::BeginSection("TV.Collapse: $($this.TraceInfo())")
 		try {
+			if ([Log]::Listeners.Count -gt 0) { $this.TraceItems() }
+
 			# Going up deepens the displayed tree. Is there a way to return it to the depth we started
 			# at? Perhaps we can have a "sliding window" of the last n ancestral levels?
 
@@ -1382,18 +1392,12 @@ class TreeView : ListBox {
 			if ($this.SelectedItem().Level() -gt $this.topLevelInView) {
 				[Log]::Trace("TV.Collapse.ParentPresent")
 
-				[uint32] $firstSibling, $lastSibling = $this.GetAncestralSiblingRange($this.SelectedIndex(), 0)
+				[uint32] $first, $last = $this.GetAncestralSiblingRange($this.SelectedIndex(), 0)
 
 				# remove collapsed items (iterating backwards for index consistency)
-				for ([uint32] $i = $lastSibling; $i -ge $firstSibling; --$i) {
-					if ($this.GetItem($i).IsExpanded()) {
-						# otherwise the icon is wrong if we re-use the item
-						$this.GetItem($i).Collapse()
-					}
-					$this.RemoveItem($i)
-				}
+				for ([uint32] $i = $last; $i -ge $first; --$i) { $this.RemoveItem($i) }
 
-				$this.SelectItem($firstSibling - 1)
+				$this.SelectItem($first - 1)
 
 				$this.SelectedItem().Collapse() # only changes expand/collapse state, does not manipulate children
 
@@ -1424,6 +1428,7 @@ class TreeView : ListBox {
 					}
 				}
 
+				if (!$parent.IsExpanded()) { $parent.Expand() }
 				$this.InsertItem(0, $parent)
 				$this.SelectItem(0)
 				$this.FirstRowInView = 0
