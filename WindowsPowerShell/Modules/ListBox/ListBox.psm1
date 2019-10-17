@@ -249,12 +249,8 @@ class ListBox : ScrollView {
 
 		switch ($key.Key) {
 			([ConsoleKey]::DownArrow) { $this.MoveSelectionDown() }
-
 			([ConsoleKey]::UpArrow) { $this.MoveSelectionUp() }
-
-			default {
-				([ScrollView]$this).OnKey($key)
-			}
+			default { ([ScrollView]$this).OnKey($key) }
 		}
 	}
 
@@ -270,25 +266,16 @@ class ListBox : ScrollView {
 		}
 
 		if (($this._selectedIndex - $this.FirstRowInView) -ge ($this.ClientHeight() - 1)) {
-			# last line is selected, scroll up one line
+			# last line in view is selected, scroll up one line
 
-			# 0		1
-			# 1		2
-			# 2		3
-			# 3*	4*
-
-			$this.ScrollAreaVertically(0, $this.ClientHeight() - 2, 1)
+			$this.ScrollAreaVertically(0, $this.ClientHeight() - 2, -1)
 			++$this.FirstRowInView
 		}
 
 		$previouslySelectedIndex = $this._selectedIndex
 		$this.SelectItem($this._selectedIndex + 1)
-		$this.DrawItem($previouslySelectedIndex)
-		$this.DrawItem($this._selectedIndex)
-	}
-
-	hidden [void] DrawItem($index) {
-
+		$this.DrawLine($this._selectedIndex)
+		$this.DrawLine($previouslySelectedIndex)
 	}
 
 	hidden [void] MoveSelectionUp() {
@@ -299,13 +286,16 @@ class ListBox : ScrollView {
 		}
 
 		if ($this._selectedIndex -eq $this.FirstRowInView) {
-			# first line is selected, scroll down one line
+			# first line in view is selected, scroll down one line
+
+			$this.ScrollAreaVertically(1, $this.ClientHeight() - 2, 1)
 			--$this.FirstRowInView
 		}
 
+		$previouslySelectedIndex = $this._selectedIndex
 		$this.SelectItem($this._selectedIndex - 1)
-
-		$this.DrawClientArea()
+		$this.DrawLine($this._selectedIndex)
+		$this.DrawLine($previouslySelectedIndex)
 	}
 
 	hidden [string] GetItemLabel([object]$item) {

@@ -53,6 +53,16 @@ class ScrollView : Window {
 		$this._textBuffer.SetScreenBuffer($this.ClientRectangle(), [System.Management.Automation.Host.Coordinates]::new($this.FirstColumnInView, $this.FirstRowInView))
 	}
 
+	hidden [void] DrawLine([int] $lineNumber) {
+		assert ($lineNumber -ge $this.FirstRowInView) "trying to draw a line that is scrolled out of view"
+
+		$lineRect = $this.ClientRectangle()
+		$lineRect.Top += ($lineNumber - $this.FirstRowInView)
+		$lineRect.Bottom = $lineRect.Top
+
+		$this._textBuffer.SetScreenBuffer($lineRect, [System.Management.Automation.Host.Coordinates]::new($this.FirstColumnInView, $lineNumber))
+	}
+
 	hidden [void] OnKey([System.ConsoleKeyInfo] $key) {
 		#[Log]::Comment("SV.OnKey: Key=$($key.Key), Modifiers=$($key.Modifiers)")
 		switch ($key.Key) {
