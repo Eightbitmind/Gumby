@@ -218,5 +218,129 @@ class FileTVItemTests {
 	}
 }
 
+class GASRTestItem : TVItemBase {
+	GASRTestItem([object] $inner) {
+		$this._inner = $inner
+	}
+
+	[string] Name() { return $this._inner.Name }
+	[uint32] Level() {
+		# Get past the initial "top-level in view" check
+		if ($this._initialLevelCall) {
+			$this._initialLevelCall = $false
+			return 0
+		}
+
+		return $this._inner.Level
+	}
+	[bool] IsContainer() { return $true }
+
+	hidden [object] $_inner
+	hidden [uint32] $_initialLevelCall = $true
+}
+
+[TestClass()]
+class TreeViewTests {
+
+	[TestMethod()]
+	[void] GetAncestralSiblingRange01() {
+		$forest =
+			<# 0 #> @{ Name = "A"            ; Level = 0},
+			<# 1 #> @{ Name =     "C"        ; Level = 1},
+			<# 2 #> @{ Name = "B"            ; Level = 0},
+			<# 3 #> @{ Name =     "D"        ; Level = 1},
+			<# 4 #> @{ Name =         "F"    ; Level = 2},
+			<# 5 #> @{ Name =             "I"; Level = 3},
+			<# 6 #> @{ Name =         "G"    ; Level = 2},
+			<# 7 #> @{ Name =         "H"    ; Level = 2},
+			<# 8 #> @{ Name =     "E"        ; Level = 1}
+
+		$tv = [TreeView]::new(
+			$forest,
+			[GASRTestItem],
+			0, 0, 10, 10, [System.ConsoleColor]::Black, [System.ConsoleColor]::White)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 0) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 1) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 0) (1, 1)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 1) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 0) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 1) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 0) (3, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 1) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 2) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 0) (4, 7)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 1) (3, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 2) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 3) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 0) (5, 5)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 1) (4, 7)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 2) (3, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 3) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 4) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 0) (4, 7)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 1) (3, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 2) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 3) (0, 8)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 0) (4, 7)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 1) (3, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 2) (0, 8)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 3) (0, 8)
+	}
+
+	[TestMethod()]
+	[void] GetAncestralSiblingRange02() {
+		$forest =
+			<# 0 #> @{ Name = "A"            ; Level = 0},
+			<# 1 #> @{ Name =     "C"        ; Level = 1},
+			<# 2 #> @{ Name =         "F"    ; Level = 2},
+			<# 3 #> @{ Name =             "G"; Level = 3},
+			<# 4 #> @{ Name = "B"            ; Level = 0},
+			<# 5 #> @{ Name =     "D"        ; Level = 1},
+			<# 6 #> @{ Name =     "E"        ; Level = 1}
+
+		$tv = [TreeView]::new(
+			$forest,
+			[GASRTestItem],
+			0, 0, 10, 10, [System.ConsoleColor]::Black, [System.ConsoleColor]::White)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 0) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 1) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 2) (0, 6)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 0) (1, 3)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 1) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 2) (0, 6)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 0) (2, 3)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 1) (1, 3)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 2) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 3) (0, 6)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 0) (3, 3)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 1) (2, 3)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 2) (1, 3)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 3) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 4) (0, 6)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 0) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 1) (0, 6)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 0) (5, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 1) (0, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 2) (0, 6)
+
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 0) (5, 6)
+		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 1) (0, 6)
+	}
+}
+
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
-RunTests $standaloneLogFilePath ([SimpleObjectTVItemTests]) ([FileTVItemTests])
+RunTests $standaloneLogFilePath ([SimpleObjectTVItemTests]) ([FileTVItemTests]) ([TreeViewTests])
