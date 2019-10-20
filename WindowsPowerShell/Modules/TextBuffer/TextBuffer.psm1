@@ -170,7 +170,7 @@ class TextBuffer {
 				($sourceOrigin.Y + $i -ge $this._lines.Count) <# below the text #> -or
 				($sourceOrigin.X + $targetWidth -lt 0) <# to the left of the text #> -or
 				($sourceOrigin.X -gt $line.Text.Length) <# to the right of the right#>) {
-				$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $this.DefaultForegroundColor, $this.DefaultBackgroundColor)
+				$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $line.ForegroundColor, $line.BackgroundColor)
 			} else {
 				$text = if ($sourceOrigin.X -lt 0) {
 					EnsureStringLength ((" " * -$sourceOrigin.X) + $line.Text) $targetWidth

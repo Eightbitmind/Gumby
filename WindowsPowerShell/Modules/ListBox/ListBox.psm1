@@ -276,6 +276,8 @@ class ListBox : ScrollView {
 		$this.SelectItem($this._selectedIndex + 1)
 		$this.DrawLine($this._selectedIndex)
 		$this.DrawLine($previouslySelectedIndex)
+
+		$this.WriteStatusBar("$($this._selectedIndex + 1)/$($this._items.Count)")
 	}
 
 	hidden [void] MoveSelectionUp() {
@@ -296,6 +298,8 @@ class ListBox : ScrollView {
 		$this.SelectItem($this._selectedIndex - 1)
 		$this.DrawLine($this._selectedIndex)
 		$this.DrawLine($previouslySelectedIndex)
+
+		$this.WriteStatusBar("$($this._selectedIndex + 1)/$($this._items.Count)")
 	}
 
 	hidden [string] GetItemLabel([object]$item) {
