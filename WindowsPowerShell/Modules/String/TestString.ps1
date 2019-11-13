@@ -81,15 +81,7 @@ class StringModuleTests {
 	[void] SplitCSVLine_WellFormedCSVLine() {
 		TestTuplesAreEqual (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
 	}
-
-	[TestMethod()]
-	[void] Zip_ThreeItems() {
-		$r = Zip ("a", "b", "c") (1, 2, 3)
-		TestAreEqual $r.Count 3
-		TestAreEqual $r.a 1
-		TestAreEqual $r.b 2
-		TestAreEqual $r.c 3
-	}
 }
 
-RunTests([StringModuleTests])
+$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
+RunTests $standaloneLogFilePath ([StringModuleTests])

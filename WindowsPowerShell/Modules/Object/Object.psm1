@@ -121,3 +121,28 @@ function MergeObjects(<# Objects... #>) {
 
 	return $refable
 }
+
+<#
+.SYNOPSIS
+Integrates an array of names and an array of values into a hash table.
+
+.PARAMETER Names
+Array of names. The items therein become the hash table keys.
+
+.PARAMETER Values
+Array of values. The items therein become the hash table values.
+
+.OUTPUTS
+Hash table.
+#>
+function Zip($Names, $Values) {
+	if ($Names.Length -ne $Values.Length) { throw "Number of names and values does not line up." }
+
+	$hash = @{}
+
+	for ($i = 0; $i -lt $Names.Length; $i++) {
+		$hash.Add($Names[$i], $Values[$i])
+	}
+
+	return $hash
+}

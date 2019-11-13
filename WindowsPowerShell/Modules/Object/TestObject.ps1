@@ -265,5 +265,17 @@ class MergeObjectsTests {
 	}
 }
 
+[TestClass()]
+class ZipTests {
+	[TestMethod()]
+	[void] ThreeItems() {
+		$r = Zip ("a", "b", "c") (1, 2, 3)
+		TestAreEqual $r.Count 3
+		TestAreEqual $r.a 1
+		TestAreEqual $r.b 2
+		TestAreEqual $r.c 3
+	}
+}
+
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
-RunTests $standaloneLogFilePath ([DeepCopyTests]) ([MergeObjectsTests])
+RunTests $standaloneLogFilePath ([DeepCopyTests]) ([MergeObjectsTests]) ([ZipTests])
