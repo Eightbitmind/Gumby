@@ -5,92 +5,92 @@ using module TestUtils
 class TestUtilsTests {
 	[TestMethod()]
 	[void] TestObject_WithMatchingInts_Succeeds() {
-		XTestObject 1 1
+		TestObject 1 1
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingInts_Fails() {
-		TestIsFalse (XAreObjectsEqual 1 2)
+		TestIsFalse (AreObjectsEqual 1 2)
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingStrings_Succeeds() {
-		XTestObject 'abc' 'abc'
+		TestObject 'abc' 'abc'
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingStrings_Fails() {
-		TestIsFalse (XAreObjectsEqual 'abc' 'xyz')
+		TestIsFalse (AreObjectsEqual 'abc' 'xyz')
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingArrays_Succeeds() {
-		XTestObject @(10, 20, 30) @(10, 20, 30)
+		TestObject @(10, 20, 30) @(10, 20, 30)
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingArrays_Fails() {
-		TestIsFalse (XAreObjectsEqual @(10, 20, 30) @(10, 20, 40))
+		TestIsFalse (AreObjectsEqual @(10, 20, 30) @(10, 20, 40))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingObjects_Succeeds() {
-		XTestObject @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 30}
+		TestObject @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 30}
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingObjects_Fails() {
-		TestIsFalse (XAreObjectsEqual @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 46})
+		TestIsFalse (AreObjectsEqual @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 46})
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingObjectsWithArrays_Succeeds() {
-		XTestObject @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,3}
+		TestObject @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,3}
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingObjectsWithArrays_Fails() {
-		TestIsFalse (XAreObjectsEqual @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,4})
+		TestIsFalse (AreObjectsEqual @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,4})
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingArraysOfObjects_Succeeds() {
-		XTestObject (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dana"})
+		TestObject (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dana"})
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingArraysOfObjects_Fails() {
-		TestIsFalse (XAreObjectsEqual (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dora"}))
+		TestIsFalse (AreObjectsEqual (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dora"}))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingRegex_Succeeds() {
-		XTestObject "Emily" ([XRegexComparand]::new("^Em"))
+		TestObject "Emily" ([RegexComparand]::new("^Em"))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingRegex_Fails() {
-		TestIsFalse (XAreObjectsEqual "Esther" ([XRegexComparand]::new("^Em")))
+		TestIsFalse (AreObjectsEqual "Esther" ([RegexComparand]::new("^Em")))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingArrayOfRegex_Succeeds() {
-		XTestObject @("Fiona", "Gavin") @([XRegexComparand]::new("^Fi"), [XRegexComparand]::new("^Ga"))
+		TestObject @("Fiona", "Gavin") @([RegexComparand]::new("^Fi"), [RegexComparand]::new("^Ga"))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMismatchingArrayOfRegex_Fails() {
-		TestIsFalse (XAreObjectsEqual @("Fiona", "Gina") @([XRegexComparand]::new("^Fi"), [XRegexComparand]::new("^Ga")))
+		TestIsFalse (AreObjectsEqual @("Fiona", "Gina") @([RegexComparand]::new("^Fi"), [RegexComparand]::new("^Ga")))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithListContainingItems_Succeeds() {
-		XTestObject @(10, 20, 30, 40) ([XListContainsComparand]::new(@(20, 40)))
+		TestObject @(10, 20, 30, 40) ([ListContainsComparand]::new(@(20, 40)))
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithListNotContainingItems_Succeeds() {
-		TestIsFalse (XAreObjectsEqual @(10, 20, 30, 40) ([XListContainsComparand]::new(@(20, 21))))
+		TestIsFalse (AreObjectsEqual @(10, 20, 30, 40) ([ListContainsComparand]::new(@(20, 21))))
 	}
 }
 

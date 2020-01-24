@@ -42,11 +42,7 @@ function TestIsType($object, $type) {
 }
 
 function TestAreEqual($actual, $expected, $messagePrefix) {
-	if ($actual -eq $expected) {
-		[Log]::Success($messagePrefix + "value '$actual' matches expectation")
-	} else {
-		[Log]::Failure($messagePrefix + "actual '$($actual)', expected '$($expected)'")
-	}
+	AreValuesEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix
 }
 
 function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
@@ -105,9 +101,7 @@ function TestTuplesMatch($actual, $expected, $message = "Test Tuples") {
 	[Log]::Success("$($message): found expected items")
 }
 
-# --------------------------------------------------------------------------------------------------
-
-function XAreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
+function AreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
 	if ($actual -eq $expected) {
 		if ($logSuccess) { $logSuccess.Invoke("$($messagePrefix)value '$actual' matches expectation") }
 		return $true
@@ -117,14 +111,14 @@ function XAreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messageP
 	}
 }
 
-class XComparandBase {
+class ComparandBase {
 	[bool] IsEqual($actual, $logSuccess, $logFailure, $messagePrefix) {
 		throw "derived classes must implement this method"
 	}
 }
 
-class XRegexComparand : XComparandBase {
-	XRegexComparand($pattern) {
+class RegexComparand : ComparandBase {
+	RegexComparand($pattern) {
 		$this.pattern = $pattern
 	}
 
@@ -141,8 +135,8 @@ class XRegexComparand : XComparandBase {
 	hidden [string] $pattern
 }
 
-class XListContainsComparand : XComparandBase {
-	XListContainsComparand($expectedItems) {
+class ListContainsComparand : ComparandBase {
+	ListContainsComparand($expectedItems) {
 		$this.expectedItems = $expectedItems
 	}
 
@@ -160,7 +154,7 @@ class XListContainsComparand : XComparandBase {
 				# We're performing a kind of "look-ahead" search and don't won't to log failures
 				# when the current actual item does not match.
 				$successMessage = [System.Text.StringBuilder]::new()
-				if (XAreObjectsEqual $actualItem $expectedItem {param($m) $successMessage.Append($m)} {<# empty 'logFailure' lambda #>} "$($messagePrefix)item $(($actualItemIndex++)): ") {
+				if (AreObjectsEqual $actualItem $expectedItem {param($m) $successMessage.Append($m)} {<# empty 'logFailure' lambda #>} "$($messagePrefix)item $(($actualItemIndex++)): ") {
 					if ($logSuccess) { $logSuccess.Invoke($successMessage.ToString()) }
 					break
 				}
@@ -191,11 +185,11 @@ class XListContainsComparand : XComparandBase {
 	hidden $expectedItems
 }
 
-function XAreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
-	if ($expected -is [XComparandBase]) {
+function AreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
+	if ($expected -is [ComparandBase]) {
 		return $expected.IsEqual($actual, $logSuccess, $logFailure, $messagePrefix)
 	} elseif (($expected -is [string]) -or ($expected -is [int])) {
-		return (XAreValuesEqual $actual $expected $logSuccess $logFailure $messagePrefix)
+		return (AreValuesEqual $actual $expected $logSuccess $logFailure $messagePrefix)
 	} elseif ($expected -is [array]) {
 		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between
 		# objects and arrays as both implement this interface.
@@ -211,7 +205,7 @@ function XAreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $message
 				return $false
 			}
 
-			$result = $result -and (XAreObjectsEqual $actualEnum.Current $expectedEnum.Current $logSuccess $logFailure "$($messagePrefix)item $(($itemIndex++)): ")
+			$result = $result -and (AreObjectsEqual $actualEnum.Current $expectedEnum.Current $logSuccess $logFailure "$($messagePrefix)item $(($itemIndex++)): ")
 		}
 
 		if ($expectedEnum.MoveNext()) {
@@ -227,114 +221,15 @@ function XAreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $message
 		foreach ($key in $expected.Keys) {
 			$expectedValue = $expected[$key]
 			$actualValue = $actual.($key)
-			$result = $result -and (XAreObjectsEqual $actualValue $expectedValue $logSuccess $logFailure "$($messagePrefix)member '$key': ")
+			$result = $result -and (AreObjectsEqual $actualValue $expectedValue $logSuccess $logFailure "$($messagePrefix)member '$key': ")
 		}
 
 		return $result
 	}
 }
 
-function XTestObject($actual, $expected, $messagePrefix) {
-	[void](XAreObjectsEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix)
-}
-
-# --------------------------------------------------------------------------------------------------
-
-class ComparandBase {
-	[bool] Compare($actual) {
-		throw "derived classes must implement this method"
-	}
-}
-
-class ListContainsComparand : ComparandBase {
-	ListContainsComparand($expectedItems) {
-		$this.expectedItems = $expectedItems
-	}
-
-	[bool] Compare($actualItems) {
-
-		# make a copy to be re-testable and to ensure an ArrayList
-		$expectedItemsCopy = [System.Collections.ArrayList]::new($this.expectedItems)
-
-		foreach ($actualItem in $actualItems) {
-
-			$expectedItemIndex = 0
-			foreach ($expectedItem in $expectedItemsCopy) {
-				# >>>>>>>>>>>>>>>>>>>>>>>>>>
-				# tentative test, should not log
-				if (AreObjectsEqual $actualItem $expectedItem) {
-					break
-				}
-				++$expectedItemIndex
-			}
-
-			if ($expectedItemIndex -lt $expectedItemsCopy.Count) {
-				$expectedItemsCopy.RemoveAt($expectedItemIndex)
-			}
-
-		}
-
-		return ($expectedItemsCopy.Count -eq 0)
-	}
-
-	hidden $expectedItems
-}
-
-function _TestObject($actual, $expected, $messagePrefix) {
-	if ($expected -is [ComparandBase]) {
-
-		if ($expected.Compare($actual)) {
-			[Log]::Success("$($messagePrefix)'$actual' matches $expected")
-		} else {
-			[Log]::Failure("$($messagePrefix)'$actual' does not match $expected")
-		}
-
-	} elseif (($expected -is [string]) -or ($expected -is [int])) {
-		TestAreEqual $actual $expected $messagePrefix
-	} elseif ($expected -is [array]) {
-		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between
-		# objects and arrays as both implement this interface.
-
-		$actualEnum = $actual.GetEnumerator()
-		$expectedEnum = $expected.GetEnumerator()
-		$itemIndex = 0
-
-		while ($actualEnum.MoveNext()) {
-			if (!$expectedEnum.MoveNext()) {
-				# Write-Host -ForegroundColor Red "$($message): more items than expected"
-				[Log]::Failure("$($messagePrefix)more items than expected")
-			}
-
-			TestObject ($actualEnum.Current) ($expectedEnum.Current) "$($messagePrefix)item $(($itemIndex++)): "
-		}
-
-		if ($expectedEnum.MoveNext()) {
-			# Write-Host -ForegroundColor Red "$($message): fewer items than expected"
-			[Log]::Failure("$($messagePrefix)fewer items than expected")
-		}
-	
-		# Write-Host -ForegroundColor Green "$($message): found expected items"
-		[Log]::Success("$($messagePrefix)found expected items")
-	} elseif ($expected -is [object]) {
-
-		foreach ($key in $expected.Keys) {
-	#Write-Host "key '$key'"
-
-			$expectedValue = $expected[$key]
-			$actualValue = $actual.($key)
-
-			TestObject $actualValue $expectedValue "$($messagePrefix)member '$key': "
-
-	#Write-Host "expected value '$expectedValue'"
-
-			# if (($expectedValue -is [string]) -or ($expectedValue -is [int])) {
-			# 	TestAreEqual $actualValue $expectedValue "'$key' member has value '$expectedValue'"
-			# } elseif ($expectedValue -is [object]) {
-			# 	TestObject $actualValue $expectedValue
-			# }
-		}
-	}
-
+function TestObject($actual, $expected, $messagePrefix) {
+	[void](AreObjectsEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix)
 }
 
 class TestClass : Attribute {}
