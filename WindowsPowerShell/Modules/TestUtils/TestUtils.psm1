@@ -42,7 +42,7 @@ function TestIsType($object, $type) {
 }
 
 function TestAreEqual($actual, $expected, $messagePrefix) {
-	AreValuesEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix
+	[void] (AreValuesEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix)
 }
 
 function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
@@ -51,29 +51,6 @@ function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
 	} else {
 		[Log]::Failure("'$($actual)' is not greater or equal '$expected'")
 	}
-}
-
-function TestTuplesAreEqual($actual, $expected, $message = "Test Tuples") {
-	$actualEnum = $actual.GetEnumerator()
-	$expectedEnum = $expected.GetEnumerator()
-
-	while ($actualEnum.MoveNext()) {
-		if (!$expectedEnum.MoveNext()) {
-			[Log]::Failure("$($message): more items than expected")
-		}
-
-		if ($actualEnum.Current -eq $expectedEnum.Current) {
-			[Log]::Success("$($message): found expected item '$($expectedEnum.Current)'")
-		} else {
-			[Log]::Failure("$($message): actual '$($actualEnum.Current)', expected '$($expectedEnum.Current)'")
-		}
-	}
-
-	if ($expectedEnum.MoveNext()) {
-		[Log]::Failure("$($message): fewer items than expected")
-	}
-
-	[Log]::Success("$($message): found expected items")
 }
 
 function TestTuplesMatch($actual, $expected, $message = "Test Tuples") {

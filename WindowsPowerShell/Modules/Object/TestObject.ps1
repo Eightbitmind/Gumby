@@ -49,7 +49,7 @@ class DeepCopyTests {
 
 		# modification of original should have no effect on copy
 		TestIsType $copy ([array])
-		TestTuplesAreEqual $copy (1, 2, 3)
+		TestObject $copy (1, 2, 3)
 	}
 
 	[TestMethod()]
@@ -80,9 +80,9 @@ class DeepCopyTests {
 
 		TestIsType $copy ([array])
 		TestAreEqual $copy.Count 3
-		TestTuplesAreEqual $copy[0] (1, 2, 3)
-		TestTuplesAreEqual $copy[1] (10, 20, 30)
-		TestTuplesAreEqual $copy[2] (100, 200, 300)
+		TestObject $copy[0] (1, 2, 3)
+		TestObject $copy[1] (10, 20, 30)
+		TestObject $copy[2] (100, 200, 300)
 	}
 
 	[TestMethod()]
@@ -153,7 +153,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6)
+		TestObject $m (1, 2, 3, 4, 5, 6)
 	}
 
 	[TestMethod()]
@@ -163,7 +163,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6, 7, 8)
+		TestObject $m (1, 2, 3, 4, 5, 6, 7, 8)
 	}
 
 	[TestMethod()]
@@ -173,7 +173,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6, 7, 8)
+		TestObject $m (1, 2, 3, 4, 5, 6, 7, 8)
 	}
 
 	[TestMethod()]
@@ -226,7 +226,7 @@ class MergeObjectsTests {
 		TestAreEqual $m.Keys.Count 3
 		TestAreEqual $m.Name "Seattle"
 		TestAreEqual $m.Demonym "Seattleite"
-		TestTuplesAreEqual $m.ZipCodes (98101, 98102, 98103, 98104, 98105)
+		TestObject $m.ZipCodes (98101, 98102, 98103, 98104, 98105)
 	}
 
 	[TestMethod()]
@@ -241,12 +241,12 @@ class MergeObjectsTests {
 		TestAreEqual $m[0].Keys.Count 3
 		TestAreEqual $m[0].Name "Portland"
 		TestAreEqual $m[0].Demonym "Portlander"
-		TestTuplesAreEqual $m[0].ZipCodes (97086, 97087, 97088, 97089, 97090)
+		TestObject $m[0].ZipCodes (97086, 97087, 97088, 97089, 97090)
 		
 		TestAreEqual $m[1].Keys.Count 3
 		TestAreEqual $m[1].Name "Seattle"
 		TestAreEqual $m[1].Demonym "Seattleite"
-		TestTuplesAreEqual $m[1].ZipCodes (98101, 98102, 98103, 98104, 98105)
+		TestObject $m[1].ZipCodes (98101, 98102, 98103, 98104, 98105)
 	}
 
 	[TestMethod()]
@@ -261,7 +261,7 @@ class MergeObjectsTests {
 		TestAreEqual $m.Name "Portland"
 		TestAreEqual $m.Demonym "Portlander"
 		TestAreEqual $m.State "Oregon"
-		TestTuplesAreEqual $m.ZipCodes (97086, 97087, 97088, 97089, 97090)
+		TestObject $m.ZipCodes (97086, 97087, 97088, 97089, 97090)
 	}
 }
 

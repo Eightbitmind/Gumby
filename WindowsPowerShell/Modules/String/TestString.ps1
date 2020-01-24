@@ -79,7 +79,7 @@ class StringModuleTests {
 
 	[TestMethod()]
 	[void] SplitCSVLine_WellFormedCSVLine() {
-		TestTuplesAreEqual (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
+		TestObject (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
 	}
 }
 

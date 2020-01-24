@@ -260,39 +260,39 @@ class TreeViewTests {
 			[GASRTestItem],
 			0, 0, 10, 10, [System.ConsoleColor]::Black, [System.ConsoleColor]::White)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 0) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 1) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(0, 0) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(0, 1) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 0) (1, 1)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 1) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(1, 0) (1, 1)
+		TestObject $tv.GetAncestralSiblingRange(1, 1) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 0) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 1) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(2, 0) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(2, 1) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 0) (3, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 1) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 2) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(3, 0) (3, 8)
+		TestObject $tv.GetAncestralSiblingRange(3, 1) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(3, 2) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 0) (4, 7)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 1) (3, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 2) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 3) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(4, 0) (4, 7)
+		TestObject $tv.GetAncestralSiblingRange(4, 1) (3, 8)
+		TestObject $tv.GetAncestralSiblingRange(4, 2) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(4, 3) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 0) (5, 5)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 1) (4, 7)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 2) (3, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 3) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 4) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(5, 0) (5, 5)
+		TestObject $tv.GetAncestralSiblingRange(5, 1) (4, 7)
+		TestObject $tv.GetAncestralSiblingRange(5, 2) (3, 8)
+		TestObject $tv.GetAncestralSiblingRange(5, 3) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(5, 4) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 0) (4, 7)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 1) (3, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 2) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 3) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(6, 0) (4, 7)
+		TestObject $tv.GetAncestralSiblingRange(6, 1) (3, 8)
+		TestObject $tv.GetAncestralSiblingRange(6, 2) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(6, 3) (0, 8)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 0) (4, 7)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 1) (3, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 2) (0, 8)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(7, 3) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(7, 0) (4, 7)
+		TestObject $tv.GetAncestralSiblingRange(7, 1) (3, 8)
+		TestObject $tv.GetAncestralSiblingRange(7, 2) (0, 8)
+		TestObject $tv.GetAncestralSiblingRange(7, 3) (0, 8)
 	}
 
 	[TestMethod()]
@@ -311,34 +311,34 @@ class TreeViewTests {
 			[GASRTestItem],
 			0, 0, 10, 10, [System.ConsoleColor]::Black, [System.ConsoleColor]::White)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 0) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 1) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(0, 2) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(0, 0) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(0, 1) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(0, 2) (0, 6)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 0) (1, 3)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 1) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(1, 2) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(1, 0) (1, 3)
+		TestObject $tv.GetAncestralSiblingRange(1, 1) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(1, 2) (0, 6)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 0) (2, 3)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 1) (1, 3)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 2) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(2, 3) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(2, 0) (2, 3)
+		TestObject $tv.GetAncestralSiblingRange(2, 1) (1, 3)
+		TestObject $tv.GetAncestralSiblingRange(2, 2) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(2, 3) (0, 6)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 0) (3, 3)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 1) (2, 3)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 2) (1, 3)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 3) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(3, 4) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(3, 0) (3, 3)
+		TestObject $tv.GetAncestralSiblingRange(3, 1) (2, 3)
+		TestObject $tv.GetAncestralSiblingRange(3, 2) (1, 3)
+		TestObject $tv.GetAncestralSiblingRange(3, 3) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(3, 4) (0, 6)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 0) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(4, 1) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(4, 0) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(4, 1) (0, 6)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 0) (5, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 1) (0, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(5, 2) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(5, 0) (5, 6)
+		TestObject $tv.GetAncestralSiblingRange(5, 1) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(5, 2) (0, 6)
 
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 0) (5, 6)
-		TestTuplesAreEqual $tv.GetAncestralSiblingRange(6, 1) (0, 6)
+		TestObject $tv.GetAncestralSiblingRange(6, 0) (5, 6)
+		TestObject $tv.GetAncestralSiblingRange(6, 1) (0, 6)
 	}
 }
 
