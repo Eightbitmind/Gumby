@@ -92,6 +92,21 @@ class TestUtilsTests {
 	[void] TestObject_WithListNotContainingItems_Succeeds() {
 		TestIsFalse (AreObjectsEqual @(10, 20, 30, 40) ([ListContainsComparand]::new(@(20, 21))))
 	}
+
+	[TestMethod()]
+	[void] TestObject_WithListContainingMatchingRegexs_Succeeds() {
+		TestObject @("Hanna", "Irene", "Joyce") ([ListContainsComparand]::new(@([RegexComparand]::new("anna"), [RegexComparand]::new("oyce"))))
+	}
+
+	[TestMethod()]
+	[void] TestObject_WithListContainingNonMatchingRegexs_Fails() {
+		TestIsFalse (AreObjectsEqual @("Hanna", "Irene", "Joyce") ([ListContainsComparand]::new(@([RegexComparand]::new("anna"), [RegexComparand]::new("oice")))))
+	}
+
+	[TestMethod()]
+	[void] TestObject_WithNegatedInt_Succeeds() {
+		TestObject 1 ([NotComparand]::new(2))
+	}
 }
 
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"

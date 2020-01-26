@@ -25,6 +25,7 @@ function TestIsNull($actual, $message = "object is null") {
 	}
 }
 
+# TODO: NotNullComparand?
 function TestIsNotNull($actual, $message = "object is not null") {
 	if ($null -ne $actual) {
 		[Log]::Success($message)
@@ -33,6 +34,7 @@ function TestIsNotNull($actual, $message = "object is not null") {
 	}
 }
 
+# TODO: TypeComparand?
 function TestIsType($object, $type) {
 	if ($object -is $type) {
 		[Log]::Success("object is of type $($type.Name)")
@@ -53,31 +55,6 @@ function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
 	}
 }
 
-function TestTuplesMatch($actual, $expected, $message = "Test Tuples") {
-	$actualEnum = $actual.GetEnumerator()
-	$expectedEnum = $expected.GetEnumerator()
-
-	while ($actualEnum.MoveNext()) {
-		if (!$expectedEnum.MoveNext()) {
-			# Write-Host -ForegroundColor Red "$($message): more items than expected"
-			[Log]::Failure("$($message): more items than expected")
-		}
-
-		if ($actualEnum.Current -notmatch $expectedEnum.Current) {
-			# Write-Host -ForegroundColor Red "$($message): actual '$($actualEnum.Current)', expected '$($expectedEnum.Current)'"
-			[Log]::Failure("$($message): actual '$($actualEnum.Current)', expected '$($expectedEnum.Current)'")
-		}
-	}
-
-	if ($expectedEnum.MoveNext()) {
-		# Write-Host -ForegroundColor Red "$($message): fewer items than expected"
-		[Log]::Failure("$($message): fewer items than expected")
-	}
-
-	# Write-Host -ForegroundColor Green "$($message): found expected items"
-	[Log]::Success("$($message): found expected items")
-}
-
 function AreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
 	if ($actual -eq $expected) {
 		if ($logSuccess) { $logSuccess.Invoke("$($messagePrefix)value '$actual' matches expectation") }
@@ -88,6 +65,8 @@ function AreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messagePr
 	}
 }
 
+# TODO: "Comparand" sounds stilted. How about "ExpectedObject", "ExpectedRegex", "ExpectedListContains" ...?
+# What about negative expectations? Could this be solved with "operator" comparands (And, Or, Not)?
 class ComparandBase {
 	[bool] IsEqual($actual, $logSuccess, $logFailure, $messagePrefix) {
 		throw "derived classes must implement this method"
@@ -160,6 +139,20 @@ class ListContainsComparand : ComparandBase {
 	}
 
 	hidden $expectedItems
+}
+
+class NotComparand : ComparandBase {
+	NotComparand($expected) {
+		$this.expected = $expected
+	}
+
+	[bool] IsEqual($actual, $logSuccess, $logFailure, $messagePrefix) {
+
+		# swapping $logSuccess and $logFailure below might not be correct
+		return !(AreObjectsEqual $actual $this.expected $logFailure $logSuccess "$($messagePrefix)negate: ")
+	}
+
+	hidden $expected
 }
 
 function AreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {

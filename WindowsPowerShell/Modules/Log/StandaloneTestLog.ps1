@@ -26,12 +26,13 @@ using module TestUtils
 	[Log]::Listeners.Add($fll) | Out-Null
 	[Log]::Comment("lobsglog")
 	[Log]::Warning("logsblog")
+	$content = Get-Content $logFileName
 
 	TestIsTrue (Test-Path $logFileName) "log file exists"
 	TestAreEqual ([Log]::WarningCount()) 1
 	TestAreEqual ([Log]::ErrorCount()) 0
 
-	TestTuplesMatch (Get-Content $logFileName) @("COMMENT: lobsglog", "WARNING: logsblog")
+	TestObject $content @([RegexComparand]::new("COMMENT: lobsglog"), [RegexComparand]::new("WARNING: logsblog"))
 
 	Remove-Item $logFileName
 	[Log]::Reset()
