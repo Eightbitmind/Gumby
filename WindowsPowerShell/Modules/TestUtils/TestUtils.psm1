@@ -55,12 +55,12 @@ function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
 	}
 }
 
-function AreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
+function AreValuesEqual($actual, $expected, $messagePrefix) {
 	if ($actual -eq $expected) {
-		if ($logSuccess) { $logSuccess.Invoke("$($messagePrefix)value '$actual' matches expectation") }
+		[Log]::Success("$($messagePrefix)value '$actual' matches expectation")
 		return $true
 	} else {
-		if ($logFailure) { $logFailure.Invoke("$($messagePrefix)actual '$($actual)', expected '$($expected)'") }
+		[Log]::Failure("$($messagePrefix)actual '$($actual)', expected '$($expected)'")
 		return $false
 	}
 }
@@ -68,7 +68,7 @@ function AreValuesEqual($actual, $expected, $logSuccess, $logFailure, $messagePr
 # TODO: "Comparand" sounds stilted. How about "ExpectedObject", "ExpectedRegex", "ExpectedListContains" ...?
 # What about negative expectations? Could this be solved with "operator" comparands (And, Or, Not)?
 class ComparandBase {
-	[bool] IsEqual($actual, $logSuccess, $logFailure, $messagePrefix) {
+	[bool] IsEqual($actual, $messagePrefix) {
 		throw "derived classes must implement this method"
 	}
 }
@@ -78,12 +78,12 @@ class RegexComparand : ComparandBase {
 		$this.pattern = $pattern
 	}
 
-	[bool] IsEqual($actual, $logSuccess, $logFailure, $messagePrefix) {
+	[bool] IsEqual($actual, $messagePrefix) {
 		$result = $actual -match $this.pattern
 		if ($result) {
-			if ($logSuccess) { $logSuccess.Invoke("$($messagePrefix)`"$actual`" matches pattern `"$($this.pattern)`"") }
+			[Log]::Success("$($messagePrefix)`"$actual`" matches pattern `"$($this.pattern)`"")
 		} else {
-			if ($logFailure) { $logFailure.Invoke("$($messagePrefix)`"$actual`" does not match pattern `"$($this.pattern)`"") }
+			[Log]::Failure("$($messagePrefix)`"$actual`" does not match pattern `"$($this.pattern)`"")
 		}
 		return $result
 	}
@@ -91,54 +91,39 @@ class RegexComparand : ComparandBase {
 	hidden [string] $pattern
 }
 
-class ListContainsComparand : ComparandBase {
-	ListContainsComparand($expectedItems) {
-		$this.expectedItems = $expectedItems
+class ContainsComparand : ComparandBase {
+	ContainsComparand($expected) {
+		$this.expected = $expected
 	}
 
-	[bool] IsEqual($actualItems, $logSuccess, $logFailure, $messagePrefix) {
+	[bool] IsEqual($actualItems, $messagePrefix) {
 
-		# make a copy to be re-testable and to ensure an ArrayList
-		$expectedItemsCopy = [System.Collections.ArrayList]::new($this.expectedItems)
-
-		$actualItemIndex = 0
-		foreach ($actualItem in $actualItems) {
-
-			$expectedItemIndex = 0
-			foreach ($expectedItem in $expectedItemsCopy) {
-
-				# We're performing a kind of "look-ahead" search and don't won't to log failures
-				# when the current actual item does not match.
-				$successMessage = [System.Text.StringBuilder]::new()
-				if (AreObjectsEqual $actualItem $expectedItem {param($m) $successMessage.Append($m)} {<# empty 'logFailure' lambda #>} "$($messagePrefix)item $(($actualItemIndex++)): ") {
-					if ($logSuccess) { $logSuccess.Invoke($successMessage.ToString()) }
-					break
-				}
-
-				++$expectedItemIndex
+		# We're performing an opportunistic search below where a non-matching actual item does not
+		# necessarily constitute a failure.
+		$logInterceptor = [LogInterceptor]::new({param($interceptor, $messageType, $message)
+			if ($messageType -eq ([LogMessageType]::Success)) {
+				$interceptor.DispatchMessage($messageType, $message)
 			}
+		})
 
-			if ($expectedItemIndex -lt $expectedItemsCopy.Count) {
-				$expectedItemsCopy.RemoveAt($expectedItemIndex)
-			}
-
-		}
-
-		if ($expectedItemsCopy.Count -eq 0) {
-			return $true
-		} else {
-
-			if ($logFailure) {
-				foreach ($missingExpectedItem in $expectedItemsCopy) {
-					$logFailure.Invoke("$($messagePrefix)missing expected item '$missingExpectedItem'")
+		try {
+			$actualItemIndex = 0
+			foreach ($actualItem in $actualItems) {
+				if (AreObjectsEqual $actualItem $this.expected "$($messagePrefix)item $(($actualItemIndex++)): ") {
+					[Log]::Failure("$($messagePrefix)found expected item '$($this.expected)'")
+					return $true
 				}
 			}
 
-			return $false
+		} finally {
+			$logInterceptor.Dispose()
 		}
+
+		[Log]::Failure("$($messagePrefix)missing item '$($this.expected)'")
+		return $false
 	}
 
-	hidden $expectedItems
+	hidden $expected
 }
 
 class NotComparand : ComparandBase {
@@ -146,20 +131,95 @@ class NotComparand : ComparandBase {
 		$this.expected = $expected
 	}
 
-	[bool] IsEqual($actual, $logSuccess, $logFailure, $messagePrefix) {
-
-		# swapping $logSuccess and $logFailure below might not be correct
-		return !(AreObjectsEqual $actual $this.expected $logFailure $logSuccess "$($messagePrefix)negate: ")
+	[bool] IsEqual($actual, $messagePrefix) {
+		$logInterceptor = [LogInterceptor]::new({ param ($interceptor, $messageType, $message)
+			switch ($messageType) {
+				([LogMessageType]::Failure) { $messageType = ([LogMessageType]::Success)}
+				([LogMessageType]::Success) { $messageType = ([LogMessageType]::Failure)}
+			}
+			$interceptor.DispatchMessage($messageType, $message)
+		})
+		try {
+			return !(AreObjectsEqual $actual $this.expected "$($messagePrefix)negate: ")
+		} finally {
+			$logInterceptor.Dispose()
+		}
 	}
 
 	hidden $expected
 }
 
-function AreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messagePrefix) {
+class AndComparand : ComparandBase {
+	AndComparand($expected) {
+		$this.expected  = $expected
+	}
+
+	[bool] IsEqual($actual, $messagePrefix) {
+		foreach ($expectedTerm in $this.expected) {
+			if (!(AreObjectsEqual $actual $expectedTerm "$($messagePrefix)AND: ")) {
+				[Log]::Failure("$($messagePrefix)AND evaluates to false")
+				return $false
+			}
+		}
+		[Log]::Success("$($messagePrefix)AND evaluates to true")
+		return $true
+	}
+
+	hidden $expected
+}
+
+class OrComparand : ComparandBase {
+	OrComparand($expected) {
+		$this.expected  = $expected
+	}
+
+	[bool] IsEqual($actual, $messagePrefix) {
+		# A false OR term does not necessarily constitute a failure.
+		$logInterceptor = [LogInterceptor]::new({param($interceptor, $messageType, $message)
+			if ($messageType -eq ([LogMessageType]::Failure)) {
+				$messageType = ([LogMessageType]::Comment)
+			}
+			$interceptor.DispatchMessage($messageType, $message)
+		})
+
+		$result = $false
+		try {
+			foreach ($expectedTerm in $this.expected) {
+				if (AreObjectsEqual $actual $expectedTerm "$($messagePrefix)OR: ") {
+					$result = $true
+					break
+				}
+			}
+		} finally {
+			$logInterceptor.Dispose()
+		}
+
+		if ($result) {
+			[Log]::Success("$($messagePrefix)OR evaluates to true")
+		} else {
+			[Log]::Failure("$($messagePrefix)OR evaluates to false")
+		}
+		return $result
+	}
+
+	hidden $expected
+}
+
+#region Comparand helper functions
+
+function ExpectRegex($pattern) { [RegexComparand]::new($pattern) }
+function ExpectContains($item) { [ContainsComparand]::new($item) }
+function ExpectNot($operand) { [NotComparand]::new($operand) }
+function ExpectAnd { [AndComparand]::new($args) }
+function ExpectOr { [OrComparand]::new($args) }
+
+#endregion
+
+function AreObjectsEqual($actual, $expected, $messagePrefix) {
 	if ($expected -is [ComparandBase]) {
-		return $expected.IsEqual($actual, $logSuccess, $logFailure, $messagePrefix)
+		return $expected.IsEqual($actual, $messagePrefix)
 	} elseif (($expected -is [string]) -or ($expected -is [int])) {
-		return (AreValuesEqual $actual $expected $logSuccess $logFailure $messagePrefix)
+		return (AreValuesEqual $actual $expected $messagePrefix)
 	} elseif ($expected -is [array]) {
 		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between
 		# objects and arrays as both implement this interface.
@@ -171,15 +231,15 @@ function AreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messageP
 
 		while ($actualEnum.MoveNext()) {
 			if (!$expectedEnum.MoveNext()) {
-				if ($logFailure) { $logFailure.Invoke("$($messagePrefix)more items than expected") }
+				[Log]::Failure("$($messagePrefix)more items than expected")
 				return $false
 			}
 
-			$result = $result -and (AreObjectsEqual $actualEnum.Current $expectedEnum.Current $logSuccess $logFailure "$($messagePrefix)item $(($itemIndex++)): ")
+			$result = $result -and (AreObjectsEqual $actualEnum.Current $expectedEnum.Current "$($messagePrefix)item $(($itemIndex++)): ")
 		}
 
 		if ($expectedEnum.MoveNext()) {
-			if ($logFailure) { $logFailure.Invoke("$($messagePrefix)fewer items than expected")}
+			[Log]::Failure("$($messagePrefix)fewer items than expected")
 			return $false
 		}
 
@@ -191,7 +251,7 @@ function AreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messageP
 		foreach ($key in $expected.Keys) {
 			$expectedValue = $expected[$key]
 			$actualValue = $actual.($key)
-			$result = $result -and (AreObjectsEqual $actualValue $expectedValue $logSuccess $logFailure "$($messagePrefix)member '$key': ")
+			$result = $result -and (AreObjectsEqual $actualValue $expectedValue "$($messagePrefix)member '$key': ")
 		}
 
 		return $result
@@ -199,7 +259,7 @@ function AreObjectsEqual($actual, $expected, $logSuccess, $logFailure, $messageP
 }
 
 function TestObject($actual, $expected, $messagePrefix) {
-	[void](AreObjectsEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix)
+	[void](AreObjectsEqual $actual $expected $messagePrefix)
 }
 
 class TestClass : Attribute {}
