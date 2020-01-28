@@ -25,7 +25,7 @@ function TestIsNull($actual, $message = "object is null") {
 	}
 }
 
-# TODO: NotNullComparand?
+# TODO: NotNullExpectedObject?
 function TestIsNotNull($actual, $message = "object is not null") {
 	if ($null -ne $actual) {
 		[Log]::Success($message)
@@ -34,7 +34,7 @@ function TestIsNotNull($actual, $message = "object is not null") {
 	}
 }
 
-# TODO: TypeComparand?
+# TODO: TypeExpectedObject?
 function TestIsType($object, $type) {
 	if ($object -is $type) {
 		[Log]::Success("object is of type $($type.Name)")
@@ -65,16 +65,14 @@ function AreValuesEqual($actual, $expected, $messagePrefix) {
 	}
 }
 
-# TODO: "Comparand" sounds stilted. How about "ExpectedObject", "ExpectedRegex", "ExpectedListContains" ...?
-# What about negative expectations? Could this be solved with "operator" comparands (And, Or, Not)?
-class ComparandBase {
+class ExpectedObjectBase {
 	[bool] IsEqual($actual, $messagePrefix) {
 		throw "derived classes must implement this method"
 	}
 }
 
-class RegexComparand : ComparandBase {
-	RegexComparand($pattern) {
+class RegexExpectedObject : ExpectedObjectBase {
+	RegexExpectedObject($pattern) {
 		$this.pattern = $pattern
 	}
 
@@ -91,8 +89,8 @@ class RegexComparand : ComparandBase {
 	hidden [string] $pattern
 }
 
-class ContainsComparand : ComparandBase {
-	ContainsComparand($expected) {
+class ContainsExpectedObject : ExpectedObjectBase {
+	ContainsExpectedObject($expected) {
 		$this.expected = $expected
 	}
 
@@ -126,8 +124,8 @@ class ContainsComparand : ComparandBase {
 	hidden $expected
 }
 
-class NotComparand : ComparandBase {
-	NotComparand($expected) {
+class NotExpectedObject : ExpectedObjectBase {
+	NotExpectedObject($expected) {
 		$this.expected = $expected
 	}
 
@@ -149,8 +147,8 @@ class NotComparand : ComparandBase {
 	hidden $expected
 }
 
-class AndComparand : ComparandBase {
-	AndComparand($expected) {
+class AndExpectedObject : ExpectedObjectBase {
+	AndExpectedObject($expected) {
 		$this.expected  = $expected
 	}
 
@@ -168,8 +166,8 @@ class AndComparand : ComparandBase {
 	hidden $expected
 }
 
-class OrComparand : ComparandBase {
-	OrComparand($expected) {
+class OrExpectedObject : ExpectedObjectBase {
+	OrExpectedObject($expected) {
 		$this.expected  = $expected
 	}
 
@@ -207,16 +205,16 @@ class OrComparand : ComparandBase {
 
 #region Comparand helper functions
 
-function ExpectRegex($pattern) { [RegexComparand]::new($pattern) }
-function ExpectContains($item) { [ContainsComparand]::new($item) }
-function ExpectNot($operand) { [NotComparand]::new($operand) }
-function ExpectAnd { [AndComparand]::new($args) }
-function ExpectOr { [OrComparand]::new($args) }
+function ExpectRegex($pattern) { [RegexExpectedObject]::new($pattern) }
+function ExpectContains($item) { [ContainsExpectedObject]::new($item) }
+function ExpectNot($operand) { [NotExpectedObject]::new($operand) }
+function ExpectAnd { [AndExpectedObject]::new($args) }
+function ExpectOr { [OrExpectedObject]::new($args) }
 
 #endregion
 
 function AreObjectsEqual($actual, $expected, $messagePrefix) {
-	if ($expected -is [ComparandBase]) {
+	if ($expected -is [ExpectedObjectBase]) {
 		return $expected.IsEqual($actual, $messagePrefix)
 	} elseif (($expected -is [string]) -or ($expected -is [int])) {
 		return (AreValuesEqual $actual $expected $messagePrefix)
