@@ -6,27 +6,21 @@ class DeepCopyTests {
 	[void] DeepCopy_Bool() {
 		$original = $true
 		$copy = DeepCopy $original
-
-		TestIsType $copy ([bool])
-		TestIsTrue $copy
+		TestObject $copy (ExpectAnd $true (ExpectType ([bool])))
 	}
 
 	[TestMethod()]
 	[void] DeepCopy_Int() {
 		$original = 1
 		$copy = DeepCopy $original
-
-		TestIsType $copy ([int])
-		TestAreEqual $copy 1
+		TestObject $copy (ExpectAnd 1 (ExpectType ([int])))
 	}
 
 	[TestMethod()]
 	[void] DeepCopy_String() {
 		$original = "abc"
 		$copy = DeepCopy $original
-
-		TestIsType $copy ([string])
-		TestAreEqual $copy "abc"
+		TestObject $copy (ExpectAnd "abc" (ExpectType ([string])))
 	}
 
 	[TestMethod()]
@@ -34,7 +28,7 @@ class DeepCopyTests {
 		$original = {param($n) $n + 1}
 		$copy = DeepCopy $original
 
-		TestIsType $copy ([scriptblock])
+		TestObject $copy (ExpectType ([scriptblock]))
 		TestAreEqual $copy.Invoke(1) 2
 	}
 
@@ -48,8 +42,7 @@ class DeepCopyTests {
 		TestAreEqual $original[0] 2
 
 		# modification of original should have no effect on copy
-		TestIsType $copy ([array])
-		TestObject $copy (1, 2, 3)
+		TestObject $copy (ExpectAnd (1, 2, 3) (ExpectType ([array])))
 	}
 
 	[TestMethod()]
@@ -62,9 +55,7 @@ class DeepCopyTests {
 		TestAreEqual $original.Age 28
 
 		# modification of original should have no effect on copy
-		TestAreEqual $copy.Keys.Count 2
-		TestAreEqual $copy.Name "Anton"
-		TestAreEqual $copy.Age 27
+		TestObject $copy (ExpectAnd @{Name = "Anton"; Age = 27} (ExpectKeyCountEqual 2))
 	}
 
 	[TestMethod()]
@@ -77,12 +68,7 @@ class DeepCopyTests {
 		TestAreEqual $original[1][0] 11
 
 		# modification of original should have no effect on copy
-
-		TestIsType $copy ([array])
-		TestAreEqual $copy.Count 3
-		TestObject $copy[0] (1, 2, 3)
-		TestObject $copy[1] (10, 20, 30)
-		TestObject $copy[2] (100, 200, 300)
+		TestObject $copy @( @(1,2,3), @(10,20,30), @(100, 200, 300) )
 	}
 
 	[TestMethod()]
@@ -99,31 +85,21 @@ class DeepCopyTests {
 		TestAreEqual $original.Portland.Population 583777
 
 		# modification of original should have no effect on copy
-
-		TestAreEqual $copy.Keys.Count 3
-
-		TestAreEqual $copy.Portland.Keys.Count 3
-		TestAreEqual $copy.Portland.Population 583776
-		TestAreEqual $copy.Portland.Area 145
-		TestAreEqual $copy.Portland.Demonym.Invoke() "Portlander"
-
-		TestAreEqual $copy.SanFrancisco.Keys.Count 3
-		TestAreEqual $copy.SanFrancisco.Population 883305
-		TestAreEqual $copy.SanFrancisco.Area 232
-		TestAreEqual $copy.SanFrancisco.Demonym.Invoke() "San Franciscan"
-		
-		TestAreEqual $copy.Seattle.Keys.Count 3
-		TestAreEqual $copy.Seattle.Population 608660
-		TestAreEqual $copy.Seattle.Area 142
-		TestAreEqual $copy.Seattle.Demonym.Invoke() "Seattleite"
+		TestObject $copy (ExpectAnd `
+			(ExpectKeyCountEqual 3) `
+			@{
+				Portland =     (ExpectAnd (ExpectKeyCountEqual 3) @{ Population = 583776; Area = 145; Demonym = (Expect "Demonym" { param($actual) $actual.Invoke() -eq "Portlander"})})
+				SanFrancisco = (ExpectAnd (ExpectKeyCountEqual 3) @{ Population = 883305; Area = 232; Demonym = (Expect "Demonym" { param($actual) $actual.Invoke() -eq "San Franciscan"})})
+				Seattle =      (ExpectAnd (ExpectKeyCountEqual 3) @{ Population = 608660; Area = 142; Demonym = (Expect "Demonym" { param($actual) $actual.Invoke() -eq "Seattleite"})})
+			})
 	}
 
 	[TestMethod()]
 	[void] DeepCopy_ArrayOfObjects() {
 		$original = 
-			@{ Name = "Anton"; Age = 27; },
-			@{ Name = "Jimi"; Age = 27; },
-			@{ Name = "Kurt"; Age = 27; }
+			@{ Name = "Anton"; Age = 27 },
+			@{ Name = "Jimi"; Age = 27 },
+			@{ Name = "Kurt"; Age = 27 }
 
 		$copy = DeepCopy $original
 
@@ -133,14 +109,13 @@ class DeepCopyTests {
 
 		# modification of original should have no effect on copy
 
-		TestIsType $copy ([array])
-		TestAreEqual $copy.Count 3
-		TestAreEqual $copy[0].Name "Anton"
-		TestAreEqual $copy[0].Age 27
-		TestAreEqual $copy[1].Name "Jimi"
-		TestAreEqual $copy[1].Age 27
-		TestAreEqual $copy[2].Name "Kurt"
-		TestAreEqual $copy[2].Age 27
+		TestObject $copy (ExpectAnd `
+			(ExpectType ([array])) `
+			@( `
+				@{Name = "Anton"; Age = 27}, `
+				@{Name = "Jimi"; Age = 27}, `
+				@{Name = "Kurt"; Age = 27} `
+			))
 	}
 }
 
@@ -183,9 +158,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 2
-		TestAreEqual $m.Name "Anton"
-		TestAreEqual $m.Age 27
+		TestObject $m (ExpectAnd (ExpectKeyCountEqual 2) @{Name = "Anton"; Age = 27})
 	}
 
 
@@ -196,9 +169,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 2
-		TestAreEqual $m.Name "Kurt"
-		TestAreEqual $m.Age 27
+		TestObject $m (ExpectAnd (ExpectKeyCountEqual 2) @{Name = <# second occurrence wins #> "Kurt"; Age = 27})
 	}
 
 	[TestMethod()]
@@ -208,12 +179,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 2
-		TestAreEqual $m.Name "Washington"
-
-		TestAreEqual $m.Seattle.Keys.Count 2
-		TestAreEqual $m.Seattle.Area 142
-		TestAreEqual $m.Seattle.Population 608660
+		TestObject $m (ExpectAnd (ExpectKeyCountEqual 2) @{Name = "Washington"; Seattle = (ExpectAnd (ExpectKeyCountEqual 2) @{Area = 142; Population = 608660})})
 	}
 
 	[TestMethod()]
@@ -223,10 +189,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 3
-		TestAreEqual $m.Name "Seattle"
-		TestAreEqual $m.Demonym "Seattleite"
-		TestObject $m.ZipCodes (98101, 98102, 98103, 98104, 98105)
+		TestObject $m (ExpectAnd (ExpectKeyCountEqual 3) @{Name = "Seattle"; Demonym = "Seattleite"; ZipCodes = @(98101, 98102, 98103, 98104, 98105)})
 	}
 
 	[TestMethod()]
@@ -236,17 +199,9 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Count 2
-
-		TestAreEqual $m[0].Keys.Count 3
-		TestAreEqual $m[0].Name "Portland"
-		TestAreEqual $m[0].Demonym "Portlander"
-		TestObject $m[0].ZipCodes (97086, 97087, 97088, 97089, 97090)
-		
-		TestAreEqual $m[1].Keys.Count 3
-		TestAreEqual $m[1].Name "Seattle"
-		TestAreEqual $m[1].Demonym "Seattleite"
-		TestObject $m[1].ZipCodes (98101, 98102, 98103, 98104, 98105)
+		TestObject $m @(
+			(ExpectAnd (ExpectKeyCountEqual 3) @{Name = "Portland"; Demonym="Portlander"; ZipCodes = @(97086, 97087, 97088, 97089, 97090)}),
+			(ExpectAnd (ExpectKeyCountEqual 3) @{Name = "Seattle";  Demonym="Seattleite"; ZipCodes = @(98101, 98102, 98103, 98104, 98105)}))
 	}
 
 	[TestMethod()]
@@ -257,11 +212,9 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b $c
 
-		TestAreEqual $m.Keys.Count 4
-		TestAreEqual $m.Name "Portland"
-		TestAreEqual $m.Demonym "Portlander"
-		TestAreEqual $m.State "Oregon"
-		TestObject $m.ZipCodes (97086, 97087, 97088, 97089, 97090)
+		TestObject $m (ExpectAnd `
+			(ExpectKeyCountEqual 4) `
+			@{Name = "Portland"; Demonym = "Portlander"; State = "Oregon"; ZipCodes = @(97086, 97087, 97088, 97089, 97090)})
 	}
 }
 
@@ -270,10 +223,8 @@ class ZipTests {
 	[TestMethod()]
 	[void] ThreeItems() {
 		$r = Zip ("a", "b", "c") (1, 2, 3)
-		TestAreEqual $r.Count 3
-		TestAreEqual $r.a 1
-		TestAreEqual $r.b 2
-		TestAreEqual $r.c 3
+
+		TestObject $r (ExpectAnd (ExpectKeyCountEqual 3) @{a = 1; b = 2; c = 3})
 	}
 }
 

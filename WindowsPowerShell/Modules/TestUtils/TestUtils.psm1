@@ -34,17 +34,8 @@ function TestIsNotNull($actual, $message = "object is not null") {
 	}
 }
 
-# TODO: TypeExpectedObject?
-function TestIsType($object, $type) {
-	if ($object -is $type) {
-		[Log]::Success("object is of type $($type.Name)")
-	} else {
-		[Log]::Failure("object is of type $($object.GetType()), expected $($type.Name)")
-	}
-}
-
 function TestAreEqual($actual, $expected, $messagePrefix) {
-	[void] (AreValuesEqual $actual $expected {param($m) [Log]::Success($m)} {param($m) [Log]::Failure($m)} $messagePrefix)
+	[void] (AreValuesEqual $actual $expected $messagePrefix)
 }
 
 function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
@@ -65,36 +56,97 @@ function AreValuesEqual($actual, $expected, $messagePrefix) {
 	}
 }
 
-class ExpectedObjectBase {
-	[bool] IsEqual($actual, $messagePrefix) {
+#region Expectations
+
+class ExpectationBase {
+	[bool] MatchesExpectation($actual, $messagePrefix) {
 		throw "derived classes must implement this method"
 	}
 }
 
-class RegexExpectedObject : ExpectedObjectBase {
-	RegexExpectedObject($pattern) {
-		$this.pattern = $pattern
+class CustomExpectation : ExpectationBase {
+	CustomExpectation($name, $predicate) {
+		$this.name = $name
+		$this.predicate = $predicate
 	}
 
-	[bool] IsEqual($actual, $messagePrefix) {
-		$result = $actual -match $this.pattern
-		if ($result) {
-			[Log]::Success("$($messagePrefix)`"$actual`" matches pattern `"$($this.pattern)`"")
+	[bool] MatchesExpectation($actual, $messagePrefix) {
+		if ($this.predicate.Invoke($actual)) {
+			[Log]::Success("$($messagePrefix)`"$($this.name)`" expectation matches")
+			return $true
 		} else {
-			[Log]::Failure("$($messagePrefix)`"$actual`" does not match pattern `"$($this.pattern)`"")
+			[Log]::Failure("$($messagePrefix)`"$($this.name)`" expectation does not match")
+			return $false
 		}
-		return $result
 	}
 
-	hidden [string] $pattern
+	hidden [string] $name
+	hidden [scriptblock] $predicate
 }
 
-class ContainsExpectedObject : ExpectedObjectBase {
-	ContainsExpectedObject($expected) {
-		$this.expected = $expected
+function Expect($name, $expected) { [CustomExpectation]::new($name, $expected) }
+
+class RegexExpectation : ExpectationBase {
+	RegexExpectation($expectedPattern) { $this.expectedPattern = $expectedPattern }
+
+	[bool] MatchesExpectation($actual, $messagePrefix) {
+		if ($actual -match $this.expectedPattern) {
+			[Log]::Success("$($messagePrefix)`"$actual`" matches pattern `"$($this.pattern)`"")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)`"$actual`" does not match pattern `"$($this.pattern)`"")
+			return $false
+		}
 	}
 
-	[bool] IsEqual($actualItems, $messagePrefix) {
+	hidden [string] $expectedPattern
+}
+
+function ExpectRegex($pattern) { [RegexExpectation]::new($pattern) }
+
+class TypeExpectation : ExpectationBase {
+	TypeExpectation($expectedType) { $this.expectedType = $expectedType }
+
+	[bool] MatchesExpectation($actual, $messagePrefix) {
+		if ($actual -is $this.expectedType) {
+			[Log]::Success("$($messagePrefix)object is of expected type $($this.expectedType.Name)")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)object is of type $($actual.GetType()), expected $($this.expectedType.Name)")
+			return $false
+		}
+	}
+
+	hidden [System.Reflection.TypeInfo] $expectedType
+}
+
+function ExpectType($type) { [TypeExpectation]::new($type) }
+
+class KeyCountEqualExpectation : ExpectationBase {
+
+	KeyCountEqualExpectation($expectedKeyCount) { $this.expectedKeyCount = $expectedKeyCount }
+
+	[bool] MatchesExpectation($actual, $messagePrefix) {
+		if ($actual.Keys.Count -eq $this.expectedKeyCount) {
+			[Log]::Success("$($messagePrefix)object key count $($this.expectedKeyCount) as expected")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)actual object key count $($actual.Keys.Count), expected $($this.expectedKeyCount)")
+			return $false
+		}
+	}
+
+	hidden [uint32] $expectedKeyCount
+}
+
+function ExpectKeyCountEqual($count) { [KeyCountEqualExpectation]::new($count) }
+
+#region List Expectations
+
+class ContainsExpectation : ExpectationBase {
+	ContainsExpectation($expectedItem) { $this.expectedItem = $expectedItem }
+
+	[bool] MatchesExpectation($actualItems, $messagePrefix) {
 
 		# We're performing an opportunistic search below where a non-matching actual item does not
 		# necessarily constitute a failure.
@@ -107,8 +159,8 @@ class ContainsExpectedObject : ExpectedObjectBase {
 		try {
 			$actualItemIndex = 0
 			foreach ($actualItem in $actualItems) {
-				if (AreObjectsEqual $actualItem $this.expected "$($messagePrefix)item $(($actualItemIndex++)): ") {
-					[Log]::Failure("$($messagePrefix)found expected item '$($this.expected)'")
+				if (AreObjectsEqual $actualItem $this.expectedItem "$($messagePrefix)item $(($actualItemIndex++)): ") {
+					[Log]::Failure("$($messagePrefix)found expected item '$($this.expectedItem)'")
 					return $true
 				}
 			}
@@ -117,19 +169,44 @@ class ContainsExpectedObject : ExpectedObjectBase {
 			$logInterceptor.Dispose()
 		}
 
-		[Log]::Failure("$($messagePrefix)missing item '$($this.expected)'")
+		[Log]::Failure("$($messagePrefix)missing item '$($this.expectedItem)'")
 		return $false
 	}
 
-	hidden $expected
+	hidden $expectedItem
 }
 
-class NotExpectedObject : ExpectedObjectBase {
-	NotExpectedObject($expected) {
-		$this.expected = $expected
+function ExpectContains($item) { [ContainsExpectation]::new($item) }
+
+class CountGreaterOrEqualExpectation : ExpectationBase {
+	CountGreaterOrEqualExpectation($expectedCount) {
+		$this.expectedCount = $expectedCount
 	}
 
-	[bool] IsEqual($actual, $messagePrefix) {
+	[bool] MatchesExpectation($actual, $messagePrefix) {
+		$actualCount = $actual.Count
+		if ($actualCount -ge $this.expectedCount) {
+			[Log]::Success("$($messagePrefix)item count $($this.expectedCount) is greater or equal to $actualCount")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)item count $($this.expectedCount) is less than $actualCount")
+			return $false
+		}
+	}
+
+	hidden $expectedCount
+}
+
+function ExpectCountGreaterOrEqual($count) { [CountGreaterOrEqualExpectation]::new($count) }
+
+#endregion
+
+#region Boolean Expectations
+
+class NotExpectation : ExpectationBase {
+	NotExpectation($expected) { $this.expected = $expected }
+
+	[bool] MatchesExpectation($actual, $messagePrefix) {
 		$logInterceptor = [LogInterceptor]::new({ param ($interceptor, $messageType, $message)
 			switch ($messageType) {
 				([LogMessageType]::Failure) { $messageType = ([LogMessageType]::Success)}
@@ -147,12 +224,12 @@ class NotExpectedObject : ExpectedObjectBase {
 	hidden $expected
 }
 
-class AndExpectedObject : ExpectedObjectBase {
-	AndExpectedObject($expected) {
-		$this.expected  = $expected
-	}
+function ExpectNot($operand) { [NotExpectation]::new($operand) }
 
-	[bool] IsEqual($actual, $messagePrefix) {
+class AndExpectation : ExpectationBase {
+	AndExpectation($expected) { $this.expected  = $expected }
+
+	[bool] MatchesExpectation($actual, $messagePrefix) {
 		foreach ($expectedTerm in $this.expected) {
 			if (!(AreObjectsEqual $actual $expectedTerm "$($messagePrefix)AND: ")) {
 				[Log]::Failure("$($messagePrefix)AND evaluates to false")
@@ -166,12 +243,12 @@ class AndExpectedObject : ExpectedObjectBase {
 	hidden $expected
 }
 
-class OrExpectedObject : ExpectedObjectBase {
-	OrExpectedObject($expected) {
-		$this.expected  = $expected
-	}
+function ExpectAnd { [AndExpectation]::new($args) }
 
-	[bool] IsEqual($actual, $messagePrefix) {
+class OrExpectation : ExpectationBase {
+	OrExpectation($expected) { $this.expected  = $expected }
+
+	[bool] MatchesExpectation($actual, $messagePrefix) {
 		# A false OR term does not necessarily constitute a failure.
 		$logInterceptor = [LogInterceptor]::new({param($interceptor, $messageType, $message)
 			if ($messageType -eq ([LogMessageType]::Failure)) {
@@ -203,20 +280,16 @@ class OrExpectedObject : ExpectedObjectBase {
 	hidden $expected
 }
 
-#region Comparand helper functions
+function ExpectOr { [OrExpectation]::new($args) }
 
-function ExpectRegex($pattern) { [RegexExpectedObject]::new($pattern) }
-function ExpectContains($item) { [ContainsExpectedObject]::new($item) }
-function ExpectNot($operand) { [NotExpectedObject]::new($operand) }
-function ExpectAnd { [AndExpectedObject]::new($args) }
-function ExpectOr { [OrExpectedObject]::new($args) }
+#endregion
 
 #endregion
 
 function AreObjectsEqual($actual, $expected, $messagePrefix) {
-	if ($expected -is [ExpectedObjectBase]) {
-		return $expected.IsEqual($actual, $messagePrefix)
-	} elseif (($expected -is [string]) -or ($expected -is [int])) {
+	if ($expected -is [ExpectationBase]) {
+		return $expected.MatchesExpectation($actual, $messagePrefix)
+	} elseif (($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
 		return (AreValuesEqual $actual $expected $messagePrefix)
 	} elseif ($expected -is [array]) {
 		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between

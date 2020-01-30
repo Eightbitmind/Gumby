@@ -183,6 +183,11 @@ class TestUtilsTests {
 		finally { $logInterceptor.Dispose() }
 		TestIsFalse $result
 	}
+
+	[TestMethod()]
+	[void] TestObject_CustomExpectation_Succeeds() {
+		TestObject 2 (Expect "IsEven" {param($a) ($a % 2) -eq 0})
+	}
 }
 
 $standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
