@@ -17,27 +17,6 @@ function TestIsFalse($condition, $message = "value is false") {
 	}
 }
 
-function TestIsNull($actual, $message = "object is null") {
-	if ($null -eq $actual) {
-		[Log]::Success($message)
-	} else {
-		[Log]::Failure($message)
-	}
-}
-
-# TODO: NotNullExpectedObject?
-function TestIsNotNull($actual, $message = "object is not null") {
-	if ($null -ne $actual) {
-		[Log]::Success($message)
-	} else {
-		[Log]::Failure($message)
-	}
-}
-
-function TestAreEqual($actual, $expected, $messagePrefix) {
-	[void] (AreValuesEqual $actual $expected $messagePrefix)
-}
-
 function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
 	if ($actual -ge $expected) {
 		[Log]::Success("'$actual' is greater or equal '$expected'")
@@ -47,13 +26,27 @@ function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
 }
 
 function AreValuesEqual($actual, $expected, $messagePrefix) {
-	if ($actual -eq $expected) {
+	if ($expected -eq $null) {
+
+		if ($actual -eq $null) {
+			[Log]::Success("$($messagePrefix)value is null")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)value is not null")
+			return $false
+		}
+
+	} elseif ($actual -eq $expected) {
 		[Log]::Success("$($messagePrefix)value '$actual' matches expectation")
 		return $true
 	} else {
 		[Log]::Failure("$($messagePrefix)actual '$($actual)', expected '$($expected)'")
 		return $false
 	}
+}
+
+function TestAreEqual($actual, $expected, $messagePrefix) {
+	[void] (AreValuesEqual $actual $expected $messagePrefix)
 }
 
 #region Expectations
@@ -85,6 +78,25 @@ class CustomExpectation : ExpectationBase {
 }
 
 function Expect($name, $expected) { [CustomExpectation]::new($name, $expected) }
+
+<#
+This expectation could be encoded in many other ways, e.g.
+	(ExpectNot $null)
+It is nevertheless useful because it provides clearer logging.
+#>
+class NotNullExpectation : ExpectationBase {
+	[bool] MatchesExpectation($actual, $messagePrefix) {
+		if ($actual -ne $null) {
+			[Log]::Success("$($messagePrefix)object '$actual' is not null")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)object is null")
+			return $false
+		}
+	}
+}
+
+function ExpectNotNull { [NotNullExpectation]::new() }
 
 class RegexExpectation : ExpectationBase {
 	RegexExpectation($expectedPattern) { $this.expectedPattern = $expectedPattern }
@@ -215,7 +227,7 @@ class NotExpectation : ExpectationBase {
 			$interceptor.DispatchMessage($messageType, $message)
 		})
 		try {
-			return !(AreObjectsEqual $actual $this.expected "$($messagePrefix)negate: ")
+			return !(AreObjectsEqual $actual $this.expected "$($messagePrefix)NOT: ")
 		} finally {
 			$logInterceptor.Dispose()
 		}
@@ -289,7 +301,7 @@ function ExpectOr { [OrExpectation]::new($args) }
 function AreObjectsEqual($actual, $expected, $messagePrefix) {
 	if ($expected -is [ExpectationBase]) {
 		return $expected.MatchesExpectation($actual, $messagePrefix)
-	} elseif (($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
+	} elseif (($expected -eq $null) -or ($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
 		return (AreValuesEqual $actual $expected $messagePrefix)
 	} elseif ($expected -is [array]) {
 		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between

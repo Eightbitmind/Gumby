@@ -55,7 +55,7 @@ class SimpleObjectTVItemTests {
 	[TestMethod()]
 	[void] Parent_Root_IsNull() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsNull $tvi.Parent()
+		TestObject $tvi.Parent() $null
 	}
 
 	[TestMethod()]
@@ -91,7 +91,7 @@ class SimpleObjectTVItemTests {
 	[TestMethod()]
 	[void] Parent_FirstChild_IsNotNull() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsNotNull $tvi.Children()[0].Parent()
+		TestObject $tvi.Children()[0].Parent() (ExpectNotNull)
 	}
 
 	[TestMethod()]
