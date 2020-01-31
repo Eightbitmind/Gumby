@@ -250,6 +250,10 @@ function ExpectOr { [OrExpectation]::new($args) }
 
 #endregion
 
+
+# TODO: Swap order of $actual and $expted to match Test function
+# TODO: Evaluate need for both AreObjectsEqual and Test
+# TODO: Rename to "Match[...]"
 function AreObjectsEqual($actual, $expected, $messagePrefix) {
 
 	function AreValuesEqual($actual, $expected, $messagePrefix) {
