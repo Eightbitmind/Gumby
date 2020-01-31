@@ -1,30 +1,6 @@
 using module Log
 using module String
 
-function TestIsTrue($condition, $message = "value is true") {
-	if ($condition) {
-		[Log]::Success($message)
-	} else {
-		[Log]::Failure($message)
-	}
-}
-
-function TestIsFalse($condition, $message = "value is false") {
-	if (!$condition) {
-		[Log]::Success($message)
-	} else {
-		[Log]::Failure($message)
-	}
-}
-
-function TestIsGreaterOrEqual($actual, $expected, $message = "Test Value") {
-	if ($actual -ge $expected) {
-		[Log]::Success("'$actual' is greater or equal '$expected'")
-	} else {
-		[Log]::Failure("'$($actual)' is not greater or equal '$expected'")
-	}
-}
-
 function AreValuesEqual($actual, $expected, $messagePrefix) {
 	if ($expected -eq $null) {
 
@@ -341,8 +317,12 @@ function AreObjectsEqual($actual, $expected, $messagePrefix) {
 	}
 }
 
-function TestObject($actual, $expected, $messagePrefix) {
-	[void](AreObjectsEqual $actual $expected $messagePrefix)
+function Test($Expected, $Actual, $MessagePrefix) {
+	TestObject $Actual $Expected $MessagePrefix
+}
+
+function TestObject($Actual, $Expected, $MessagePrefix) {
+	[void](AreObjectsEqual $Actual $Expected $MessagePrefix)
 }
 
 class TestClass : Attribute {}

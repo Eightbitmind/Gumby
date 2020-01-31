@@ -5,7 +5,7 @@ using module TestUtils
 class TestUtilsTests {
 	[TestMethod()]
 	[void] TestObject_MatchingInts_Succeeds() {
-		TestObject 1 1
+		Test 1 1
 	}
 
 	[TestMethod()]
@@ -14,12 +14,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual 1 2	}
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithMatchingStrings_Succeeds() {
-		TestObject 'abc' 'abc'
+		Test 'abc' 'abc'
 	}
 
 	[TestMethod()]
@@ -28,12 +28,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual 'abc' 'xyz' }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_MatchingArrays_Succeeds() {
-		TestObject @(10, 20, 30) @(10, 20, 30)
+		Test @(10, 20, 30) @(10, 20, 30)
 	}
 
 	[TestMethod()]
@@ -42,12 +42,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual @(10, 20, 30) @(10, 20, 40) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_MatchingObjects_Succeeds() {
-		TestObject @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 30}
+		Test @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 30}
 	}
 
 	[TestMethod()]
@@ -56,12 +56,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 46} }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_MatchingObjectsWithArrays_Succeeds() {
-		TestObject @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,3}
+		Test @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,3}
 	}
 
 	[TestMethod()]
@@ -70,12 +70,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,4} }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_MatchingArraysOfObjects_Succeeds() {
-		TestObject (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dana"})
+		Test (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dana"})
 	}
 
 	[TestMethod()]
@@ -84,12 +84,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dora"}) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_MatchingRegex_Succeeds() {
-		TestObject "Emily" (ExpectRegex "^Em")
+		Test (ExpectRegex "^Em") "Emily"
 	}
 
 	[TestMethod()]
@@ -98,43 +98,40 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual "Esther" (ExpectRegex "^Em") }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_MatchingArrayOfRegex_Succeeds() {
-		TestObject @("Fiona", "Gavin") @((ExpectRegex "^Fi"), (ExpectRegex "^Ga"))
+		Test @((ExpectRegex "^Fi"), (ExpectRegex "^Ga")) @("Fiona", "Gavin")
 	}
 
 	[TestMethod()]
 	[void] TestObject_MismatchingArrayOfRegex_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-
 		try { $result = AreObjectsEqual @("Fiona", "Gina") @((ExpectRegex "^Fi"), (ExpectRegex "^Ga")) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
-
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_ListContainingItem_Succeeds() {
-		TestObject @(10, 20, 30) (ExpectContains 20)
+		Test (ExpectContains 20) @(10, 20, 30)
 	}
 
 	[TestMethod()]
 	[void] TestObject_ListNotContainingItem_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-
 		try { $result = AreObjectsEqual @(10, 20, 30) (ExpectContains 21) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_ListContainingItemMatchingRegex_Succeeds() {
-		TestObject @("Hanna", "Irene", "Joyce") (ExpectContains (ExpectRegex "anna"))
+		Test (ExpectContains (ExpectRegex "anna")) @("Hanna", "Irene", "Joyce")
 	}
 
 	[TestMethod()]
@@ -143,22 +140,22 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual @("Hanna", "Irene", "Joyce") (ExpectContains (ExpectRegex "anne")) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_NegatedMismatch_Succeeds() {
-		TestObject 1 (ExpectNot 2)
+		Test (ExpectNot 2) 1
 	}
 
 	[TestMethod()]
 	[void] TestObject_DoubleNegatedMatch_Succeeds() {
-		TestObject 1 (ExpectNot (ExpectNot 1))
+		Test (ExpectNot (ExpectNot 1)) 1
 	}
 
 	[TestMethod()]
 	[void] TestObject_WithListContainingOneItemAndAnother_Succeeds() {
-		TestObject @(10, 20, 30) (ExpectAnd (ExpectContains 10) (ExpectContains 30))
+		Test (ExpectAnd (ExpectContains 10) (ExpectContains 30)) @(10, 20, 30)
 	}
 
 	[TestMethod()]
@@ -167,12 +164,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual @(10, 20, 30) (ExpectAnd (ExpectContains 10) (ExpectContains 21)) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_ListContainingOneItemOrAnother_Succeeds() {
-		TestObject @(10, 20, 30) (ExpectOr (ExpectContains 40) (ExpectContains 10))
+		Test (ExpectOr (ExpectContains 40) (ExpectContains 10)) @(10, 20, 30)
 	}
 
 	[TestMethod()]
@@ -181,12 +178,12 @@ class TestUtilsTests {
 		$logInterceptor = [LogInterceptor]::new({})
 		try { $result = AreObjectsEqual @(10, 20, 30) (ExpectOr (ExpectContains 5) (ExpectContains 17)) }
 		finally { $logInterceptor.Dispose() }
-		TestIsFalse $result
+		Test $false $result
 	}
 
 	[TestMethod()]
 	[void] TestObject_CustomExpectation_Succeeds() {
-		TestObject 2 (Expect "IsEven" {param($a) ($a % 2) -eq 0})
+		Test (Expect "IsEven" {param($a) ($a % 2) -eq 0}) 2
 	}
 }
 

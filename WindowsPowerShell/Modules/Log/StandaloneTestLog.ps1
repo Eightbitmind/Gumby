@@ -8,15 +8,15 @@ using module TestUtils
 
 & {
 	[Log]::Error("slogblog")
-	TestAreEqual ([Log]::WarningCount()) 0
-	TestAreEqual ([Log]::ErrorCount()) 1
+	if ([Log]::WarningCount() -ne 0) { throw "WarningCount is not 0" }
+	if ([Log]::ErrorCount() -ne 1) { throw "ErrorCount is not 1"}
 	[Log]::Reset()
 }
 
 & {
 	[Log]::Warning("slobglog")
-	TestAreEqual ([Log]::WarningCount()) 1
-	TestAreEqual ([Log]::ErrorCount()) 0
+	if ([Log]::WarningCount() -ne 1) { throw "WarningCount is not 1" }
+	if ([Log]::ErrorCount() -ne 0) { throw "ErrorCount is not 0" }
 	[Log]::Reset()
 }
 
@@ -28,11 +28,12 @@ using module TestUtils
 	[Log]::Warning("logsblog")
 	$content = Get-Content $logFileName
 
-	TestIsTrue (Test-Path $logFileName) "log file exists"
-	TestAreEqual ([Log]::WarningCount()) 1
-	TestAreEqual ([Log]::ErrorCount()) 0
+	if (!(Test-Path $logFileName)) { throw "log file doesn't exist" }
+	if ([Log]::WarningCount() -ne 1) { throw "WarningCount is not 1" }
+	if ([Log]::ErrorCount() -ne 0) { throw "ErrorCount is not 0" }
 
-	TestObject $content @([RegexComparand]::new("COMMENT: lobsglog"), [RegexComparand]::new("WARNING: logsblog"))
+	if ($content[0] -notmatch "COMMENT: lobsglog") { throw "log line 1 does not match expectation" }
+	if ($content[1] -notmatch "WARNING: logsblog") { throw "log line 2 does not match expectation" }
 
 	Remove-Item $logFileName
 	[Log]::Reset()
