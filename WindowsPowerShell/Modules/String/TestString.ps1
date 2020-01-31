@@ -5,81 +5,81 @@ using module TestUtils
 class StringModuleTests {
 	[TestMethod()]
 	[void] Abbreviate10() {
-		TestAreEqual (Abbreviate "abcdefghij" 10) "abcdefghij"
+		Test "abcdefghij" (Abbreviate "abcdefghij" 10)
 	}
 
 	[TestMethod()]
 	[void] Abbreviate09() {
-		TestAreEqual (Abbreviate "abcdefghij" 9) "abc...hij"
+		Test "abc...hij" (Abbreviate "abcdefghij" 9)
 	}
 
 	[TestMethod()]
 	[void] Abbreviate08() {
-		TestAreEqual (Abbreviate "abcdefghij" 8) "abc...ij"
+		Test "abc...ij" (Abbreviate "abcdefghij" 8)
 	}
 
 	[TestMethod()]
 	[void] Abbreviate07() {
-		TestAreEqual (Abbreviate "abcdefghij" 7) "ab...ij"
+		Test "ab...ij" (Abbreviate "abcdefghij" 7)
 	}
 
 	[TestMethod()]
 	[void] Abbreviate06() {
-		TestAreEqual (Abbreviate "abcdefghij" 6) "ab...j"
+		Test "ab...j" (Abbreviate "abcdefghij" 6)
 	}
 
 	[TestMethod()]
 	[void] Abbreviate05() {
-		TestAreEqual (Abbreviate "abcdefghij" 5) "a...j"
+		Test "a...j" (Abbreviate "abcdefghij" 5)
 	}
 
 	[TestMethod()]
 	[void] Abbreviate04() {
-		TestAreEqual (Abbreviate "abcdefghij" 4) "a..."
+		Test "a..." (Abbreviate "abcdefghij" 4)
 	}
 
 	[TestMethod()]
 	[void] EnsureStringLength_ExtendsStringWithDefaultFillChar() {
-		TestAreEqual (EnsureStringLength "abc" 6) "abc   "
+		Test "abc   " (EnsureStringLength "abc" 6)
 	}
 
 	[TestMethod()]
 	[void] EnsureStringLength_ExtendsStringWithCustomFillChar() {
-		TestAreEqual (EnsureStringLength "abc" 6 "_") "abc___"
+		Test "abc___" (EnsureStringLength "abc" 6 "_")
 	}
 
 	[TestMethod()]
 	[void] EnsureStringLength_TruncatesString() {
-		TestAreEqual (EnsureStringLength "abcdef" 3) "abc"
+		Test "abc" (EnsureStringLength "abcdef" 3)
 	}
 
 	[TestMethod()]
 	[void] NormalizeWhitespace_EmptyString() {
-		TestAreEqual (NormalizeWhitespace "") ""
+		Test "" (NormalizeWhitespace "")
 	}
 	[TestMethod()]
 	[void] NormalizeWhitespace_StringWithoutWhitespace() {
-		TestAreEqual (NormalizeWhitespace "abc") "abc"
+		Test "abc" (NormalizeWhitespace "abc")
 	}
 
 	[TestMethod()]
 	[void] NormalizeWhitespace_StringWithTrailingWhitespace() {
-		TestAreEqual (NormalizeWhitespace "abc ") "abc"
+		Test "abc" (NormalizeWhitespace "abc ")
 	}
 
 	[TestMethod()]
 	[void] NormalizeWhitespace_StringWithLeadingWhitespace() {
-		TestAreEqual (NormalizeWhitespace " abc") "abc"
+		Test "abc" (NormalizeWhitespace " abc")
 	}
 
 	[TestMethod()]
 	[void] NormalizeWhitespace_StringWithScatteredWhitespace() {
-		TestAreEqual (NormalizeWhitespace "   a bc`tdef `t ghi `n") "a bc def ghi"
+		Test "a bc def ghi" (NormalizeWhitespace "   a bc`tdef `t ghi `n")
 	}
 
 	[TestMethod()]
 	[void] SplitCSVLine_WellFormedCSVLine() {
-		TestObject (SplitCSVLine "`"a`",`"b`",`"c`"") @('a', 'b', 'c')
+		Test @('a', 'b', 'c') (SplitCSVLine "`"a`",`"b`",`"c`"")
 	}
 }
 

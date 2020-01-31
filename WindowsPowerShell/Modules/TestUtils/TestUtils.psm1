@@ -1,30 +1,6 @@
 using module Log
 using module String
 
-function AreValuesEqual($actual, $expected, $messagePrefix) {
-	if ($expected -eq $null) {
-
-		if ($actual -eq $null) {
-			[Log]::Success("$($messagePrefix)value is null")
-			return $true
-		} else {
-			[Log]::Failure("$($messagePrefix)value is not null")
-			return $false
-		}
-
-	} elseif ($actual -eq $expected) {
-		[Log]::Success("$($messagePrefix)value '$actual' matches expectation")
-		return $true
-	} else {
-		[Log]::Failure("$($messagePrefix)actual '$($actual)', expected '$($expected)'")
-		return $false
-	}
-}
-
-function TestAreEqual($actual, $expected, $messagePrefix) {
-	[void] (AreValuesEqual $actual $expected $messagePrefix)
-}
-
 #region Expectations
 
 class ExpectationBase {
@@ -275,6 +251,27 @@ function ExpectOr { [OrExpectation]::new($args) }
 #endregion
 
 function AreObjectsEqual($actual, $expected, $messagePrefix) {
+
+	function AreValuesEqual($actual, $expected, $messagePrefix) {
+		if ($expected -eq $null) {
+	
+			if ($actual -eq $null) {
+				[Log]::Success("$($messagePrefix)value is null")
+				return $true
+			} else {
+				[Log]::Failure("$($messagePrefix)value is not null")
+				return $false
+			}
+	
+		} elseif ($actual -eq $expected) {
+			[Log]::Success("$($messagePrefix)value '$actual' matches expectation")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)actual '$($actual)', expected '$($expected)'")
+			return $false
+		}
+	}
+
 	if ($expected -is [ExpectationBase]) {
 		return $expected.MatchesExpectation($actual, $messagePrefix)
 	} elseif (($expected -eq $null) -or ($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
@@ -318,10 +315,6 @@ function AreObjectsEqual($actual, $expected, $messagePrefix) {
 }
 
 function Test($Expected, $Actual, $MessagePrefix) {
-	TestObject $Actual $Expected $MessagePrefix
-}
-
-function TestObject($Actual, $Expected, $MessagePrefix) {
 	[void](AreObjectsEqual $Actual $Expected $MessagePrefix)
 }
 

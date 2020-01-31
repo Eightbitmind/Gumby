@@ -136,9 +136,6 @@ _TestAreEqual $LogMessages[0].Message "log call from within TestMethod"
 _TestAreEqual $LogMessages[1].MessageType ([LogMessageType]::Success)
 _TestAreEqual $LogMessages[1].Message "TestMethod" # test runner logging the successful execution of the test method
 
-# TestAreEqual $LogMessages[2].MessageType ([LogMessageType]::Success)
-# TestAreEqual $LogMessages[2].Message "TestClassTeardown2"
-
 [Log]::Reset()
 $LogMessages.Clear()
 $testRunner.TestClasses.Clear()
