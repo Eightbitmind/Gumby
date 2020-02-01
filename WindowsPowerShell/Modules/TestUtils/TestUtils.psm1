@@ -4,7 +4,7 @@ using module String
 #region Expectations
 
 class ExpectationBase {
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		throw "derived classes must implement this method"
 	}
 }
@@ -15,7 +15,7 @@ class CustomExpectation : ExpectationBase {
 		$this.predicate = $predicate
 	}
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		if ($this.predicate.Invoke($actual)) {
 			[Log]::Success("$($messagePrefix)`"$($this.name)`" expectation matches")
 			return $true
@@ -37,7 +37,7 @@ This expectation could be encoded in many other ways, e.g.
 It is nevertheless useful because it provides clearer logging.
 #>
 class NotNullExpectation : ExpectationBase {
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		if ($actual -ne $null) {
 			[Log]::Success("$($messagePrefix)object '$actual' is not null")
 			return $true
@@ -53,7 +53,7 @@ function ExpectNotNull { [NotNullExpectation]::new() }
 class RegexExpectation : ExpectationBase {
 	RegexExpectation($expectedPattern) { $this.expectedPattern = $expectedPattern }
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		if ($actual -match $this.expectedPattern) {
 			[Log]::Success("$($messagePrefix)`"$actual`" matches pattern `"$($this.pattern)`"")
 			return $true
@@ -71,7 +71,7 @@ function ExpectRegex($pattern) { [RegexExpectation]::new($pattern) }
 class TypeExpectation : ExpectationBase {
 	TypeExpectation($expectedType) { $this.expectedType = $expectedType }
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		if ($actual -is $this.expectedType) {
 			[Log]::Success("$($messagePrefix)object is of expected type $($this.expectedType.Name)")
 			return $true
@@ -90,7 +90,7 @@ class KeyCountEqualExpectation : ExpectationBase {
 
 	KeyCountEqualExpectation($expectedKeyCount) { $this.expectedKeyCount = $expectedKeyCount }
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		if ($actual.Keys.Count -eq $this.expectedKeyCount) {
 			[Log]::Success("$($messagePrefix)object key count $($this.expectedKeyCount) as expected")
 			return $true
@@ -110,7 +110,7 @@ function ExpectKeyCountEqual($count) { [KeyCountEqualExpectation]::new($count) }
 class ContainsExpectation : ExpectationBase {
 	ContainsExpectation($expectedItem) { $this.expectedItem = $expectedItem }
 
-	[bool] MatchesExpectation($actualItems, $messagePrefix) {
+	[bool] IsMatch($actualItems, $messagePrefix) {
 
 		# We're performing an opportunistic search below where a non-matching actual item does not
 		# necessarily constitute a failure.
@@ -123,7 +123,7 @@ class ContainsExpectation : ExpectationBase {
 		try {
 			$actualItemIndex = 0
 			foreach ($actualItem in $actualItems) {
-				if (AreObjectsEqual $this.expectedItem $actualItem "$($messagePrefix)item $(($actualItemIndex++)): ") {
+				if (IsMatch $this.expectedItem $actualItem "$($messagePrefix)item $(($actualItemIndex++)): ") {
 					[Log]::Failure("$($messagePrefix)found expected item '$($this.expectedItem)'")
 					return $true
 				}
@@ -147,7 +147,7 @@ class CountGreaterOrEqualExpectation : ExpectationBase {
 		$this.expectedCount = $expectedCount
 	}
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		$actualCount = $actual.Count
 		if ($actualCount -ge $this.expectedCount) {
 			[Log]::Success("$($messagePrefix)item count $($this.expectedCount) is greater or equal to $actualCount")
@@ -170,7 +170,7 @@ function ExpectCountGreaterOrEqual($count) { [CountGreaterOrEqualExpectation]::n
 class NotExpectation : ExpectationBase {
 	NotExpectation($expected) { $this.expected = $expected }
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		$logInterceptor = [LogInterceptor]::new({ param ($interceptor, $messageType, $message)
 			switch ($messageType) {
 				([LogMessageType]::Failure) { $messageType = ([LogMessageType]::Success)}
@@ -179,7 +179,7 @@ class NotExpectation : ExpectationBase {
 			$interceptor.DispatchMessage($messageType, $message)
 		})
 		try {
-			return !(AreObjectsEqual $this.expected $actual "$($messagePrefix)NOT: ")
+			return !(IsMatch $this.expected $actual "$($messagePrefix)NOT: ")
 		} finally {
 			$logInterceptor.Dispose()
 		}
@@ -193,9 +193,9 @@ function ExpectNot($operand) { [NotExpectation]::new($operand) }
 class AndExpectation : ExpectationBase {
 	AndExpectation($expected) { $this.expected  = $expected }
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		foreach ($expectedTerm in $this.expected) {
-			if (!(AreObjectsEqual $expectedTerm $actual "$($messagePrefix)AND: ")) {
+			if (!(IsMatch $expectedTerm $actual "$($messagePrefix)AND: ")) {
 				[Log]::Failure("$($messagePrefix)AND evaluates to false")
 				return $false
 			}
@@ -212,7 +212,7 @@ function ExpectAnd { [AndExpectation]::new($args) }
 class OrExpectation : ExpectationBase {
 	OrExpectation($expected) { $this.expected  = $expected }
 
-	[bool] MatchesExpectation($actual, $messagePrefix) {
+	[bool] IsMatch($actual, $messagePrefix) {
 		# A false OR term does not necessarily constitute a failure.
 		$logInterceptor = [LogInterceptor]::new({param($interceptor, $messageType, $message)
 			if ($messageType -eq ([LogMessageType]::Failure)) {
@@ -224,7 +224,7 @@ class OrExpectation : ExpectationBase {
 		$result = $false
 		try {
 			foreach ($expectedTerm in $this.expected) {
-				if (AreObjectsEqual $expectedTerm $actual "$($messagePrefix)OR: ") {
+				if (IsMatch $expectedTerm $actual "$($messagePrefix)OR: ") {
 					$result = $true
 					break
 				}
@@ -250,9 +250,8 @@ function ExpectOr { [OrExpectation]::new($args) }
 
 #endregion
 
-# TODO: Evaluate need for both AreObjectsEqual and Test
-# TODO: Rename to "Match[...]"
-function AreObjectsEqual($expected, $actual, $messagePrefix) {
+# TODO: Evaluate need for both IsMatch and Test
+function IsMatch($expected, $actual, $messagePrefix) {
 
 	function AreValuesEqual($expected, $actual, $messagePrefix) {
 		if ($expected -eq $null) {
@@ -275,7 +274,7 @@ function AreObjectsEqual($expected, $actual, $messagePrefix) {
 	}
 
 	if ($expected -is [ExpectationBase]) {
-		return $expected.MatchesExpectation($actual, $messagePrefix)
+		return $expected.IsMatch($actual, $messagePrefix)
 	} elseif (($expected -eq $null) -or ($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
 		return (AreValuesEqual $expected $actual $messagePrefix)
 	} elseif ($expected -is [array]) {
@@ -293,7 +292,7 @@ function AreObjectsEqual($expected, $actual, $messagePrefix) {
 				return $false
 			}
 
-			$result = $result -and (AreObjectsEqual $expectedEnum.Current $actualEnum.Current "$($messagePrefix)item $(($itemIndex++)): ")
+			$result = $result -and (IsMatch $expectedEnum.Current $actualEnum.Current "$($messagePrefix)item $(($itemIndex++)): ")
 		}
 
 		if ($expectedEnum.MoveNext()) {
@@ -309,7 +308,7 @@ function AreObjectsEqual($expected, $actual, $messagePrefix) {
 		foreach ($key in $expected.Keys) {
 			$expectedValue = $expected[$key]
 			$actualValue = $actual.($key)
-			$result = $result -and (AreObjectsEqual $expectedValue $actualValue "$($messagePrefix)member '$key': ")
+			$result = $result -and (IsMatch $expectedValue $actualValue "$($messagePrefix)member '$key': ")
 		}
 
 		return $result
@@ -317,7 +316,7 @@ function AreObjectsEqual($expected, $actual, $messagePrefix) {
 }
 
 function Test($Expected, $Actual, $MessagePrefix) {
-	[void](AreObjectsEqual $Expected $Actual $MessagePrefix)
+	[void](IsMatch $Expected $Actual $MessagePrefix)
 }
 
 class TestClass : Attribute {}

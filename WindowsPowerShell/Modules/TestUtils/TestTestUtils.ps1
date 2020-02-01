@@ -12,7 +12,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingInts_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual 1 2	}
+		try { $result = IsMatch 1 2	}
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -26,7 +26,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingStrings_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual 'abc' 'xyz' }
+		try { $result = IsMatch 'abc' 'xyz' }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -40,7 +40,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingArrays_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual @(10, 20, 30) @(10, 20, 40) }
+		try { $result = IsMatch @(10, 20, 30) @(10, 20, 40) }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -54,7 +54,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingObjects_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 46} }
+		try { $result = IsMatch @{Name = "Anna"; Age = 30} @{Name = "Anna"; Age = 46} }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -68,7 +68,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingObjectsWithArrays_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,4} }
+		try { $result = IsMatch @{Name = "Ben"; Games = 1,2,3} @{Name = "Ben"; Games = 1,2,4} }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -82,7 +82,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingArraysOfObjects_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dora"}) }
+		try { $result = IsMatch (@{Name = "Clara"}, @{Name = "Dana"}) (@{Name = "Clara"}, @{Name="Dora"}) }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -96,7 +96,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingRegex_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual (ExpectRegex "^Em") "Esther" }
+		try { $result = IsMatch (ExpectRegex "^Em") "Esther" }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -110,7 +110,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingArrayOfRegex_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual @((ExpectRegex "^Fi"), (ExpectRegex "^Ga")) @("Fiona", "Gina") }
+		try { $result = IsMatch @((ExpectRegex "^Fi"), (ExpectRegex "^Ga")) @("Fiona", "Gina") }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -124,7 +124,7 @@ class TestUtilsTests {
 	[void] TestObject_ListNotContainingItem_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual (ExpectContains 21) @(10, 20, 30) }
+		try { $result = IsMatch (ExpectContains 21) @(10, 20, 30) }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -138,7 +138,7 @@ class TestUtilsTests {
 	[void] TestObject_ListNotContainingItemMatchingRegex_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual (ExpectContains (ExpectRegex "anne")) @("Hanna", "Irene", "Joyce") }
+		try { $result = IsMatch (ExpectContains (ExpectRegex "anne")) @("Hanna", "Irene", "Joyce") }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -162,7 +162,7 @@ class TestUtilsTests {
 	[void] TestObject_ListNotContainingOneItemButNotAnother_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual (ExpectAnd (ExpectContains 10) (ExpectContains 21)) @(10, 20, 30) }
+		try { $result = IsMatch (ExpectAnd (ExpectContains 10) (ExpectContains 21)) @(10, 20, 30) }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
@@ -176,7 +176,7 @@ class TestUtilsTests {
 	[void] TestObject_ListContainingNeitherOneItemNorAnother_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = AreObjectsEqual (ExpectOr (ExpectContains 5) (ExpectContains 17)) @(10, 20, 30) }
+		try { $result = IsMatch (ExpectOr (ExpectContains 5) (ExpectContains 17)) @(10, 20, 30) }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}
