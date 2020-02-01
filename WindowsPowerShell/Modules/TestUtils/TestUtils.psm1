@@ -123,7 +123,7 @@ class ContainsExpectation : ExpectationBase {
 		try {
 			$actualItemIndex = 0
 			foreach ($actualItem in $actualItems) {
-				if (AreObjectsEqual $actualItem $this.expectedItem "$($messagePrefix)item $(($actualItemIndex++)): ") {
+				if (AreObjectsEqual $this.expectedItem $actualItem "$($messagePrefix)item $(($actualItemIndex++)): ") {
 					[Log]::Failure("$($messagePrefix)found expected item '$($this.expectedItem)'")
 					return $true
 				}
@@ -179,7 +179,7 @@ class NotExpectation : ExpectationBase {
 			$interceptor.DispatchMessage($messageType, $message)
 		})
 		try {
-			return !(AreObjectsEqual $actual $this.expected "$($messagePrefix)NOT: ")
+			return !(AreObjectsEqual $this.expected $actual "$($messagePrefix)NOT: ")
 		} finally {
 			$logInterceptor.Dispose()
 		}
@@ -195,7 +195,7 @@ class AndExpectation : ExpectationBase {
 
 	[bool] MatchesExpectation($actual, $messagePrefix) {
 		foreach ($expectedTerm in $this.expected) {
-			if (!(AreObjectsEqual $actual $expectedTerm "$($messagePrefix)AND: ")) {
+			if (!(AreObjectsEqual $expectedTerm $actual "$($messagePrefix)AND: ")) {
 				[Log]::Failure("$($messagePrefix)AND evaluates to false")
 				return $false
 			}
@@ -224,7 +224,7 @@ class OrExpectation : ExpectationBase {
 		$result = $false
 		try {
 			foreach ($expectedTerm in $this.expected) {
-				if (AreObjectsEqual $actual $expectedTerm "$($messagePrefix)OR: ") {
+				if (AreObjectsEqual $expectedTerm $actual "$($messagePrefix)OR: ") {
 					$result = $true
 					break
 				}
@@ -250,13 +250,11 @@ function ExpectOr { [OrExpectation]::new($args) }
 
 #endregion
 
-
-# TODO: Swap order of $actual and $expted to match Test function
 # TODO: Evaluate need for both AreObjectsEqual and Test
 # TODO: Rename to "Match[...]"
-function AreObjectsEqual($actual, $expected, $messagePrefix) {
+function AreObjectsEqual($expected, $actual, $messagePrefix) {
 
-	function AreValuesEqual($actual, $expected, $messagePrefix) {
+	function AreValuesEqual($expected, $actual, $messagePrefix) {
 		if ($expected -eq $null) {
 	
 			if ($actual -eq $null) {
@@ -279,7 +277,7 @@ function AreObjectsEqual($actual, $expected, $messagePrefix) {
 	if ($expected -is [ExpectationBase]) {
 		return $expected.MatchesExpectation($actual, $messagePrefix)
 	} elseif (($expected -eq $null) -or ($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
-		return (AreValuesEqual $actual $expected $messagePrefix)
+		return (AreValuesEqual $expected $actual $messagePrefix)
 	} elseif ($expected -is [array]) {
 		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between
 		# objects and arrays as both implement this interface.
@@ -295,7 +293,7 @@ function AreObjectsEqual($actual, $expected, $messagePrefix) {
 				return $false
 			}
 
-			$result = $result -and (AreObjectsEqual $actualEnum.Current $expectedEnum.Current "$($messagePrefix)item $(($itemIndex++)): ")
+			$result = $result -and (AreObjectsEqual $expectedEnum.Current $actualEnum.Current "$($messagePrefix)item $(($itemIndex++)): ")
 		}
 
 		if ($expectedEnum.MoveNext()) {
@@ -311,7 +309,7 @@ function AreObjectsEqual($actual, $expected, $messagePrefix) {
 		foreach ($key in $expected.Keys) {
 			$expectedValue = $expected[$key]
 			$actualValue = $actual.($key)
-			$result = $result -and (AreObjectsEqual $actualValue $expectedValue "$($messagePrefix)member '$key': ")
+			$result = $result -and (AreObjectsEqual $expectedValue $actualValue "$($messagePrefix)member '$key': ")
 		}
 
 		return $result
@@ -319,7 +317,7 @@ function AreObjectsEqual($actual, $expected, $messagePrefix) {
 }
 
 function Test($Expected, $Actual, $MessagePrefix) {
-	[void](AreObjectsEqual $Actual $Expected $MessagePrefix)
+	[void](AreObjectsEqual $Expected $Actual $MessagePrefix)
 }
 
 class TestClass : Attribute {}
