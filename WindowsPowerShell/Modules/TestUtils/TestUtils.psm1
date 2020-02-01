@@ -3,6 +3,21 @@ using module String
 
 #region Expectations
 
+# An expectation can be seen as a function with two parameters
+#     function IsMatch($expected, $actual)
+# which has been curried into a function with one parameter
+#     function IsMatch($actual)
+# by capturing the argument for the $expected parameter. Expectation trees - built, for instance,
+# via the constructor arguments of the And and Or expectations - allow for the validation of
+# complex test conditions. For instance, the expectation tree
+#     (And (ListContains 'a') (Not (ListContains 'b')))
+# checks that an actual list data structure contains an element 'a', but no element 'b'. The
+# IsMatch function below treats native PowerShell values and objects as expectations. For instance,
+# the integer 1 is treated as an expectation checking that an actual value equals 1; the array
+# @(1, 2, 3) is treated as an expectation checking that an actual object yields the values 1, 2 and
+# 3 when iterated; the object @{Name = "Joe"; Age = 33} checks that an actual object has a
+# member "Name" with the value "Joe" and a member "Age" with the value 33.
+
 class ExpectationBase {
 	[bool] IsMatch($actual, $messagePrefix) {
 		throw "derived classes must implement this method"
@@ -163,6 +178,9 @@ class CountGreaterOrEqualExpectation : ExpectationBase {
 
 function ExpectCountGreaterOrEqual($count) { [CountGreaterOrEqualExpectation]::new($count) }
 
+# Future: ExpectCountEquals, ExpectEachItem (iterates over the items in the actual data structure,
+# passing each into child expectations)
+
 #endregion
 
 #region Boolean Expectations
@@ -250,7 +268,6 @@ function ExpectOr { [OrExpectation]::new($args) }
 
 #endregion
 
-# TODO: Evaluate need for both IsMatch and Test
 function IsMatch($expected, $actual, $messagePrefix) {
 
 	function AreValuesEqual($expected, $actual, $messagePrefix) {
@@ -315,6 +332,8 @@ function IsMatch($expected, $actual, $messagePrefix) {
 	}
 }
 
+# The way our test executor works, we do not need the return value suppression provided by this
+# function. At this point, this function is merely syntactic sugar.
 function Test($Expected, $Actual, $MessagePrefix) {
 	[void](IsMatch $Expected $Actual $MessagePrefix)
 }
