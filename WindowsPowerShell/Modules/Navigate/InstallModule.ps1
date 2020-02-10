@@ -7,7 +7,7 @@ param(
 )
 
 # dot-source install helper methods
-. "$PSScriptRoot\..\InstallModules.ps1"
+. "$PSScriptRoot\..\InstallUtils.ps1"
 
 $TargetDir = "$TargetRootDir\Navigate"
 
