@@ -1,4 +1,4 @@
-using module Path
+using module Gumby.Path
 
 <#
 .SYNOPSIS

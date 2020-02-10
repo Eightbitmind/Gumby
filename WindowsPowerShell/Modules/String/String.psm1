@@ -1,4 +1,6 @@
-﻿using module Assert
+﻿function Assert($Condition, $Message = "assertion failed") {
+	if (!$Condition) { throw $Message }
+}
 
 <#
 .SYNOPSIS
@@ -20,7 +22,7 @@ function Abbreviate([string] $Text, [uint32] $MaxLength, [string] $Ellipsis = ".
 	if ($Text.Length -le $MaxLength) {
 		return $Text
 	} else {
-		# assert ($MaxLength -gt $Ellipsis.length)
+		# Assert ($MaxLength -gt $Ellipsis.length)
 		# PS converts floats to ints by rounding, not by truncation of the fractional part
 
 		#   01234567890123456789
@@ -86,13 +88,13 @@ function SpaceWords([string[]] $Words, [int] $Width, [string] $SpacingChar = ' '
 	# to provide heterogenous spacing lengths according to the integer divisibility of the
 	# total spacing length.
 
-	assert ($Words.Count -ge 2)
-	assert ($SpacingChar.Length -eq 1)
+	Assert ($Words.Count -ge 2)
+	Assert ($SpacingChar.Length -eq 1)
 
 	$totalSpacingLength = $Width
 	foreach ($word in $Words) { $totalSpacingLength -= $word.Length }
 
-	assert ($totalSpacingLength -ge 0)
+	Assert ($totalSpacingLength -ge 0)
 
 	$spacingLength = $totalSpacingLength / ($Words.Count - 1)
 

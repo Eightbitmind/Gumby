@@ -1,5 +1,7 @@
-using module String
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\String.psm1"
 
 [TestClass()]
 class StringModuleTests {

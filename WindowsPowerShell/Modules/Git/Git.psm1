@@ -1,4 +1,4 @@
-using module Path;
+using module Gumby.Path
 
 function GitGetRepoName($defaultRepoName = "<unknown-repo>")
 {
@@ -79,8 +79,3 @@ function GitCreateCachedRepoNameGetter([string] $rootDir, $defaultRepoName = "<u
 		return $repoName
 	}.GetNewClosure()
 }
-
-Export-ModuleMember -Function GitGetRepoRootDir
-Export-ModuleMember -Function GitGetRepoName
-Export-ModuleMember -Function GitGetBranchName
-Export-ModuleMember -Function GitCreateCachedRepoNameGetter

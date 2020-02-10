@@ -1,5 +1,7 @@
-using module Crypto
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\Crypto.psm1"
 
 [TestClass()]
 class CryptoModuleTests {

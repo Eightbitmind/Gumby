@@ -1,6 +1,7 @@
-using module Path
-using module TreeView
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\TreeView.psm1"
 
 [TestClass()]
 class SimpleObjectTVItemTests {

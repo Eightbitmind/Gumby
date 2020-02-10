@@ -1,4 +1,4 @@
-﻿# abstain from using module Assert here as it might use the Log module
+﻿# abstain from using the Debug module here as it might use the Log module
 
 enum LogMessageType {
 	Comment

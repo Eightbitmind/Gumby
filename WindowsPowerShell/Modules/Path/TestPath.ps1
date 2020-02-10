@@ -1,5 +1,6 @@
-using module Path
-using module TestUtils
+using module Gumby.Test
+
+using module ".\Path.psm1"
 
 [TestClass()]
 class PathNormalizeTests {

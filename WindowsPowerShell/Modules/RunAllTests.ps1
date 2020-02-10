@@ -1,5 +1,5 @@
-using module Path
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
 
 # Do not name this file in a way that matches the pattern used in the Get-ChildItem call below,
 # else it will dot-source itself, leading to infinite recursion.

@@ -1,6 +1,6 @@
-using module Assert
+using module Debug
 using module ListBox
-using module Log
+using module Gumby.Log
 using module Window
 
 class TVItemBase : LBItemBase {
@@ -189,7 +189,7 @@ class TreeView : ListBox {
 			if ($i++ -eq 0) {
 				$this.topLevelInView = $tvItem.Level()
 			} else {
-				assert ($tvItem.Level() -eq $this.topLevelInView)
+				Assert ($tvItem.Level() -eq $this.topLevelInView)
 			}
 		}
 
@@ -321,12 +321,12 @@ class TreeView : ListBox {
 
 		for ([uint32] $i = 1; $i -le $levelDistance; ++$i) {
 			if (($first -gt 0) -and ($this.GetItem($first - 1).Level() -eq $this.GetItem($startIndex).Level() - $i)) {
-				# assert($this.Items[$first - 1].Level() -eq $this.Items[$first].Level() - 1)
+				# Assert ($this.Items[$first - 1].Level() -eq $this.Items[$first].Level() - 1)
 				$first = GetFirstAtLevel ($first - 1)
 			}
 
 			if (($last -lt $this.ItemCount() - 1) -and ($this.GetItem($last + 1).Level() -eq $this.GetItem($startIndex).Level() - $i)) {
-				# assert($this.Items[$last + 1].Level() -lt $this.Items[$last].Level())
+				# Assert ($this.Items[$last + 1].Level() -lt $this.Items[$last].Level())
 				$last = GetLastAtLevel ($last + 1)
 			}
 		}

@@ -1,5 +1,7 @@
-using module Math
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\Math.psm1"
 
 [TestClass()]
 class MathModuleTests {

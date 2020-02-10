@@ -1,4 +1,7 @@
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\Object.psm1"
 
 [TestClass()]
 class DeepCopyTests {

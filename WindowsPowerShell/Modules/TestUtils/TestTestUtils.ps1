@@ -1,5 +1,7 @@
-using module Log
-using module TestUtils
+using module Gumby.Log
+using module Gumby.Path
+
+using module ".\TestUtils.psm1"
 
 [TestClass()]
 class TestUtilsTests {
@@ -12,7 +14,7 @@ class TestUtilsTests {
 	[void] TestObject_MismatchingInts_Fails() {
 		$result = $true
 		$logInterceptor = [LogInterceptor]::new({})
-		try { $result = IsMatch 1 2	}
+		try { $result = IsMatch 1 2 }
 		finally { $logInterceptor.Dispose() }
 		Test $false $result
 	}

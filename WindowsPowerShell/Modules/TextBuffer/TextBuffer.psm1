@@ -1,5 +1,5 @@
-using module Log
-using module String
+using module Gumby.Log
+using module Gumby.String
 
 class TextBuffer {
 	TextBuffer(

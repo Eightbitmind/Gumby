@@ -68,9 +68,3 @@ Boolean indicating whether the item identified by $Path exists.
 function TestPath2([string] $Path) {
 	Test-Path -ErrorAction SilentlyContinue $Path
 }
-
-Export-ModuleMember -Function CopyFile,
-	CreateSymbolicLink,
-	IsNotDirectory,
-	SetReadOnly,
-	TestPath2

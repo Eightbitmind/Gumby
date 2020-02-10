@@ -1,6 +1,7 @@
-using module Path
-using module TestUtils
-using module TextBuffer
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\TextBuffer.psm1"
 
 # notational shorthands
 function coords($X, $Y) { return [System.Management.Automation.Host.Coordinates]::new($X, $Y) }
