@@ -1,4 +1,7 @@
+using module Gumby.Path
 using module Gumby.Test
+
+Import-Module "$PSScriptRoot/Object.psm1"
 
 [TestClass()]
 class DeepCopyTests {
@@ -7,8 +10,8 @@ class DeepCopyTests {
 		$original = $true
 		$copy = DeepCopy $original
 
-		TestIsType $copy ([bool])
-		TestIsTrue $copy
+		Test (ExpectType ([bool])) $copy
+		Test $true $copy
 	}
 
 	[TestMethod()]
@@ -16,8 +19,8 @@ class DeepCopyTests {
 		$original = 1
 		$copy = DeepCopy $original
 
-		TestIsType $copy ([int])
-		TestAreEqual $copy 1
+		Test (ExpectType ([int])) $copy
+		Test 1 $copy
 	}
 
 	[TestMethod()]
@@ -25,8 +28,8 @@ class DeepCopyTests {
 		$original = "abc"
 		$copy = DeepCopy $original
 
-		TestIsType $copy ([string])
-		TestAreEqual $copy "abc"
+		Test (ExpectType ([string])) $copy
+		Test "abc" $copy
 	}
 
 	[TestMethod()]
@@ -34,8 +37,8 @@ class DeepCopyTests {
 		$original = {param($n) $n + 1}
 		$copy = DeepCopy $original
 
-		TestIsType $copy ([scriptblock])
-		TestAreEqual $copy.Invoke(1) 2
+		Test (ExpectType ([scriptblock])) $copy
+		Test 2 $copy.Invoke(1)
 	}
 
 	[TestMethod()]
@@ -45,11 +48,11 @@ class DeepCopyTests {
 
 		# modify original
 		++$original[0]
-		TestAreEqual $original[0] 2
+		Test 2 $original[0]
 
 		# modification of original should have no effect on copy
-		TestIsType $copy ([array])
-		TestTuplesAreEqual $copy (1, 2, 3)
+		Test (ExpectType ([array])) $copy
+		Test (1, 2, 3) $copy
 	}
 
 	[TestMethod()]
@@ -59,30 +62,32 @@ class DeepCopyTests {
 
 		# modify original
 		++$original.Age
-		TestAreEqual $original.Age 28
+		Test 28 $original.Age
 
 		# modification of original should have no effect on copy
-		TestAreEqual $copy.Keys.Count 2
-		TestAreEqual $copy.Name "Anton"
-		TestAreEqual $copy.Age 27
+		Test `
+			(ExpectAnd `
+				(ExpectKeyCountEqual 2) `
+				@{Name = 'Anton'; Age = 27}) `
+			$copy
 	}
 
 	[TestMethod()]
 	[void] DeepCopy_ArrayOfArrays() {
-		$original = @( @(1,2,3), @(10,20,30), @(100, 200, 300) )
+		$original = @( @(1, 2, 3), @(10, 20, 30), @(100, 200, 300) )
 		$copy = DeepCopy $original
 
 		# modify original
 		++$original[1][0]
-		TestAreEqual $original[1][0] 11
+		Test 11 $original[1][0] 11
 
 		# modification of original should have no effect on copy
 
-		TestIsType $copy ([array])
-		TestAreEqual $copy.Count 3
-		TestTuplesAreEqual $copy[0] (1, 2, 3)
-		TestTuplesAreEqual $copy[1] (10, 20, 30)
-		TestTuplesAreEqual $copy[2] (100, 200, 300)
+		Test `
+			(ExpectAnd `
+				(ExpectType ([array])) `
+				@(@(1,2,3), @(10,20,30), @(100, 200, 300))) `
+			$copy
 	}
 
 	[TestMethod()]
@@ -96,26 +101,44 @@ class DeepCopyTests {
 
 		# modify original
 		++$original.Portland.Population
-		TestAreEqual $original.Portland.Population 583777
+		Test 583777 $original.Portland.Population
 
 		# modification of original should have no effect on copy
 
-		TestAreEqual $copy.Keys.Count 3
-
-		TestAreEqual $copy.Portland.Keys.Count 3
-		TestAreEqual $copy.Portland.Population 583776
-		TestAreEqual $copy.Portland.Area 145
-		TestAreEqual $copy.Portland.Demonym.Invoke() "Portlander"
-
-		TestAreEqual $copy.SanFrancisco.Keys.Count 3
-		TestAreEqual $copy.SanFrancisco.Population 883305
-		TestAreEqual $copy.SanFrancisco.Area 232
-		TestAreEqual $copy.SanFrancisco.Demonym.Invoke() "San Franciscan"
-		
-		TestAreEqual $copy.Seattle.Keys.Count 3
-		TestAreEqual $copy.Seattle.Population 608660
-		TestAreEqual $copy.Seattle.Area 142
-		TestAreEqual $copy.Seattle.Demonym.Invoke() "Seattleite"
+		Test `
+			(ExpectAnd `
+				(ExpectKeyCountEqual 3) `
+				@{ `
+					Portland = `
+						(ExpectAnd `
+							(ExpectKeyCountEqual 3) `
+							@{ `
+								Population = 583776; `
+								Area = 145; `
+								Demonym = (Expect "Demonym" { param($sb) $sb.Invoke() -eq "Portlander" }) `
+							} `
+						); `
+					SanFrancisco = `
+						(ExpectAnd `
+							(ExpectKeyCountEqual 3) `
+							@{ `
+								Population = 883305; `
+								Area = 232; `
+								Demonym = (Expect "Demonym" { param($sb) $sb.Invoke() -eq "San Franciscan" }) `
+							} `
+						); `
+					Seattle = `
+						(ExpectAnd `
+							(ExpectKeyCountEqual 3) `
+							@{ `
+								Population = 608660; `
+								Area = 142; `
+								Demonym = (Expect "Demonym" { param($sb) $sb.Invoke() -eq "Seattleite" }) `
+							} `
+						)
+				} `
+			) `
+			$copy
 	}
 
 	[TestMethod()]
@@ -129,18 +152,17 @@ class DeepCopyTests {
 
 		# modify original
 		++$original[0].Age
-		TestAreEqual $original[0].Age 28
+		Test 28 $original[0].Age
 
 		# modification of original should have no effect on copy
 
-		TestIsType $copy ([array])
-		TestAreEqual $copy.Count 3
-		TestAreEqual $copy[0].Name "Anton"
-		TestAreEqual $copy[0].Age 27
-		TestAreEqual $copy[1].Name "Jimi"
-		TestAreEqual $copy[1].Age 27
-		TestAreEqual $copy[2].Name "Kurt"
-		TestAreEqual $copy[2].Age 27
+		Test `
+			@( `
+				(ExpectAnd (ExpectKeyCountEqual 2) @{Name = "Anton"; Age = 27}), `
+				(ExpectAnd (ExpectKeyCountEqual 2) @{Name = "Jimi"; Age = 27}), `
+				(ExpectAnd (ExpectKeyCountEqual 2) @{Name = "Kurt"; Age = 27}) `
+			) `
+			$copy
 	}
 }
 
@@ -153,7 +175,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6)
+		Test (1, 2, 3, 4, 5, 6) $m
 	}
 
 	[TestMethod()]
@@ -163,7 +185,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6, 7, 8)
+		Test (1, 2, 3, 4, 5, 6, 7, 8) $m
 	}
 
 	[TestMethod()]
@@ -173,7 +195,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestTuplesAreEqual $m (1, 2, 3, 4, 5, 6, 7, 8)
+		Test (1, 2, 3, 4, 5, 6, 7, 8) $m
 	}
 
 	[TestMethod()]
@@ -183,11 +205,8 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 2
-		TestAreEqual $m.Name "Anton"
-		TestAreEqual $m.Age 27
+		Test (ExpectAnd (ExpectKeyCountEqual 2) @{Name = 'Anton'; Age = 27}) $m
 	}
-
 
 	[TestMethod()]
 	[void] MergeObjects_ObjectsWithSharedProperties() {
@@ -196,9 +215,7 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 2
-		TestAreEqual $m.Name "Kurt"
-		TestAreEqual $m.Age 27
+		Test (ExpectAnd (ExpectKeyCountEqual 2) @{Name = <# last one wins #> "Kurt"; Age = 27}) $m
 	}
 
 	[TestMethod()]
@@ -208,12 +225,19 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 2
-		TestAreEqual $m.Name "Washington"
-
-		TestAreEqual $m.Seattle.Keys.Count 2
-		TestAreEqual $m.Seattle.Area 142
-		TestAreEqual $m.Seattle.Population 608660
+		Test `
+			(ExpectAnd `
+				(ExpectKeyCountEqual 2) `
+				@{ `
+					Name = "Washington"; `
+					Seattle = `
+						(ExpectAnd `
+							(ExpectKeyCountEqual 2) `
+							@{Area = 142; Population = 608660} `
+						) `
+				} `
+			) `
+			$m
 	}
 
 	[TestMethod()]
@@ -223,10 +247,16 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Keys.Count 3
-		TestAreEqual $m.Name "Seattle"
-		TestAreEqual $m.Demonym "Seattleite"
-		TestTuplesAreEqual $m.ZipCodes (98101, 98102, 98103, 98104, 98105)
+		Test `
+			(ExpectAnd `
+				(ExpectKeyCountEqual 3) `
+				@{ `
+					Name = "Seattle"; `
+					Demonym = "Seattleite"; `
+					ZipCodes = (98101, 98102, 98103, 98104, 98105) `
+				} `
+			) `
+			$m
 	}
 
 	[TestMethod()]
@@ -236,17 +266,16 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b
 
-		TestAreEqual $m.Count 2
-
-		TestAreEqual $m[0].Keys.Count 3
-		TestAreEqual $m[0].Name "Portland"
-		TestAreEqual $m[0].Demonym "Portlander"
-		TestTuplesAreEqual $m[0].ZipCodes (97086, 97087, 97088, 97089, 97090)
-		
-		TestAreEqual $m[1].Keys.Count 3
-		TestAreEqual $m[1].Name "Seattle"
-		TestAreEqual $m[1].Demonym "Seattleite"
-		TestTuplesAreEqual $m[1].ZipCodes (98101, 98102, 98103, 98104, 98105)
+		Test `
+			@( `
+				(ExpectAnd `
+					(ExpectKeyCountEqual 3) `
+					@{Name = "Portland"; Demonym = "Portlander"; ZipCodes = (97086, 97087, 97088, 97089, 97090)}), `
+				(ExpectAnd `
+					(ExpectKeyCountEqual 3) `
+					@{Name = "Seattle"; Demonym = "Seattleite"; ZipCodes = (98101, 98102, 98103, 98104, 98105)}) `
+			) `
+			$m
 	}
 
 	[TestMethod()]
@@ -257,13 +286,19 @@ class MergeObjectsTests {
 
 		$m = MergeObjects $a $b $c
 
-		TestAreEqual $m.Keys.Count 4
-		TestAreEqual $m.Name "Portland"
-		TestAreEqual $m.Demonym "Portlander"
-		TestAreEqual $m.State "Oregon"
-		TestTuplesAreEqual $m.ZipCodes (97086, 97087, 97088, 97089, 97090)
+		Test `
+			(ExpectAnd `
+				(ExpectKeyCountEqual 4) `
+				@{ `
+					Name = "Portland"; `
+					Demonym = "Portlander"; `
+					State = "Oregon"; `
+					ZipCodes=(97086, 97087, 97088, 97089, 97090) `
+				} `
+			) `
+			$m
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
+$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
 RunTests $standaloneLogFilePath ([DeepCopyTests]) ([MergeObjectsTests])
