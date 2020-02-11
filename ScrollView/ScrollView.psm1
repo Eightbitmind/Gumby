@@ -1,4 +1,5 @@
-using module Log
+using module Debug
+using module Gumby.Log
 using module TextBuffer
 using module Window
 
@@ -54,7 +55,7 @@ class ScrollView : Window {
 	}
 
 	hidden [void] DrawLine([int] $lineNumber) {
-		assert ($lineNumber -ge $this.FirstRowInView) "trying to draw a line that is scrolled out of view"
+		Assert ($lineNumber -ge $this.FirstRowInView) "trying to draw a line that is scrolled out of view"
 
 		$lineRect = $this.ClientRectangle()
 		$lineRect.Top += ($lineNumber - $this.FirstRowInView)

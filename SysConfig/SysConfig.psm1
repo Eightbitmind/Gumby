@@ -25,5 +25,3 @@ function SCSwapMouseButtons(<# $Swap = $true #>)
 
 	# [Win32]::SwapMouseButton($Swap)
 }
-
-Export-ModuleMember -Function SCSwapMouseButtons

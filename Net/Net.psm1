@@ -54,5 +54,3 @@ function Use-NetworkShare([string] $share, [string] $user, [string] $password) {
 		return @{ Success = $false; Disconnect = {} }
 	}
 }
-
-Export-ModuleMember -Function Test-NetworkSharePath, Use-NetworkShare

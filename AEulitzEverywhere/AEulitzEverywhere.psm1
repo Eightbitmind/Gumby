@@ -11,6 +11,7 @@ function AEulitzEverywhereShortcuts() {
 			"ToolsGitHub"     = { start 'https://github.com/Eightbitmind/tools'}
 		}
 		"Commands" = @{
+			"Pull ToolsGitHub" = { pushd $HOME/ToolsGitHub; git pull; popd }
 			"Swap Mouse Buttons" = { SCSwapMouseButtons }
 		}
 	}

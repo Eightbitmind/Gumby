@@ -1,4 +1,4 @@
-using module Log
+using module Gumby.Log
 using module Object
 using module TreeView
 using module Window

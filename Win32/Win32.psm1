@@ -25,5 +25,3 @@ public static class Win32
 		# }
 	}
 }
-
-Export-ModuleMember -Function Win32EnsureHelperFunctions

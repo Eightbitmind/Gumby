@@ -39,7 +39,3 @@ function FssSetLocationIfShortcut() {
 		Set-Location (FssExpandShortcut (pwd))
 	}
 }
-
-Export-ModuleMember -Function FssEnsureShortcutDrive,
-	FssExpandShortcut,
-	FssSetLocationIfShortcut

@@ -1,5 +1,5 @@
-using module Log
-using module String
+using module Gumby.Log
+using module Gumby.String
 
 class TextBuffer {
 	TextBuffer(
@@ -164,23 +164,27 @@ class TextBuffer {
 
 		for ($i = 0; $i -lt $targetHeight; ++$i) {
 			$stripe = @{Coordinates = [System.Management.Automation.Host.Coordinates]::new($targetArea.Left, $targetArea.Top + $i)}
-			$line = $this._lines[$sourceOrigin.Y + $i]
 
-			if (($sourceOrigin.Y + $i -lt 0) <# above the text #> -or 
-				($sourceOrigin.Y + $i -ge $this._lines.Count) <# below the text #> -or
-				($sourceOrigin.X + $targetWidth -lt 0) <# to the left of the text #> -or
-				($sourceOrigin.X -gt $line.Text.Length) <# to the right of the right#>) {
+			if (($sourceOrigin.Y + $i -lt 0) <# above the text #> -or
+				($sourceOrigin.Y + $i -ge $this._lines.Count) <# below the text #>) {
 				$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $this.DefaultForegroundColor, $this.DefaultBackgroundColor)
 			} else {
-				$text = if ($sourceOrigin.X -lt 0) {
-					EnsureStringLength ((" " * -$sourceOrigin.X) + $line.Text) $targetWidth
-				} else {
-					EnsureStringLength $line.Text.Substring($sourceOrigin.X) $targetWidth
-				}
+				$line = $this._lines[$sourceOrigin.Y + $i]
 
-				$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray(@($text), $line.ForegroundColor, $line.BackgroundColor)
+				if (($sourceOrigin.X + $targetWidth -lt 0) <# to the left of the text #> -or
+					($sourceOrigin.X -gt $line.Text.Length) <# to the right of the right#>) {
+					$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray( @(' ' * $targetWidth), $line.ForegroundColor, $line.BackgroundColor)
+				} else {
+					$text = if ($sourceOrigin.X -lt 0) {
+						EnsureStringLength ((" " * -$sourceOrigin.X) + $line.Text) $targetWidth
+					} else {
+						EnsureStringLength $line.Text.Substring($sourceOrigin.X) $targetWidth
+					}
+
+					$stripe.BufferCells = $Global:Host.UI.RawUI.NewBufferCellArray(@($text), $line.ForegroundColor, $line.BackgroundColor)
+				}
 			}
-			$stripes.Add($stripe) | Out-Null
+			[void] $stripes.Add($stripe)
 		}
 
 		return $stripes

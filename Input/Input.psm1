@@ -28,4 +28,3 @@ function ReadChoice([string] $prompt, $choices, [bool]$caseSensitive=$false) {
 	if ($caseSensitive) { $choice } else { $choice.ToUpperInvariant() }
 }
 
-Export-ModuleMember -Function ReadChoice

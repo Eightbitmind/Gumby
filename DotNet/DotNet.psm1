@@ -101,9 +101,3 @@ function Start-StrongNameUtility
 {
 	&(Find-NetFxProgram "sn.exe") $args
 }
-
-Export-ModuleMember -Function Start-AssemblerLinker
-Export-ModuleMember -Function Start-GacUtil
-Export-ModuleMember -Function Start-Ildasm
-Export-ModuleMember -Function Start-InstallUtil
-Export-ModuleMember -Function Start-StrongNameUtility

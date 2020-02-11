@@ -1,7 +1,7 @@
-using module Assert
-using module Log
+using module Debug
+using module Gumby.Log
+using module Gumby.String
 using module Math
-using module String
 
 enum WindowResult {
 	OK
@@ -73,7 +73,7 @@ class Window {
 	}
 
 	[void] WriteLine([int] $lineNumber, [string] $text, $foregroundColor, $backgroundColor) {
-		assert ($lineNumber -lt $this.ClientHeight()) "line number outside of client area"
+		Assert ($lineNumber -lt $this.ClientHeight()) "line number outside of client area"
 		[System.Management.Automation.Host.BufferCell[,]] $buffer = 
 			$Global:Host.UI.RawUI.NewBufferCellArray(
 				@(EnsureStringLength $text $this.ClientWidth()),
@@ -312,7 +312,7 @@ class Window {
 		$t270 = [System.Management.Automation.Host.BufferCell]::new([char]0x251C, $this._foregroundColor, $this._backgroundColor, ([System.Management.Automation.Host.BufferCellType]::Complete))
 
 		if ($this.Title) {
-			assert ($this.Title.Length -lt ($windowWidth - 3)) "title too wide for window"
+			Assert ($this.Title.Length -lt ($windowWidth - 3)) "title too wide for window"
 			$t = $this.Title.Substring(0, [math]::Min($this.Title.Length, $windowWidth - 4))
 
 			#  <-a-> <-l-> <-b-->

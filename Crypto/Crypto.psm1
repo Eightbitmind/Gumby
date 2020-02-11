@@ -14,5 +14,3 @@ function GetMD5($Text) {
 	$hash = [System.BitConverter]::ToString($md5.ComputeHash($utf8.GetBytes($Text)))
 	return $hash
 }
-
-Export-ModuleMember -Function GetMD5
