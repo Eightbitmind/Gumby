@@ -1,11 +1,13 @@
-using module Path
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+Import-Module "$PSScriptRoot/Path.psm1"
 
 [TestClass()]
 class PathNormalizeTests {
 	[TestMethod()]
 	[void] PathNormalize_PathWithForwardSlashes() {
-		TestAreEqual (PathNormalize "a:/b/c.txt") "a:\b\c.txt"
+		Test "a:\b\c.txt" (PathNormalize "a:/b/c.txt")
 	}
 }
 
@@ -13,37 +15,37 @@ class PathNormalizeTests {
 class PathFileBaseNameTests {
 	[TestMethod()]
 	[void] PathFileBaseName_EmptyPath() {
-		TestAreEqual (PathFileBaseName "") ""
+		Test "" (PathFileBaseName "")
 	}
 
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithoutParentWithoutExt() {
-		TestAreEqual (PathFileBaseName "a") "a"
+		Test "a" (PathFileBaseName "a")
 	}
 
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithoutParentWithExt() {
-		TestAreEqual (PathFileBaseName "a.b") "a"
+		Test "a" (PathFileBaseName "a.b")
 	}
 
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithoutFilePart() {
-		TestAreEqual (PathFileBaseName "a\b\") ""
+		Test "" (PathFileBaseName "a\b\")
 	}
 
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithParentWithoutExt() {
-		TestAreEqual (PathFileBaseName "a\b\c") "c"
+		Test "c" (PathFileBaseName "a\b\c")
 	}
 	
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithParentWithExtWithoutExt() {
-		TestAreEqual (PathFileBaseName "a\b.c\d") "d"
+		Test "d" (PathFileBaseName "a\b.c\d")
 	}
 
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithParentWithExtWithExt() {
-		TestAreEqual (PathFileBaseName "a\b.c\d.e") "d"
+		Test "d" (PathFileBaseName "a\b.c\d.e")
 	}
 }
 
@@ -52,47 +54,47 @@ class PathJoinTests {
 	[TestMethod()]
 	[void] PathJoin_Nothing() {
 		# not sure if that's the right behavior, perhaps we should throw if there's no base name
-		TestAreEqual (PathJoin) ""
+		Test "" (PathJoin)
 	}
 
 	[TestMethod()]
 	[void] PathJoin_Base() {
-		TestAreEqual (PathJoin -BaseName "a") "a"
+		Test "a" (PathJoin -BaseName "a")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_BaseWithExt() {
-		TestAreEqual (PathJoin -BaseName "a.b") "a.b"
+		Test "a.b" (PathJoin -BaseName "a.b")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_BaseExtWithoutDot() {
-		TestAreEqual (PathJoin -BaseName "a" -Extension "txt") "a.txt"
+		Test "a.txt" (PathJoin -BaseName "a" -Extension "txt")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_BaseExtWithDot() {
-		TestAreEqual (PathJoin -BaseName "a" -Extension ".txt") "a.txt"
+		Test "a.txt" (PathJoin -BaseName "a" -Extension ".txt")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_BaseWithExtDoubleExt() {
-		TestAreEqual (PathJoin -BaseName "a.b" -Extension "c.d") "a.b.c.d"
+		Test "a.b.c.d" (PathJoin -BaseName "a.b" -Extension "c.d")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_DirsBaseNoExt() {
-		TestAreEqual (PathJoin -Directories "a", "b", "c" -BaseName "d") "a\b\c\d"
+		Test "a\b\c\d" (PathJoin -Directories "a", "b", "c" -BaseName "d")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_DirsWithoutSepBaseExt() {
-		TestAreEqual (PathJoin -Directories "a", "b", "c" -BaseName "d" -Extension "txt") "a\b\c\d.txt"
+		Test "a\b\c\d.txt" (PathJoin -Directories "a", "b", "c" -BaseName "d" -Extension "txt")
 	}
 
 	[TestMethod()]
 	[void] PathJoin_DirsWithSepBaseExt() {
-		TestAreEqual (PathJoin -Directories "a\", "/b", "c" -BaseName "d" -Extension "txt") "a\b\c\d.txt"
+		Test "a\b\c\d.txt" (PathJoin -Directories "a\", "/b", "c" -BaseName "d" -Extension "txt")
 	}
 }
 
@@ -100,9 +102,9 @@ class PathJoinTests {
 class PathAsUriTests {
 	[TestMethod()]
 	[void] PathAsUri_Example1() {
-		TestAreEqual (PathAsUri "C:\foo\bar") "file:C:/foo/bar"
+		Test "file:C:/foo/bar" (PathAsUri "C:\foo\bar")
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
+$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
 RunTests $standaloneLogFilePath ([PathNormalizeTests]) ([PathFileBaseNameTests]) ([PathJoinTests]) ([PathAsUriTests])
