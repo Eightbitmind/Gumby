@@ -8,17 +8,17 @@ param(
 # dot-source install helper methods
 . "$PSScriptRoot\..\InstallUtils.ps1"
 
-$TargetDir = "$TargetRootDir\Math"
+$TargetDir = "$TargetRootDir\DirHistory"
 
 switch ($Action) {
 	"Install" {
 		MakeDirIfNotExisting "$TargetDir"
-		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psd1" "$TargetDir\Math.psd1"
-		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psm1" "$TargetDir\Math.psm1"
+		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\DirHistory.psd1" "$TargetDir\DirHistory.psd1"
+		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\DirHistory.psm1" "$TargetDir\DirHistory.psm1"
 	}
 	"Uninstall" {
-		RemoveFileIfExisting "$TargetDir\Math.psm1"
-		RemoveFileIfExisting "$TargetDir\Math.psd1"
+		RemoveFileIfExisting "$TargetDir\DirHistory.psm1"
+		RemoveFileIfExisting "$TargetDir\DirHistory.psd1"
 		RemoveDirIfExistingAndNotEmpty "$TargetDir"
 	}
 }

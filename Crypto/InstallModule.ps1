@@ -8,17 +8,17 @@ param(
 # dot-source install helper methods
 . "$PSScriptRoot\..\InstallUtils.ps1"
 
-$TargetDir = "$TargetRootDir\Math"
+$TargetDir = "$TargetRootDir\Crypto"
 
 switch ($Action) {
 	"Install" {
 		MakeDirIfNotExisting "$TargetDir"
-		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psd1" "$TargetDir\Math.psd1"
-		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psm1" "$TargetDir\Math.psm1"
+		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Crypto.psd1" "$TargetDir\Crypto.psd1"
+		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Crypto.psm1" "$TargetDir\Crypto.psm1"
 	}
 	"Uninstall" {
-		RemoveFileIfExisting "$TargetDir\Math.psm1"
-		RemoveFileIfExisting "$TargetDir\Math.psd1"
+		RemoveFileIfExisting "$TargetDir\Crypto.psm1"
+		RemoveFileIfExisting "$TargetDir\Crypto.psd1"
 		RemoveDirIfExistingAndNotEmpty "$TargetDir"
 	}
 }

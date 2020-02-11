@@ -1,4 +1,4 @@
-using module TestUtils
+using module Gumby.Test
 
 [TestClass()]
 class DeepCopyTests {

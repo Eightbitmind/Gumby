@@ -1,5 +1,5 @@
 using module Math
-using module TestUtils
+using module Gumby.Test
 
 [TestClass()]
 class MathModuleTests {

@@ -1,5 +1,5 @@
 using module Crypto
-using module TestUtils
+using module Gumby.Test
 
 [TestClass()]
 class CryptoModuleTests {
