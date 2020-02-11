@@ -1,4 +1,4 @@
-﻿using module Assert
+﻿using module Debug
 
 <#
 .SYNOPSIS
