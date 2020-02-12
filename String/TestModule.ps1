@@ -1,5 +1,6 @@
-using module Gumby.Path
 using module Gumby.Test
+
+param([ValidateSet("ExportTests", "RunTests")] $Mode = "RunTests")
 
 Import-Module "$PSScriptRoot/String.psm1"
 
@@ -91,5 +92,8 @@ class StringModuleTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\StringTests.log"
-RunTests $standaloneLogFilePath ([StringModuleTests])
+$tests = @([StringModuleTests])
+switch ($Mode) {
+	"ExportTests" { $tests }
+	"RunTests" { RunTests "$env:TEMP\StringTests.log" @tests }
+}

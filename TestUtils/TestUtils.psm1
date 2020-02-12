@@ -546,12 +546,7 @@ class TestRunner {
 }
 
 function RunTests($logFilePath <#, TestClasses... #>) {
-	$globalTestRunner = Get-Variable -Scope Global -Name 'TestRunner' -ErrorAction Ignore
-	if ($globalTestRunner -ne $null) {
-		foreach ($arg in $args) { $globalTestRunner.Value.TestClasses.Add($arg) | Out-Null }
-	} else {
-		$testRunner = [TestRunner]::new($logFilePath)
-		foreach ($arg in $args) { $testRunner.TestClasses.Add($arg) | Out-Null }
-		$testRunner.RunTests()
-	}
+	$testRunner = [TestRunner]::new($logFilePath)
+	foreach ($arg in $args) { [void]($testRunner.TestClasses.Add($arg)) }
+	$testRunner.RunTests()
 }

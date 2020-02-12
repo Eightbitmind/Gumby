@@ -1,15 +1,14 @@
-using module Gumby.Path
 using module Gumby.Test
 
-# Do not name this file in a way that matches the pattern used in the Get-ChildItem call below,
-# else it will dot-source itself, leading to infinite recursion.
+$__tests = [System.Collections.ArrayList]::new()
 
-$Global:TestRunner = [TestRunner]::new("$env:TEMP\$(PathFileBaseName $PSCommandPath).log")
-
-foreach ($testFile in (Get-ChildItem $PSScriptRoot -Recurse -Include TestModule.ps1)) {
-	. $testFile
+foreach ($moduleTestScript in (Get-ChildItem $PSScriptRoot -Recurse -Include TestModule.ps1)) {
+	$exports = . $moduleTestScript -Mode ExportTests
+	if ($exports -is [array]) {
+		foreach ($test in $exports) { [void]($__tests.Add($test)) }
+	} else {
+		[void]($__tests.Add($exports))
+	}
 }
 
-$Global:TestRunner.RunTests()
-
-Remove-Variable -Scope Global -Name TestRunner
+RunTests "$env:TEMP\AllModuleTests.log" @__tests

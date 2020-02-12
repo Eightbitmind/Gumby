@@ -1,7 +1,7 @@
-using module Gumby.Path
 using module Gumby.Test
-
 using module ".\TextBuffer.psm1"
+
+param([ValidateSet("ExportTests", "RunTests")] $Mode = "RunTests")
 
 # notational shorthands
 function coords($X, $Y) { return [System.Management.Automation.Host.Coordinates]::new($X, $Y) }
@@ -578,5 +578,8 @@ class TextBufferTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\TextBufferTests.log"
-RunTests $standaloneLogFilePath ([TextBufferTests])
+$tests = @([TextBufferTests])
+switch ($Mode) {
+	"ExportTests" { $tests }
+	"RunTests" { RunTests "$env:TEMP\TextBufferTests.log" @tests }
+}

@@ -1,5 +1,6 @@
-using module Gumby.Path
 using module Gumby.Test
+
+param([ValidateSet("ExportTests", "RunTests")] $Mode = "RunTests")
 
 Import-Module "$PSScriptRoot/Object.psm1"
 
@@ -300,5 +301,8 @@ class MergeObjectsTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\ObjectTests.log"
-RunTests $standaloneLogFilePath ([DeepCopyTests]) ([MergeObjectsTests])
+$tests = ([DeepCopyTests]), ([MergeObjectsTests])
+switch ($Mode) {
+	"ExportTests" { $tests }
+	"RunTests" { RunTests "$env:TEMP\ObjectTests.log" @tests }
+}

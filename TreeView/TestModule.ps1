@@ -1,7 +1,8 @@
-using module Gumby.Path
 using module Gumby.Test
 
 using module ".\TreeView.psm1"
+
+param([ValidateSet("ExportTests", "RunTests")] $Mode = "RunTests")
 
 [TestClass()]
 class SimpleObjectTVItemTests {
@@ -219,5 +220,8 @@ class FileTVItemTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\TreeViewTests.log"
-RunTests $standaloneLogFilePath ([SimpleObjectTVItemTests]) ([FileTVItemTests])
+$tests = ([SimpleObjectTVItemTests]), ([FileTVItemTests])
+switch ($Mode) {
+	"ExportTests" { $tests }
+	"RunTests" { RunTests "$env:TEMP\TreeViewTests.log" @tests }
+}
