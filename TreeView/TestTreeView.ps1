@@ -1,6 +1,7 @@
-using module Path
-using module TreeView
-using module TestUtils
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\TreeView.psm1"
 
 [TestClass()]
 class SimpleObjectTVItemTests {
@@ -16,32 +17,32 @@ class SimpleObjectTVItemTests {
 	[TestMethod()]
 	[void] Name_Root_AsExpected(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Name() "Flintstone"
+		Test "Flintstone" $tvi.Name()
 	}
 
 	[TestMethod()]
 	[void] Level_Root_AsExpected(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Level() 0
+		Test 0 $tvi.Level()
 	}
 
 	[TestMethod()]
 	[void] IsContainer_Root_IsTrue(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsTrue $tvi.IsContainer()
+		Test $true $tvi.IsContainer()
 	}
 
 	[TestMethod()]
 	[void] IsExpanded_RootInitially_IsFalse(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsFalse $tvi.IsExpanded()
+		Test $false $tvi.IsExpanded()
 	}
 
 	[TestMethod()]
 	[void] IsExpanded_RootAfterExpansion_IsTrue(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
 		$tvi.Expand()
-		TestIsTrue $tvi.IsExpanded()
+		Test $true $tvi.IsExpanded()
 	}
 
 	[TestMethod()]
@@ -49,61 +50,61 @@ class SimpleObjectTVItemTests {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
 		$tvi.Expand()
 		$tvi.Collapse()
-		TestIsFalse $tvi.IsExpanded()
+		Test $false $tvi.IsExpanded()
 	}
 
 	[TestMethod()]
 	[void] Parent_Root_IsNull() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsNull $tvi.Parent()
+		Test $null $tvi.Parent()
 	}
 
 	[TestMethod()]
 	[void] ChildrenCount_Root_AsExpected() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children().Count 3
+		Test 3 $tvi.Children().Count
 	}
 
 	[TestMethod()]
 	[void] Name_FirstChild_AsExpected(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Name() "Fred"
+		Test "Fred" $tvi.Children()[0].Name()
 	}
 
 	[TestMethod()]
 	[void] Level_FirstChild_AsExpected(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Level() 1
+		Test 1 $tvi.Children()[0].Level()
 	}
 
 	[TestMethod()]
 	[void] IsContainer_FirstChild_IsFalse(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsFalse $tvi.Children()[0].IsContainer()
+		Test $false $tvi.Children()[0].IsContainer()
 	}
 
 	[TestMethod()]
 	[void] IsExpanded_FirstChild_IsFalse(){
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsFalse $tvi.IsExpanded()
+		Test $false $tvi.IsExpanded()
 	}
 
 	[TestMethod()]
 	[void] Parent_FirstChild_IsNotNull() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestIsNotNull $tvi.Children()[0].Parent()
+		Test (ExpectNotNull) $tvi.Children()[0].Parent()
 	}
 
 	[TestMethod()]
 	[void] Parent_FirstChild_HasExpectedName() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Parent().Name() "Flintstone"
+		Test "Flintstone" $tvi.Children()[0].Parent().Name()
 	}
 
 	[TestMethod()]
 	[void] ChildrenCount_FirstChild_AsExpected() {
 		$tvi = [SimpleObjectTVItem]::new($this.simpleObject)
-		TestAreEqual $tvi.Children()[0].Children().Count 0
+		Test 0 $tvi.Children()[0].Children().Count
 	}
 }
 
@@ -152,71 +153,71 @@ class FileTVItemTests {
 	[TestMethod()]
 	[void] Name_Root() {
 		$tvi = [FileTVItem]::new($this.rootDir)
-		TestAreEqual $tvi.Name() "FileTVItemTests"
+		Test "FileTVItemTests" $tvi.Name()
 	}
 
 	[TestMethod()]
 	[void] IsContainer_Root() {
 		$tvi = [FileTVItem]::new($this.rootDir)
-		TestIsTrue $tvi.IsContainer()
+		Test $true $tvi.IsContainer()
 	}
 
 	[TestMethod()]
 	[void] Children_Root_ExpectedCount() {
 		$tvi = [FileTVItem]::new($this.rootDir)
-		TestAreEqual $tvi.Children().Count 2
+		Test 2 $tvi.Children().Count
 	}
 
 	[TestMethod()]
 	[void] Children_Root_ExpectedItems() {
 		$tvi = [FileTVItem]::new($this.rootDir)
-		TestAreEqual $tvi.Children()[0].Name() "A1"
-		TestAreEqual $tvi.Children()[1].Name() "A2"
+		Test "A1" $tvi.Children()[0].Name()
+		Test "A2" $tvi.Children()[1].Name()
 	}
 
 	[TestMethod()]
 	[void] Children_A1_ExpectedCount() {
 		$tvi = [FileTVItem]::new($this.rootDir)
-		TestAreEqual $tvi.Children()[0].Children().Count 4
+		Test 4 $tvi.Children()[0].Children().Count
 	}
 
 	[TestMethod()]
 	[void] Children_A1_ExpectedItems() {
 		$tvi = [FileTVItem]::new($this.rootDir)
-		TestAreEqual $tvi.Children()[0].Children()[0].Name() "B1"
-		TestAreEqual $tvi.Children()[0].Children()[1].Name() "B2"
-		TestAreEqual $tvi.Children()[0].Children()[2].Name() "a1f1.txt"
-		TestAreEqual $tvi.Children()[0].Children()[3].Name() "a1f2.txt"
+		Test "B1" $tvi.Children()[0].Children()[0].Name()
+		Test "B2" $tvi.Children()[0].Children()[1].Name()
+		Test "a1f1.txt" $tvi.Children()[0].Children()[2].Name()
+		Test "a1f2.txt" $tvi.Children()[0].Children()[3].Name()
 	}
 
 	[TestMethod()]
 	[void] IsContainer_B1_True() {
 		$root = [FileTVItem]::new($this.rootDir)
-		TestIsTrue $root.Children()[0].Children()[0].IsContainer()
+		Test $true $root.Children()[0].Children()[0].IsContainer()
 	}
 
 	[TestMethod()]
 	[void] Parent_B1_A1() {
 		$root = [FileTVItem]::new($this.rootDir)
-		TestAreEqual $root.Children()[0].Children()[0].Parent().Name() "A1"
+		Test "A1" $root.Children()[0].Children()[0].Parent().Name()
 	}
 
 	[TestMethod()]
 	[void] IsContainer_a1f1_False() {
 		$root = [FileTVItem]::new($this.rootDir)
 		$a1f1 = $root.Children()[0].Children()[2]
-		TestAreEqual $a1f1.Name() "a1f1.txt"
-		TestIsFalse $a1f1.IsContainer()
+		Test "a1f1.txt" $a1f1.Name()
+		Test $false $a1f1.IsContainer()
 	}
 
 	[TestMethod()]
 	[void] Parent_a1f1_A1() {
 		$root = [FileTVItem]::new($this.rootDir)
 		$a1f1 = $root.Children()[0].Children()[2]
-		TestAreEqual $a1f1.Name() "a1f1.txt"
-		TestAreEqual $a1f1.Parent().Name() "A1"
+		Test "a1f1.txt" $a1f1.Name()
+		Test "A1" $a1f1.Parent().Name()
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
+$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
 RunTests $standaloneLogFilePath ([SimpleObjectTVItemTests]) ([FileTVItemTests])
