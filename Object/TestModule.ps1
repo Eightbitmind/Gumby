@@ -300,5 +300,5 @@ class MergeObjectsTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+$standaloneLogFilePath = "$env:TEMP\ObjectTests.log"
 RunTests $standaloneLogFilePath ([DeepCopyTests]) ([MergeObjectsTests])

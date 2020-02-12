@@ -578,5 +578,5 @@ class TextBufferTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSScriptCommand).log"
+$standaloneLogFilePath = "$env:TEMP\TextBufferTests.log"
 RunTests $standaloneLogFilePath ([TextBufferTests])

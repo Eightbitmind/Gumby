@@ -106,5 +106,5 @@ class PathAsUriTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+$standaloneLogFilePath = "$env:TEMP\PathTests.log"
 RunTests $standaloneLogFilePath ([PathNormalizeTests]) ([PathFileBaseNameTests]) ([PathJoinTests]) ([PathAsUriTests])

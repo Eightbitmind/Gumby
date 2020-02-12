@@ -31,5 +31,5 @@ class MathModuleTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+$standaloneLogFilePath = "$env:TEMP\MathTests.log"
 RunTests $standaloneLogFilePath ([MathModuleTests])

@@ -11,5 +11,5 @@ class CryptoModuleTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+$standaloneLogFilePath = "$env:TEMP\CryptoTests.log"
 RunTests $standaloneLogFilePath ([CryptoModuleTests])

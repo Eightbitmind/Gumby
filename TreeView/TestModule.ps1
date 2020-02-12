@@ -219,5 +219,5 @@ class FileTVItemTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+$standaloneLogFilePath = "$env:TEMP\TreeViewTests.log"
 RunTests $standaloneLogFilePath ([SimpleObjectTVItemTests]) ([FileTVItemTests])

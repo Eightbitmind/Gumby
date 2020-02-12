@@ -91,5 +91,5 @@ class StringModuleTests {
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSCommandPath).log"
+$standaloneLogFilePath = "$env:TEMP\StringTests.log"
 RunTests $standaloneLogFilePath ([StringModuleTests])
