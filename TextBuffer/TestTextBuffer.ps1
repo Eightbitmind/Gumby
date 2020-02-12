@@ -1,6 +1,7 @@
-using module Path
-using module TestUtils
-using module TextBuffer
+using module Gumby.Path
+using module Gumby.Test
+
+using module ".\TextBuffer.psm1"
 
 # notational shorthands
 function coords($X, $Y) { return [System.Management.Automation.Host.Coordinates]::new($X, $Y) }
@@ -14,22 +15,22 @@ class TextBufferTests {
 	[TestMethod()]
 	[void] AddLine(){
 		$b = [TextBuffer]::new((white), (black))
-		TestAreEqual $b.LineCount() 0
+		Test 0 $b.LineCount()
 		
 		$b.AddLine("abc", (white), (black))
-		TestAreEqual $b.LineCount() 1
-		TestAreEqual $b.GetLine(0).Text "abc"
+		Test 1 $b.LineCount()
+		Test "abc" $b.GetLine(0).Text
 		
 		$b.AddLine("def", (white), (black))
-		TestAreEqual $b.LineCount() 2
-		TestAreEqual $b.GetLine(0).Text "abc"
-		TestAreEqual $b.GetLine(1).Text "def"
+		Test 2 $b.LineCount()
+		Test "abc" $b.GetLine(0).Text
+		Test "def" $b.GetLine(1).Text
 		
 		$b.AddLine("ghi", (white), (black))
-		TestAreEqual $b.LineCount() 3
-		TestAreEqual $b.GetLine(0).Text "abc"
-		TestAreEqual $b.GetLine(1).Text "def"
-		TestAreEqual $b.GetLine(2).Text "ghi"
+		Test 3 $b.LineCount()
+		Test "abc" $b.GetLine(0).Text
+		Test "def" $b.GetLine(1).Text
+		Test "ghi" $b.GetLine(2).Text
 	}
 
 	[TestMethod()]
@@ -39,40 +40,40 @@ class TextBufferTests {
 		$b.AddLine("abc", (white), (black))
 		$b.AddLine("def", (white), (black))
 		$b.AddLine("ghi", (white), (black))
-		TestAreEqual $b.LineCount() 3
+		Test 3 $b.LineCount()
 
 		$b.RemoveLine(0)
-		TestAreEqual $b.LineCount() 2
-		TestAreEqual $b.GetLine(0).Text "def"
-		TestAreEqual $b.GetLine(1).Text "ghi"
+		Test 2 $b.LineCount()
+		Test "def" $b.GetLine(0).Text
+		Test "ghi" $b.GetLine(1).Text
 		
 		$b.RemoveLine(1)
-		TestAreEqual $b.LineCount() 1
-		TestAreEqual $b.GetLine(0).Text "def"
+		Test 1 $b.LineCount()
+		Test "def" $b.GetLine(0).Text
 
 		$b.RemoveLine(0)
-		TestAreEqual $b.LineCount() 0
+		Test 0 $b.LineCount()
 	}
 
 	[TestMethod()]
 	[void] ColumnCount(){
 		$b = [TextBuffer]::new((white), (black))
-		TestAreEqual $b.ColumnCount() 0
+		Test 0 $b.ColumnCount()
 		
 		$b.AddLine("", (white), (black))
-		TestAreEqual $b.ColumnCount() 0
+		Test 0 $b.ColumnCount()
 
 		$b.AddLine("a", (white), (black))
-		TestAreEqual $b.ColumnCount() 1
+		Test 1 $b.ColumnCount()
 
 		$b.AddLine("bbb", (white), (black))
-		TestAreEqual $b.ColumnCount() 3
+		Test 3 $b.ColumnCount()
 
 		$b.RemoveLine(2)
-		TestAreEqual $b.ColumnCount() 1
+		Test 1 $b.ColumnCount()
 
 		$b.RemoveLine(1)
-		TestAreEqual $b.ColumnCount() 0
+		Test 0 $b.ColumnCount()
 	}
 
 	[TestMethod()]
@@ -84,16 +85,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords -1 -1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " ab" (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca " ab" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca " de" (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca " de" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -105,16 +106,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords -1 0))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca " ab" (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca " ab" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " de" (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca " de" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca " gh" (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca " gh" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -126,16 +127,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca " de" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca " de" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " gh" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca " gh" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "   " (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "   " (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -147,16 +148,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 0 -1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "abc" (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca "abc" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "def" (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca "def" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -168,16 +169,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 0 0))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "abc" (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "abc" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "def" (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca "def" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "ghi" (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca "ghi" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -189,16 +190,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 0 1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "def" (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "def" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "ghi" (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca "ghi" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "   " (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca "   " (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -210,16 +211,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 1 -1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "bc " (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca "bc " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "ef " (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca "ef " (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -231,16 +232,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 1 0))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "bc " (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "bc " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "ef " (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca "ef " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "hi " (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca "hi " (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -252,16 +253,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 12 34 14 36), (coords 1 1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 12 34)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "ef " (white) (black))
+		Test (coords 12 34) $stripes[0].Coordinates
+		Test (bca "ef " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 12 35)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "hi " (white) (black))
+		Test (coords 12 35) $stripes[1].Coordinates
+		Test (bca "hi " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 12 36)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "   " (white) (black))
+		Test (coords 12 36) $stripes[2].Coordinates
+		Test (bca "   " (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -274,16 +275,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 -1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " ab" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca " ab" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca " ef" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca " ef" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -296,16 +297,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 0))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca " ab" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca " ab" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " ef" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca " ef" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca " ij" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca " ij" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -318,16 +319,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords -1 1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca " ef" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca " ef" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " ij" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca " ij" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca " mn" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca " mn" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -340,16 +341,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 0 -1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "abc" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca "abc" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "efg" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "efg" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -362,16 +363,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 0 0))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "abc" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "abc" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "efg" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca "efg" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "ijk" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "ijk" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -384,16 +385,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 0 1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "efg" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "efg" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "ijk" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca "ijk" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "mno" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "mno" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -406,16 +407,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 1 -1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "   " (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "bcd" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca "bcd" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "fgh" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "fgh" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -428,16 +429,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 1 0))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "bcd" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "bcd" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "fgh" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca "fgh" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "jkl" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "jkl" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -450,16 +451,16 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 0 0 2 2), (coords 1 1))
 
-		TestAreEqual $stripes.Count 3
+		Test 3 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 0 0)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "fgh" (white) (black))
+		Test (coords 0 0) $stripes[0].Coordinates
+		Test (bca "fgh" (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 0 1)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "jkl" (white) (black))
+		Test (coords 0 1) $stripes[1].Coordinates
+		Test (bca "jkl" (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 0 2)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "nop" (white) (black))
+		Test (coords 0 2) $stripes[2].Coordinates
+		Test (bca "nop" (white) (black)) $stripes[2].BufferCells
 	}
 
 	[TestMethod()]
@@ -471,25 +472,25 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 10 20 15 25), (coords 0 0))
 
-		TestAreEqual $stripes.Count 6
+		Test 6 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 10 20)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "abc   " (white) (black))
+		Test (coords 10 20) $stripes[0].Coordinates
+		Test (bca "abc   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 10 21)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "def   " (white) (black))
+		Test (coords 10 21) $stripes[1].Coordinates
+		Test (bca "def   " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 10 22)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "ghi   " (white) (black))
+		Test (coords 10 22) $stripes[2].Coordinates
+		Test (bca "ghi   " (white) (black)) $stripes[2].BufferCells
 
-		TestAreEqual $stripes[3].Coordinates (coords 10 23)
-		TestTuplesAreEqual $stripes[3].BufferCells (bca "      " (white) (black))
+		Test (coords 10 23) $stripes[3].Coordinates
+		Test (bca "      " (white) (black)) $stripes[3].BufferCells
 
-		TestAreEqual $stripes[4].Coordinates (coords 10 24)
-		TestTuplesAreEqual $stripes[4].BufferCells (bca "      " (white) (black))
+		Test (coords 10 24) $stripes[4].Coordinates
+		Test (bca "      " (white) (black)) $stripes[4].BufferCells
 
-		TestAreEqual $stripes[5].Coordinates (coords 10 25)
-		TestTuplesAreEqual $stripes[5].BufferCells (bca "      " (white) (black))
+		Test (coords 10 25) $stripes[5].Coordinates
+		Test (bca "      " (white) (black)) $stripes[5].BufferCells
 	}
 
 	[TestMethod()]
@@ -501,25 +502,25 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 10 20 15 25), (coords -1 -1))
 
-		TestAreEqual $stripes.Count 6
+		Test 6 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 10 20)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "      " (white) (black))
+		Test (coords 10 20) $stripes[0].Coordinates
+		Test (bca "      " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 10 21)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca " abc  " (white) (black))
+		Test (coords 10 21) $stripes[1].Coordinates
+		Test (bca " abc  " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 10 22)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca " def  " (white) (black))
+		Test (coords 10 22) $stripes[2].Coordinates
+		Test (bca " def  " (white) (black)) $stripes[2].BufferCells
 
-		TestAreEqual $stripes[3].Coordinates (coords 10 23)
-		TestTuplesAreEqual $stripes[3].BufferCells (bca " ghi  " (white) (black))
+		Test (coords 10 23) $stripes[3].Coordinates
+		Test (bca " ghi  " (white) (black)) $stripes[3].BufferCells
 
-		TestAreEqual $stripes[4].Coordinates (coords 10 24)
-		TestTuplesAreEqual $stripes[4].BufferCells (bca "      " (white) (black))
+		Test (coords 10 24) $stripes[4].Coordinates
+		Test (bca "      " (white) (black)) $stripes[4].BufferCells
 
-		TestAreEqual $stripes[5].Coordinates (coords 10 25)
-		TestTuplesAreEqual $stripes[5].BufferCells (bca "      " (white) (black))
+		Test (coords 10 25) $stripes[5].Coordinates
+		Test (bca "      " (white) (black)) $stripes[5].BufferCells
 	}
 
 	[TestMethod()]
@@ -531,25 +532,25 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 10 20 15 25), (coords -5 -5))
 
-		TestAreEqual $stripes.Count 6
+		Test 6 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 10 20)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "      " (white) (black))
+		Test (coords 10 20) $stripes[0].Coordinates
+		Test (bca "      " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 10 21)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "      " (white) (black))
+		Test (coords 10 21) $stripes[1].Coordinates
+		Test (bca "      " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 10 22)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "      " (white) (black))
+		Test (coords 10 22) $stripes[2].Coordinates
+		Test (bca "      " (white) (black)) $stripes[2].BufferCells
 
-		TestAreEqual $stripes[3].Coordinates (coords 10 23)
-		TestTuplesAreEqual $stripes[3].BufferCells (bca "      " (white) (black))
+		Test (coords 10 23) $stripes[3].Coordinates
+		Test (bca "      " (white) (black)) $stripes[3].BufferCells
 
-		TestAreEqual $stripes[4].Coordinates (coords 10 24)
-		TestTuplesAreEqual $stripes[4].BufferCells (bca "      " (white) (black))
+		Test (coords 10 24) $stripes[4].Coordinates
+		Test (bca "      " (white) (black)) $stripes[4].BufferCells
 
-		TestAreEqual $stripes[5].Coordinates (coords 10 25)
-		TestTuplesAreEqual $stripes[5].BufferCells (bca "     a" (white) (black))
+		Test (coords 10 25) $stripes[5].Coordinates
+		Test (bca "     a" (white) (black)) $stripes[5].BufferCells
 	}
 
 	[TestMethod()]
@@ -561,21 +562,21 @@ class TextBufferTests {
 
 		$stripes = $b.GetStripes((rect 10 20 13 23), (coords 2 0))
 
-		TestAreEqual $stripes.Count 4
+		Test 4 $stripes.Count
 
-		TestAreEqual $stripes[0].Coordinates (coords 10 20)
-		TestTuplesAreEqual $stripes[0].BufferCells (bca "c   " (white) (black))
+		Test (coords 10 20) $stripes[0].Coordinates
+		Test (bca "c   " (white) (black)) $stripes[0].BufferCells
 
-		TestAreEqual $stripes[1].Coordinates (coords 10 21)
-		TestTuplesAreEqual $stripes[1].BufferCells (bca "    " (white) (black))
+		Test (coords 10 21) $stripes[1].Coordinates
+		Test (bca "    " (white) (black)) $stripes[1].BufferCells
 
-		TestAreEqual $stripes[2].Coordinates (coords 10 22)
-		TestTuplesAreEqual $stripes[2].BufferCells (bca "i   " (white) (black))
+		Test (coords 10 22) $stripes[2].Coordinates
+		Test (bca "i   " (white) (black)) $stripes[2].BufferCells
 
-		TestAreEqual $stripes[3].Coordinates (coords 10 23)
-		TestTuplesAreEqual $stripes[3].BufferCells (bca "    " (white) (black))
+		Test (coords 10 23) $stripes[3].Coordinates
+		Test (bca "    " (white) (black)) $stripes[3].BufferCells
 	}
 }
 
-$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $MyInvocation.MyCommand.Path).log"
+$standaloneLogFilePath = "$env:TEMP\$(PathFileBaseName $PSScriptCommand).log"
 RunTests $standaloneLogFilePath ([TextBufferTests])
