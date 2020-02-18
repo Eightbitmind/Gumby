@@ -1,5 +1,4 @@
-﻿# abstain from using module Debug here as it might use the Log module
-# abstain from using module File here as it might use the Log module
+﻿# abstain from using module Assert here as it might use the Log module
 
 enum LogMessageType {
 	Comment
@@ -83,7 +82,7 @@ class Log {
 	}
 
 	# ArrayList over standard array for mutability
-	static [Collections.ArrayList] $Listeners = [Collections.ArrayList]::new()
+	static [System.Collections.ArrayList] $Listeners = [System.Collections.ArrayList]::new()
 
 	static hidden [uint32] $_warningCount = 0
 	static hidden [uint32] $_errorCount = 0
@@ -150,21 +149,54 @@ class FileLogListener : LogListenerBase {
 class ConsoleLogListener : LogListenerBase {
 	[void] ProcessMessage([LogMessageType] $MessageType, [string] $Message) {
 		switch ($MessageType) {
+			([LogMessageType]::Comment) {
+				Write-Host $Message
+				break
+			}
+
 			([LogMessageType]::Warning) {
 				Write-Host -ForegroundColor Yellow $Message
+				break
 			}
 
 			([LogMessageType]::Error) {
 				Write-Host -ForegroundColor Red $Message
+				break
 			}
 
 			([LogMessageType]::Success) {
 				Write-Host -ForegroundColor Green $Message
+				break
 			}
 
 			([LogMessageType]::Failure) {
 				Write-Host -ForegroundColor Red $Message
+				break
 			}
 		}
 	}
+}
+
+class LogInterceptor : LogListenerBase {
+
+	LogInterceptor([scriptblock] $onProcessMessage) {
+		$this.onProcessMessage = $onProcessMessage
+		$this.listeners = [Log]::Listeners
+		[Log]::Listeners = [System.Collections.ArrayList]::new(@($this))
+	}
+
+	[void] ProcessMessage([LogMessageType] $MessageType, [string] $Message) {
+		$this.onProcessMessage.Invoke($this, $MessageType, $Message)
+	}
+
+	[void] DispatchMessage([LogMessageType] $MessageType, [string] $Message) {
+		foreach ($l in $this.listeners) { $l.ProcessMessage($MessageType, $Message) }
+	}
+
+	[void] Dispose() {
+		[Log]::Listeners = $this.listeners
+	}
+
+	hidden [System.Collections.ArrayList] $listeners
+	hidden [scriptblock] $onProcessMessage
 }
