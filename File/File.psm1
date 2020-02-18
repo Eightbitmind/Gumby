@@ -27,7 +27,12 @@ Target of the link being created.
 Path of the link being created.
 #>
 function CreateSymbolicLink($Target, $Link) {
-	New-Item -Path $Link -ItemType SymbolicLink -Value $Target
+	[void](New-Item -Path $Link -ItemType SymbolicLink -Value $Target)
+}
+
+function IsSymbolicLink ($Item) {
+	if ($Item -is [string]) { $Item = Get-Item $Item }
+	return (($null -ne $Item.LinkType) -and ($Item.LinkType -eq 'SymbolicLink'))
 }
 
 <#
