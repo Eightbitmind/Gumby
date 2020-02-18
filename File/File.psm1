@@ -35,6 +35,10 @@ function IsSymbolicLink ($Item) {
 	return (($null -ne $Item.LinkType) -and ($Item.LinkType -eq 'SymbolicLink'))
 }
 
+function IsDirectory($Path) {
+	return (Test-Path -PathType Container $Path)
+}
+
 <#
 .SYNOPSIS
 	.
