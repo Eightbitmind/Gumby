@@ -25,7 +25,7 @@ function RemoveDirectoryIfExistingAndEmpty($Path) {
 	if (Test-Path -PathType Container $Path) {
 		$dirInfo = Get-Item $Path
 		if (($dirInfo.GetDirectories().Count + $dirInfo.GetFiles().Count) -eq 0) {
-			[Log]::Comment("removed directory `"$Path`"")
+			[Log]::Comment("removing directory `"$Path`"")
 			rmdir $Path
 		} else {
 			[Log]::Comment("skipping removal of directory `"$Path`" because it is not empty")
