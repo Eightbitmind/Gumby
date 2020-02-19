@@ -68,6 +68,32 @@ function EnsureStringLength([string] $Text, [int] $Length, [string] $FillChar = 
 
 <#
 .SYNOPSIS
+Expand macro references ('$MacroName') with macro values.
+
+.PARAMETER Text
+String containing macro references.
+
+.PARAMETER Macros
+Hashtable with macro names as keys and macro values as values.
+
+.OUTPUTS
+String in which macro references have been replaced with macro values.
+#>
+function ExpandMacros($Text, $Macros) {
+	[regex] $macroPattern = '(?<!`)\$(?<MacroName>[a-zA-Z_]\w*)'
+	return $macroPattern.Replace($Text, {
+		param ($match)
+		$macroName = $match.Groups['MacroName'].Value
+		if ($Macros.ContainsKey($macroName)) {
+			return $Macros[$macroName]
+		} else {
+			return $match.Value
+		}
+	})
+}
+
+<#
+.SYNOPSIS
 Normalizes a string by removing whitespace characters from its beginning and end, and by reducing
 whitespace character sequences in the middle of the string to a single whitespace character.
 

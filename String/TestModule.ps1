@@ -57,6 +57,21 @@ class StringModuleTests {
 	}
 
 	[TestMethod()]
+	[void] ExpandMacros_KnownMacros() {
+		Test "Name's Bond, James Bond." (ExpandMacros 'Name''s $LastName, $FirstName $LastName.' @{FirstName = "James"; LastName = "Bond"})
+	}
+
+	[TestMethod()]
+	[void] ExpandMacros_UnknownMacros() {
+		Test 'there are known knowns and known $Unknowns' (ExpandMacros 'there are known $ThingsWeAreAwareOf and known $Unknowns' @{ThingsWeAreAwareOf = "knowns"})
+	}
+
+	[TestMethod()]
+	[void] ExpandMacros_EscapedMacroReference() {
+		Test 'The Great `$Escape is a tale of prisoner escape.' (ExpandMacros 'The Great `$Escape is a tale of $Escape.' @{Escape = "prisoner escape"})
+	}
+
+	[TestMethod()]
 	[void] NormalizeWhitespace_EmptyString() {
 		Test "" (NormalizeWhitespace "")
 	}

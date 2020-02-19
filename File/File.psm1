@@ -1,5 +1,51 @@
 <#
 .SYNOPSIS
+	Values describing a text file encoding.
+#>
+enum TextFileEncoding {
+	UTF8
+	Unicode
+	UTF32
+	UTF7
+	ASCII
+}
+
+<#
+.SYNOPSIS
+	Gets text file encoding.
+
+.PARAMETER Path
+	Path and name of the text file whose encoding is to be determined.
+
+.OUTPUTS
+	'TextFileEncoding' enum value describing the text file encoding.
+
+.DESCRIPTION
+	The Get-FileEncoding function determines encoding by looking at the Byte Order Mark (BOM).
+	It assumes the specified file ('Path' parameter) is an existing, non-zero length file.
+#>
+function Get-TextFileEncoding ([string] $Path) {
+	[byte[]] $bytes = Get-Content -Encoding byte -ReadCount 4 -TotalCount 4 -Path $Path
+
+	if ($bytes[0] -eq 0xef -and $bytes[1] -eq 0xbb -and $bytes[2] -eq 0xbf) {
+		return [TextFileEncoding]::UTF8
+	}
+	elseif ($bytes[0] -eq 0xfe -and $bytes[1] -eq 0xff) {
+		return [TextFileEncoding]::Unicode
+	}
+	elseif ($bytes[0] -eq 0 -and $bytes[1] -eq 0 -and $bytes[2] -eq 0xfe -and $bytes[3] -eq 0xff) {
+		return [TextFileEncoding]::UTF32
+	}
+	elseif ($bytes[0] -eq 0x2b -and $bytes[1] -eq 0x2f -and $bytes[2] -eq 0x76) {
+		return [TextFileEncoding]::UTF7
+	}
+	else {
+		return [TextFileEncoding]::ASCII
+	}
+}
+
+<#
+.SYNOPSIS
 Copies a file, creating target directories if needed.
 
 .PARAMETER Source
