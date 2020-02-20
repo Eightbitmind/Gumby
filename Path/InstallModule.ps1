@@ -8,7 +8,10 @@ param(
 # dot-source install helper methods
 . "$PSScriptRoot\..\InstallUtils.ps1"
 
-$TargetDir = "$TargetRootDir\Path"
+$Macros = Import-PowerShellDataFile "$PSScriptRoot\InstallMacros.psd1"
+$InstallName = PathFileBaseName $Macros.RootModule
+
+$TargetDir = "$TargetRootDir\$InstallName"
 
 switch ($Action) {
 	"Install" {

@@ -1,0 +1,3 @@
+@{
+	RootModule = 'Path.psm1'
+}

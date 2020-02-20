@@ -13,8 +13,8 @@ $StagingDir = "$($env:TEMP)\$(PathFileBaseName $PSCommandPath)\$PublishName"
 
 try {
 	EnsureEmptyDir $StagingDir
-	ExpandFile "$PSScriptRoot\Math.psd1t" "$PSScriptRoot\PublishMacros.psd1" "$StagingDir\$PublishName.psd1"
-	Copy-Item "$PSScriptRoot\Math.psm1" "$StagingDir\$PublishName.psm1"
+	ExpandFile "$PSScriptRoot\Path.psd1t" "$PSScriptRoot\PublishMacros.psd1" "$StagingDir\$PublishName.psd1"
+	Copy-Item "$PSScriptRoot\Path.psm1" "$StagingDir\$PublishName.psm1"
 	Publish-Module -NuGetApiKey $NuGetApiKey -Path $StagingDir
 } finally {
 	if (TestPath $StagingDir) {Remove-Item -Recurse -Force $StagingDir}
