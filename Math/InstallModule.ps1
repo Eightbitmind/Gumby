@@ -8,17 +8,22 @@ param(
 # dot-source install helper methods
 . "$PSScriptRoot\..\InstallUtils.ps1"
 
-$TargetDir = "$TargetRootDir\Math"
+$Macros = Import-PowerShellDataFile "$PSScriptRoot\InstallMacros.psd1"
+$InstallName = PathFileBaseName $Macros.RootModule
+
+$TargetDir = "$TargetRootDir\$InstallName"
 
 switch ($Action) {
 	"Install" {
 		MakeDirIfNotExisting "$TargetDir"
-		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psd1" "$TargetDir\Math.psd1"
-		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psm1" "$TargetDir\Math.psm1"
+		ExpandFile "$PSScriptRoot\Math.psd1t" "$PSScriptRoot\InstallMacros.psd1" "$TargetDir\$InstallName.psd1"
+		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psm1" "$TargetDir\$InstallName.psm1"
+		break
 	}
 	"Uninstall" {
-		RemoveFileIfExisting "$TargetDir\Math.psm1"
-		RemoveFileIfExisting "$TargetDir\Math.psd1"
+		RemoveFileIfExisting "$TargetDir\$InstallName.psm1"
+		RemoveFileIfExisting "$TargetDir\$InstallName.psd1"
 		RemoveDirIfExistingAndNotEmpty "$TargetDir"
+		break
 	}
 }

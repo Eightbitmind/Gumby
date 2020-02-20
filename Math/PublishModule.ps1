@@ -9,5 +9,5 @@ $Macros = Import-PowerShellDataFile "$PSScriptRoot\PublishMacros.psd1"
 $PublishName = PathFileBaseName $Macros.RootModule
 $StagingDir = "$($env:TEMP)\$(PathFileBaseName $PSCommandPath)\$PublishName"
 EnsureEmptyDir $StagingDir
-ExpandFile "$PSScriptRoot\String.psd1t" "$PSScriptRoot\PublishMacros.psd1" "$StagingDir\$PublishName.psd1"
-Copy-Item "$PSScriptRoot\String.psm1" "$StagingDir\$PublishName.psm1"
+ExpandFile "$PSScriptRoot\Math.psd1t" "$PSScriptRoot\PublishMacros.psd1" "$StagingDir\$PublishName.psd1"
+Copy-Item "$PSScriptRoot\Math.psm1" "$StagingDir\$PublishName.psm1"

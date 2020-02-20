@@ -41,19 +41,51 @@ Path to extract base name part from.
 Base name part.
 #>
 function PathFileBaseName([string] $Path) {
+
+	# a: Position after the last separator (if any)
+	# b: Position of the last dot (if any)
+
+	# "p"
+	#  0
+	#  a
+	# b
+
+	# "p.q"
+	#  012
+	#  a
+	#   b
+
+	# "p.q.r"
+	#  01234
+	#  a
+	#     b
+
+	# "p\q"
+	#  012
+	#    a
+	# b
+
+	# "p.q\r"
+	#  01234
+	#      a
+	#   b
+
+	# "p\q.r\s.t.u"
+	#  01234567890
+	#        a
+	#           b
+
 	[int] $a = $Path.LastIndexOf((PathSeparator))
 
 	if ($a -lt 0) { $a = 0 } else { ++$a }
 
 	if ($a -ge $Path.Length) { return "" }
 
-	[int] $b = $Path.IndexOf('.', $a)
+	[int] $b = $Path.LastIndexOf('.')
 
-	if ($b -lt 0) {
-		# "a\b" -> "b"
+	if ($b -lt $a) {
 		return $Path.Substring($a)
 	} else {
-		# "a\b.c" -> "b"
 		return $Path.Substring($a, $b - $a)
 	}
 }
