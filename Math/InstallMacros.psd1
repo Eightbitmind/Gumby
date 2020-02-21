@@ -1,3 +1,0 @@
-@{
-	RootModule = 'Math.psm1'
-}

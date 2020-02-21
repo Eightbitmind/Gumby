@@ -1,3 +1,0 @@
-@{
-	RootModule = 'String.psm1'
-}

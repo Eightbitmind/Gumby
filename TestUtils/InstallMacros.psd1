@@ -1,3 +1,0 @@
-@{
-	RootModule = 'TestUtils.psm1'
-}
