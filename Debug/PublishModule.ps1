@@ -7,12 +7,12 @@ param($NuGetApiKey)
 # dot-source install helper methods
 . "$PSScriptRoot\..\InstallUtils.ps1"
 
-$StagingDir = "$($env:TEMP)\$(PathFileBaseName $PSCommandPath)\Gumby.String"
+$StagingDir = "$($env:TEMP)\$(PathFileBaseName $PSCommandPath)\Gumby.Debug"
 
 try {
 	EnsureEmptyDir $StagingDir
-	Copy-Item "$PSScriptRoot\String.psd1" "$StagingDir\Gumby.String.psd1"
-	Copy-Item "$PSScriptRoot\String.psm1" "$StagingDir\Gumby.String.psm1"
+	Copy-Item "$PSScriptRoot\Debug.psd1" "$StagingDir\Gumby.Debug.psd1"
+	Copy-Item "$PSScriptRoot\Debug.psm1" "$StagingDir\Gumby.Debug.psm1"
 	Publish-Module -NuGetApiKey $NuGetApiKey -Path $StagingDir
 } finally {
 	if (Test-Path $StagingDir) {Remove-Item -Recurse -Force $StagingDir}

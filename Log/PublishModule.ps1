@@ -15,5 +15,5 @@ try {
 	Copy-Item "$PSScriptRoot\Log.psm1" "$StagingDir\Gumby.Log.psm1"
 	Publish-Module -NuGetApiKey $NuGetApiKey -Path $StagingDir
 } finally {
-	if (TestPath $StagingDir) {Remove-Item -Recurse -Force $StagingDir}
+	if (Test-Path $StagingDir) {Remove-Item -Recurse -Force $StagingDir}
 }

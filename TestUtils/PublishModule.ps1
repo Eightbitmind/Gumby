@@ -11,9 +11,9 @@ $StagingDir = "$($env:TEMP)\$(PathFileBaseName $PSCommandPath)\Gumby.Test"
 
 try {
 	EnsureEmptyDir $StagingDir
-	Copy-File "$PSScriptRoot\TestUtils.psd1" "$StagingDir\Gumby.Test.psd1"
+	Copy-Item "$PSScriptRoot\TestUtils.psd1" "$StagingDir\Gumby.Test.psd1"
 	Copy-Item "$PSScriptRoot\TestUtils.psm1" "$StagingDir\Gumby.Test.psm1"
 	Publish-Module -NuGetApiKey $NuGetApiKey -Path $StagingDir
 } finally {
-	if (TestPath $StagingDir) {Remove-Item -Recurse -Force $StagingDir}
+	if (Test-Path $StagingDir) {Remove-Item -Recurse -Force $StagingDir}
 }
