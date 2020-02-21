@@ -1,0 +1,3 @@
+@{
+	RootModule = 'Log.psm1'
+}
