@@ -1,4 +1,4 @@
-using module File
+using module Gumby.File
 using module Gumby.Path
 using module Gumby.String
 
