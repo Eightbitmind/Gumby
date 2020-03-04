@@ -3,6 +3,8 @@ using module ScrollView
 class LBItemBase {
 	[string] Name() { throw "abstract" }
 	[object] Value() { throw "abstract" }
+	[void] OnSelected() {}
+	[void] OnDeselected() {}
 }
 
 class StringLBItem : LBItemBase {
@@ -40,7 +42,7 @@ class ListBox : ScrollView {
 	) : base($left, $top, $width, $height, $foregroundColor, $backgroundColor) {
 
 		$lbItems = [System.Collections.Generic.List`1[LBItemBase]]::new()
-		foreach($item in $items) {
+		foreach ($item in $items) {
 			$lbItems.Add($lbItemType::new($item)) | Out-Null
 		}
 
@@ -49,7 +51,7 @@ class ListBox : ScrollView {
 
 	hidden [void] InitializeItems([System.Collections.Generic.IEnumerable`1[LBItemBase]] $lbItems) {
 		foreach ($lbItem in $lbItems) {
-			$this._items.Add($lbitem) | Out-Null
+			[void]($this._items.Add($lbItem))
 			$this.AddLine($this.GetItemLabel($lbItem), $this.ForegroundColor(), $this.BackgroundColor())
 		}
 
@@ -59,7 +61,7 @@ class ListBox : ScrollView {
 	[int] ItemCount() { return $this._items.Count }
 
 	[void] AddItem([object] $item) {
-		$this._items.Add($item) | Out-Null
+		[void]($this._items.Add($item))
 		$this.AddLine($this.GetItemLabel($item), $this.ForegroundColor(), $this.BackgroundColor())
 	}
 
@@ -95,6 +97,8 @@ class ListBox : ScrollView {
 					# deselect currently selected item
 					$this.GetLine($this._selectedIndex).ForegroundColor = $this.ForegroundColor()
 					$this.GetLine($this._selectedIndex).BackgroundColor = $this.BackgroundColor()
+
+					$this._items[$this._selectedIndex].OnDeselected()
 				}
 	
 				# select new item
@@ -102,6 +106,8 @@ class ListBox : ScrollView {
 				$this.GetLine($index).BackgroundColor = $this.ForegroundColor()
 	
 				$this._selectedIndex = $index
+
+				$this._items[$this._selectedIndex].OnSelected()
 			}
 		} else {
 			# removing selection
@@ -110,6 +116,8 @@ class ListBox : ScrollView {
 				# deselect currently selected item
 				$this.GetLine($this._selectedIndex).ForegroundColor = $this.ForegroundColor()
 				$this.GetLine($this._selectedIndex).BackgroundColor = $this.BackgroundColor()
+
+				$this._items[$this._selectedIndex].OnDeselected()
 			}
 
 			$this._selectedIndex = -1 # normalizing to -1

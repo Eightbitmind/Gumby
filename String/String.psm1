@@ -1,6 +1,4 @@
-﻿using module Debug
-
-<#
+﻿<#
 .SYNOPSIS
 If necessary, abbreviates a string by replacing part of it with the ellipsis.
 
