@@ -183,3 +183,79 @@ function Zip($Names, $Values) {
 
 	return $hash
 }
+
+class TextArray {
+	[void] SetText($lineIndex, $columnIndex, $text) {
+		# ensure there are enough lines
+		for ($i = $lineIndex - $this.lines.Count; $i -ge 0; --$i) {
+			[void]($this.lines.Add([System.Text.StringBuilder]::new()))
+		}
+
+		$line = $this.lines[$lineIndex]
+
+		if ($line.Length -le $columnIndex) {
+			# append text
+			[void]($line.Append(' ' * ($columnIndex - $line.Length)).Append($text))
+		} else {
+			# (partially) overwrite text
+
+			#           012
+			# line   = "abc"
+			#             ^- columnIndex = 2
+			# text   =   "pqr"
+			#             removeCount = 1
+			# result = "abpqr"
+
+			#           012345678
+			# line   = "abcdefghi"
+			#             ^- columnIndex = 2
+			# text   =   "pqr"
+			#             removeCount = 3
+			# result = "abpqrfghi"
+
+			$removeCount = [Math]::Min($line.Length - $columnIndex, $text.Length)
+
+			[void]($line.Remove($columnIndex, $removeCount))
+			[void]($line.Insert($columnIndex, $text))
+		}
+	}
+
+	[string] GetLine($lineIndex) {
+		return $this.lines[$lineIndex].ToString()
+	}
+
+	[int] GetLineCount() {
+		return $this.lines.Count
+	}
+
+	hidden [System.Collections.ArrayList] $lines = [System.Collections.ArrayList]::new()
+}
+
+function WordWrap([string] $text, [int] $width) {
+
+	function IsWhitespace([char] $c) {
+		return $c -eq " " -or $c -eq "`t"
+	}
+
+	$lines = [System.Collections.ArrayList]::new()
+	[int] $a = 0
+	[int] $b = [Math]::Min($width, $text.Length)
+
+
+	while ($a -lt $text.Length) {
+
+		while (($b -gt 0) -and !(IsWhitespace $text[$a + $b - 1])) { --$b }
+
+		if ($b -eq 0) {
+			# no whitespace, break in the middle of a word
+			$b = [Math]::Min($width, $text.Length - $a)
+		}
+
+		[void]($lines.Add($text.Substring($a, $b)))
+
+		# prepare next iteration
+		$a += $b
+		$b = [Math]::Min($width, $text.Length - $a)
+	}
+	return $lines
+}
