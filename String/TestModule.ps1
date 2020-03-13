@@ -216,6 +216,40 @@ class TextArrayTests {
 [TestClass()]
 class WordWrapTests {
 	[TestMethod()]
+	[void] WordWrap_NullWidth0() {
+		$l = @(WordWrap $null 0)
+		Test 0 $l.Count
+	}
+
+	[TestMethod()]
+	[void] WordWrap_NullWidth1() {
+		$l = @(WordWrap $null 1)
+		Test 0 $l.Count
+	}
+
+	[TestMethod()]
+	[void] WordWrap_EmptyStringWidth0() {
+		$l = @(WordWrap "" 0)
+		Test 0 $l.Count
+	}
+
+	[TestMethod()]
+	[void] WordWrap_EmptyStringWidth1() {
+		$l = @(WordWrap "" 1)
+		Test 0 $l.Count
+	}
+
+	[TestMethod()]
+	[void] WordWrap_SingleCharWidth1() {
+		Test @("a") @(WordWrap "a" 1)
+	}
+
+	[TestMethod()]
+	[void] WordWrap_OneWordWidth1() {
+		Test @("a", "b", "c") @(WordWrap "abc" 1)
+	}
+
+	[TestMethod()]
 	[void] WordWrap_OneWordShorterThanWidth() {
 		Test @("abc") @(WordWrap "abc" 4)
 	}
@@ -238,6 +272,59 @@ class WordWrapTests {
 	[TestMethod()]
 	[void] WordWrap_WidthAtBoundary() {
 		Test @("abc ", "de") @(WordWrap "abc de" 4)
+	}
+
+	[TestMethod()]
+	[void] WordWrap_WhitespaceOnly() {
+		Test @("   ", "  ") @(WordWrap "     " 3)
+	}
+
+	[TestMethod()]
+	[void] WordWrap_TabAsBoundary() {
+		Test @("abc", "`tde") @(WordWrap "abc`tde" 3)
+	}
+
+	[TestMethod()]
+	[void] WordWrap_Phrase01Width30() {
+		Test @(
+		   # 012345678901234567890123456789
+			"Apollo 9 (March 3-13, 1969) ",
+			"was the third crewed mission "
+			"in the United States Apollo ",
+			"program."
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." 30)
+	}
+
+	[TestMethod()]
+	[void] WordWrap_Phrase01Width20() {
+		Test @(
+		   # 01234567890123456789
+			"Apollo 9 (March ",
+			"3-13, 1969) was the ",
+			"third crewed mission",
+			" in the United ",
+			"States Apollo ",
+			"program."
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." 20)
+	}
+
+	[TestMethod()]
+	[void] WordWrap_Phrase01Width10() {
+		Test @(
+		   # 0123456789
+			"Apollo 9 ",
+			"(March ",
+			"3-13, "
+			"1969) was "
+			"the third "
+			"crewed ",
+			"mission in",
+			" the ",
+			"United ",
+			"States ",
+			"Apollo ",
+			"program."
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." 10)
 	}
 }
 

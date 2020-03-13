@@ -232,23 +232,33 @@ class TextArray {
 }
 
 function WordWrap([string] $text, [int] $width) {
-
 	function IsWhitespace([char] $c) {
 		return $c -eq " " -or $c -eq "`t"
 	}
 
+	if (![string]::IsNullOrEmpty($text) -and ($width -lt 1)) { throw "width must be greater than or equal to 1" }
+
 	$lines = [System.Collections.ArrayList]::new()
+
+	if ([string]::IsNullOrEmpty($text)) { return $lines }
+
 	[int] $a = 0
 	[int] $b = [Math]::Min($width, $text.Length)
 
-
 	while ($a -lt $text.Length) {
 
-		while (($b -gt 0) -and !(IsWhitespace $text[$a + $b - 1])) { --$b }
+		if (($a + $b) -eq $text.Length) {
+			[void]($lines.Add($text.Substring($a)))
+			break
+		}
 
-		if ($b -eq 0) {
-			# no whitespace, break in the middle of a word
-			$b = [Math]::Min($width, $text.Length - $a)
+		if (!(IsWhitespace $text[$a + $b])) {
+			while (($b -gt 0) -and !(IsWhitespace $text[$a + $b - 1])) { --$b }
+
+			if ($b -eq 0) {
+				# no whitespace, break in the middle of a word
+				$b = [Math]::Min($width, $text.Length - $a)
+			}
 		}
 
 		[void]($lines.Add($text.Substring($a, $b)))
