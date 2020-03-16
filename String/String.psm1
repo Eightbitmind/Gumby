@@ -231,41 +231,63 @@ class TextArray {
 	hidden [System.Collections.ArrayList] $lines = [System.Collections.ArrayList]::new()
 }
 
-function WordWrap([string] $text, [int] $width) {
-	function IsWhitespace([char] $c) {
-		return $c -eq " " -or $c -eq "`t"
-	}
+enum TextJustification {
+	Left
+	Right
+}
 
-	if (![string]::IsNullOrEmpty($text) -and ($width -lt 1)) { throw "width must be greater than or equal to 1" }
+function WordWrap(
+	[string] $Text,
+	[int] $Width,
+	[TextJustification] $Justification = [TextJustification]::Left) {
+
+	if (![string]::IsNullOrEmpty($Text) -and ($Width -lt 1)) { throw "width must be greater than or equal to 1" }
 
 	$lines = [System.Collections.ArrayList]::new()
 
-	if ([string]::IsNullOrEmpty($text)) { return $lines }
+	function TrimJustifyAppend($s) {
+		$s = $s.Trim()
+		if ([string]::IsNullOrEmpty($s)) { return }
 
-	[int] $a = 0
-	[int] $b = [Math]::Min($width, $text.Length)
-
-	while ($a -lt $text.Length) {
-
-		if (($a + $b) -eq $text.Length) {
-			[void]($lines.Add($text.Substring($a)))
-			break
-		}
-
-		if (!(IsWhitespace $text[$a + $b])) {
-			while (($b -gt 0) -and !(IsWhitespace $text[$a + $b - 1])) { --$b }
-
-			if ($b -eq 0) {
-				# no whitespace, break in the middle of a word
-				$b = [Math]::Min($width, $text.Length - $a)
+		switch ($Justification) {
+			([TextJustification]::Left) {
+				# PadRight?
+			}
+	
+			([TextJustification]::Right) {
+				$s = $s.PadLeft($Width)
 			}
 		}
 
-		[void]($lines.Add($text.Substring($a, $b)))
+		[void]($lines.Add($s))
+	}
+
+	if ([string]::IsNullOrEmpty($Text)) { return $lines }
+
+	[int] $start = 0
+	[int] $length = [Math]::Min($Width, $Text.Length)
+
+	while ($start -lt $Text.Length) {
+
+		if (($start + $length) -eq $Text.Length) {
+			TrimJustifyAppend $Text.Substring($start)
+			break
+		}
+
+		if (!([char]::IsWhiteSpace($Text, $start + $length))) {
+			while (($length -gt 0) -and !([char]::IsWhiteSpace($Text, $start + $length - 1))) { --$length }
+
+			if ($length -eq 0) {
+				# no whitespace, break in the middle of a word
+				$length = [Math]::Min($Width, $Text.Length - $start)
+			}
+		}
+
+		TrimJustifyAppend $Text.Substring($start, $length)
 
 		# prepare next iteration
-		$a += $b
-		$b = [Math]::Min($width, $text.Length - $a)
+		$start += $length
+		$length = [Math]::Min($Width, $Text.Length - $start)
 	}
 	return $lines
 }

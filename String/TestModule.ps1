@@ -217,114 +217,177 @@ class TextArrayTests {
 class WordWrapTests {
 	[TestMethod()]
 	[void] WordWrap_NullWidth0() {
-		$l = @(WordWrap $null 0)
+		$l = @(WordWrap $null -Width 0)
 		Test 0 $l.Count
 	}
 
 	[TestMethod()]
 	[void] WordWrap_NullWidth1() {
-		$l = @(WordWrap $null 1)
+		$l = @(WordWrap $null -Width 1)
 		Test 0 $l.Count
 	}
 
 	[TestMethod()]
 	[void] WordWrap_EmptyStringWidth0() {
-		$l = @(WordWrap "" 0)
+		$l = @(WordWrap "" -Width 0)
 		Test 0 $l.Count
 	}
 
 	[TestMethod()]
 	[void] WordWrap_EmptyStringWidth1() {
-		$l = @(WordWrap "" 1)
+		$l = @(WordWrap "" -Width 1)
 		Test 0 $l.Count
 	}
 
 	[TestMethod()]
 	[void] WordWrap_SingleCharWidth1() {
-		Test @("a") @(WordWrap "a" 1)
+		Test @("a") @(WordWrap "a" -Width 1)
 	}
 
 	[TestMethod()]
 	[void] WordWrap_OneWordWidth1() {
-		Test @("a", "b", "c") @(WordWrap "abc" 1)
+		Test @("a", "b", "c") @(WordWrap "abc" -Width 1)
 	}
 
 	[TestMethod()]
 	[void] WordWrap_OneWordShorterThanWidth() {
-		Test @("abc") @(WordWrap "abc" 4)
+		Test @("abc") @(WordWrap "abc" -Width 4)
 	}
 
 	[TestMethod()]
 	[void] WordWrap_OneWordAsLongAsWidth() {
-		Test @("abc") @(WordWrap "abc" 3)
+		Test @("abc") @(WordWrap "abc" -Width 3)
 	}
 
 	[TestMethod()]
-	[void] WordWrap_OneWordLongerThanWidth() {
-		Test @("ab", "c") @(WordWrap "abc" 2)
+	[void] WordWrap_OneWordLongerThanWidthLeftJustified() {
+		Test @(
+			"ab",
+			"c"
+		) @(WordWrap "abc" -Width 2 -Justification ([TextJustification]::Left))
+	}
+
+	[TestMethod()]
+	[void] WordWrap_OneWordLongerThanWidthRightJustified() {
+		Test @(
+			"ab",
+			" c"
+		) @(WordWrap "abc" -Width 2 -Justification ([TextJustification]::Right))
 	}
 
 	[TestMethod()]
 	[void] WordWrap_WidthAtEndOfWord() {
-		Test @("abc", " de") @(WordWrap "abc de" 3)
+		Test @("abc", "de") @(WordWrap "abc de" -Width 3)
 	}
 
 	[TestMethod()]
 	[void] WordWrap_WidthAtBoundary() {
-		Test @("abc ", "de") @(WordWrap "abc de" 4)
+		Test @("abc", "de") @(WordWrap "abc de" -Width 4)
 	}
 
 	[TestMethod()]
 	[void] WordWrap_WhitespaceOnly() {
-		Test @("   ", "  ") @(WordWrap "     " 3)
+		$l = @(WordWrap "     " -Width 3)
+		Test 0 $l.Count
 	}
 
 	[TestMethod()]
 	[void] WordWrap_TabAsBoundary() {
-		Test @("abc", "`tde") @(WordWrap "abc`tde" 3)
+		Test @("abc", "de") @(WordWrap "abc`tde" -Width 3 -Trim $false)
 	}
 
 	[TestMethod()]
-	[void] WordWrap_Phrase01Width30() {
+	[void] WordWrap_Phrase01Width30LeftJustified() {
 		Test @(
 		   # 012345678901234567890123456789
-			"Apollo 9 (March 3-13, 1969) ",
-			"was the third crewed mission "
-			"in the United States Apollo ",
+			"Apollo 9 (March 3-13, 1969)",
+			"was the third crewed mission"
+			"in the United States Apollo",
 			"program."
-		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." 30)
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 30 -Justification ([TextJustification]::Left))
 	}
 
 	[TestMethod()]
-	[void] WordWrap_Phrase01Width20() {
+	[void] WordWrap_Phrase01Width30RightJustified() {
+		Test @(
+		   # 012345678901234567890123456789
+			"   Apollo 9 (March 3-13, 1969)",
+			"  was the third crewed mission"
+			"   in the United States Apollo",
+			"                      program."
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 30 -Justification ([TextJustification]::Right))
+	}
+
+	[TestMethod()]
+	[void] WordWrap_Phrase01Width20LeftJustified() {
 		Test @(
 		   # 01234567890123456789
-			"Apollo 9 (March ",
-			"3-13, 1969) was the ",
+			"Apollo 9 (March",
+			"3-13, 1969) was the",
 			"third crewed mission",
-			" in the United ",
-			"States Apollo ",
+			"in the United",
+			"States Apollo",
 			"program."
-		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." 20)
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 20 -Justification ([TextJustification]::Left))
 	}
 
 	[TestMethod()]
-	[void] WordWrap_Phrase01Width10() {
+	[void] WordWrap_Phrase01Width20RightJustified() {
+		Test @(
+		   # 01234567890123456789
+			"     Apollo 9 (March",
+			" 3-13, 1969) was the",
+			"third crewed mission",
+			"       in the United",
+			"       States Apollo",
+			"            program."
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 20 -Justification ([TextJustification]::Right))
+
+		# Why not this?
+		#   # 01234567890123456789
+		#    "     Apollo 9 (March",
+		#    " 3-13, 1969) was the",
+		#    "third crewed mission",
+		#    "in the United States",
+		#    "Apollo program.",
+	}
+
+	[TestMethod()]
+	[void] WordWrap_Phrase01Width10LeftJustified() {
 		Test @(
 		   # 0123456789
-			"Apollo 9 ",
-			"(March ",
-			"3-13, "
-			"1969) was "
-			"the third "
-			"crewed ",
+			"Apollo 9",
+			"(March",
+			"3-13,"
+			"1969) was"
+			"the third"
+			"crewed",
 			"mission in",
-			" the ",
-			"United ",
-			"States ",
-			"Apollo ",
+			"the",
+			"United",
+			"States",
+			"Apollo",
 			"program."
-		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." 10)
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 10 -Justification ([TextJustification]::Left))
+	}
+
+	[TestMethod()]
+	[void] WordWrap_Phrase01Width10RightJustified() {
+		Test @(
+		   # 0123456789
+			"  Apollo 9",
+			"    (March",
+			"     3-13,",
+			" 1969) was",
+			" the third",
+			"    crewed",
+			"mission in",
+			"       the",
+			"    United",
+			"    States",
+			"    Apollo",
+			"  program."
+		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 10 -Justification ([TextJustification]::Right))
 	}
 }
 
