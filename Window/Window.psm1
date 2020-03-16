@@ -1,4 +1,4 @@
-using module Debug
+using module Gumby.Debug
 using module Gumby.Log
 using module Gumby.String
 using module Math

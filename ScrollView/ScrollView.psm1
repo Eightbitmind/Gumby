@@ -1,6 +1,6 @@
-using module Debug
+using module Gumby.Debug
 using module Gumby.Log
-using module TextBuffer
+using module Gumby.TextBuffer
 using module Window
 
 class ScrollView : Window {

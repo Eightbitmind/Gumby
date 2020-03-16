@@ -1,3 +1,50 @@
+function EnsureEmptyDir($Path) {
+	if (Test-Path $Path) {
+		Remove-Item -Recurse -Force "$Path\*"
+	} else {
+		[void](mkdir $Path)
+	}
+}
+
+# I considered 
+# - Import-PowerShellDataFile
+# - ConvertFrom-StringData
+# - Import-LocalizedData
+# for expansion of psd1 "templates". I'm going with plain text I/O to preserve comments.
+function ExpandFile($OriginalFile, $MacroFile, $ExpandedFile) {
+	if (!(Test-Path $OriginalFile)) {
+		throw "expansion source `"$OriginalFile`" does not exist"
+	}
+
+	if (!(Test-Path $MacroFile)) {
+		throw "macro file `"$MacroFile`" does not exist"
+	}
+
+	function _ExpandFile {
+		[string] $originalEncoding = Get-TextFileEncoding $OriginalFile
+		$Macros = Import-PowerShellDataFile $MacroFile
+		$expandedContent = ExpandMacros (Get-Content -Raw $OriginalFile) $Macros
+		Write-Output $expandedContent | Out-File -Encoding $originalEncoding -FilePath $ExpandedFile
+	}
+
+	if (Test-Path $ExpandedFile) {
+		$originalFileTime = (Get-Item $OriginalFile).LastWriteTime
+		$macroFileTime = (Get-Item $MacroFile).LastWriteTime
+		$expandedFileTime = (Get-Item $ExpandedFile).LastWriteTime
+
+		if (($originalFileTime -gt $expandedFileTime) -or ($macroFileTime -gt $expandedFileTime)) {
+			_ExpandFile
+			Write-Host "expanded `"$OriginalFile`" to `"$ExpandedFile`" because the target was out of date"
+		} else {
+			Write-Host "skipped expanding `"$OriginalFile`" to `"$ExpandedFile`" because the target is up to date"
+		}
+
+	} else {
+		_ExpandFile
+		Write-Host "expanded `"$OriginalFile`" to `"$ExpandedFile`" because the target did not exist"
+	}
+}
+
 function MakeDirIfNotExisting($Path) {
 	if (!(Test-Path $Path)) {
 		[void](mkdir $Path)

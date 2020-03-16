@@ -1,6 +1,4 @@
-﻿using module Debug
-
-<#
+﻿<#
 .SYNOPSIS
 If necessary, abbreviates a string by replacing part of it with the ellipsis.
 
@@ -64,6 +62,32 @@ function EnsureStringLength([string] $Text, [int] $Length, [string] $FillChar = 
 	} else {
 		return $Text.Substring(0, $Length)
 	}
+}
+
+<#
+.SYNOPSIS
+Expand macro references ('$MacroName') with macro values.
+
+.PARAMETER Text
+String containing macro references.
+
+.PARAMETER Macros
+Hashtable with macro names as keys and macro values as values.
+
+.OUTPUTS
+String in which macro references have been replaced with macro values.
+#>
+function ExpandMacros($Text, $Macros) {
+	[regex] $macroPattern = '(?<!`)\$(?<MacroName>[a-zA-Z_]\w*)'
+	return $macroPattern.Replace($Text, {
+		param ($match)
+		$macroName = $match.Groups['MacroName'].Value
+		if ($Macros.ContainsKey($macroName)) {
+			return $Macros[$macroName]
+		} else {
+			return $match.Value
+		}
+	})
 }
 
 <#
@@ -158,4 +182,112 @@ function Zip($Names, $Values) {
 	}
 
 	return $hash
+}
+
+class TextArray {
+	[void] SetText($lineIndex, $columnIndex, $text) {
+		# ensure there are enough lines
+		for ($i = $lineIndex - $this.lines.Count; $i -ge 0; --$i) {
+			[void]($this.lines.Add([System.Text.StringBuilder]::new()))
+		}
+
+		$line = $this.lines[$lineIndex]
+
+		if ($line.Length -le $columnIndex) {
+			# append text
+			[void]($line.Append(' ' * ($columnIndex - $line.Length)).Append($text))
+		} else {
+			# (partially) overwrite text
+
+			#           012
+			# line   = "abc"
+			#             ^- columnIndex = 2
+			# text   =   "pqr"
+			#             removeCount = 1
+			# result = "abpqr"
+
+			#           012345678
+			# line   = "abcdefghi"
+			#             ^- columnIndex = 2
+			# text   =   "pqr"
+			#             removeCount = 3
+			# result = "abpqrfghi"
+
+			$removeCount = [Math]::Min($line.Length - $columnIndex, $text.Length)
+
+			[void]($line.Remove($columnIndex, $removeCount))
+			[void]($line.Insert($columnIndex, $text))
+		}
+	}
+
+	[string] GetLine($lineIndex) {
+		return $this.lines[$lineIndex].ToString()
+	}
+
+	[int] GetLineCount() {
+		return $this.lines.Count
+	}
+
+	hidden [System.Collections.ArrayList] $lines = [System.Collections.ArrayList]::new()
+}
+
+enum TextJustification {
+	Left
+	Right
+}
+
+function WordWrap(
+	[string] $Text,
+	[int] $Width,
+	[TextJustification] $Justification = [TextJustification]::Left) {
+
+	if (![string]::IsNullOrEmpty($Text) -and ($Width -lt 1)) { throw "width must be greater than or equal to 1" }
+
+	$lines = [System.Collections.ArrayList]::new()
+
+	function TrimJustifyAppend($s) {
+		$s = $s.Trim()
+		if ([string]::IsNullOrEmpty($s)) { return }
+
+		switch ($Justification) {
+			([TextJustification]::Left) {
+				# PadRight?
+			}
+	
+			([TextJustification]::Right) {
+				$s = $s.PadLeft($Width)
+			}
+		}
+
+		[void]($lines.Add($s))
+	}
+
+	if ([string]::IsNullOrEmpty($Text)) { return $lines }
+
+	[int] $start = 0
+	[int] $length = [Math]::Min($Width, $Text.Length)
+
+	while ($start -lt $Text.Length) {
+
+		if (($start + $length) -eq $Text.Length) {
+			TrimJustifyAppend $Text.Substring($start)
+			break
+		}
+
+		if (!([char]::IsWhiteSpace($Text, $start + $length))) {
+			while (($length -gt 0) -and !([char]::IsWhiteSpace($Text, $start + $length - 1))) { --$length }
+
+			if ($length -eq 0) {
+				# no whitespace, break in the middle of a word
+				$length = [Math]::Min($Width, $Text.Length - $start)
+			}
+		}
+
+		TrimJustifyAppend $Text.Substring($start, $length)
+
+		# prepare next iteration
+		$start += $length
+		$length = [Math]::Min($Width, $Text.Length - $start)
+	}
+	return $lines
 }

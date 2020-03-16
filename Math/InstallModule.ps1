@@ -15,10 +15,12 @@ switch ($Action) {
 		MakeDirIfNotExisting "$TargetDir"
 		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psd1" "$TargetDir\Math.psd1"
 		CopyFileIfTargetNotExistingOrIsOlder "$PSScriptRoot\Math.psm1" "$TargetDir\Math.psm1"
+		break
 	}
 	"Uninstall" {
 		RemoveFileIfExisting "$TargetDir\Math.psm1"
 		RemoveFileIfExisting "$TargetDir\Math.psd1"
 		RemoveDirIfExistingAndNotEmpty "$TargetDir"
+		break
 	}
 }

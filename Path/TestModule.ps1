@@ -30,6 +30,11 @@ class PathFileBaseNameTests {
 	}
 
 	[TestMethod()]
+	[void] PathFileBaseName_NameWithMultipleDots() {
+		Test "a.b" (PathFileBaseName "a.b.c")
+	}
+
+	[TestMethod()]
 	[void] PathFileBaseName_PathWithoutFilePart() {
 		Test "" (PathFileBaseName "a\b\")
 	}
@@ -47,6 +52,11 @@ class PathFileBaseNameTests {
 	[TestMethod()]
 	[void] PathFileBaseName_PathWithParentWithExtWithExt() {
 		Test "d" (PathFileBaseName "a\b.c\d.e")
+	}
+
+	[TestMethod()]
+	[void] PathFileBaseName_PathWithParentWithExtWithNameWithMultipleDots() {
+		Test "d.e" (PathFileBaseName "a\b.c\d.e.f")
 	}
 }
 
