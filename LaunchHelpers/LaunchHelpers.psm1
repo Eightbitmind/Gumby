@@ -118,6 +118,7 @@ function OpenWithPSEdit([string] $fileName) {
 #>
 function OpenWithVisualStudio([string] $fileName, [switch] $newVSInstance) {
 	foreach ($command in
+		"${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\devenv.exe",
 		"${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.exe",
 		"${env:ProgramFiles(x86)}\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe",
 		"INVALIDPATH")
