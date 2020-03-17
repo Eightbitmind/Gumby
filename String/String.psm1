@@ -236,6 +236,9 @@ enum TextJustification {
 	Right
 }
 
+# All whitespace in a line boundary position is replaced by a line break. Therefore, this function
+# does not preserve whitespace (i.e. if you were to join the resulting lines, you would get the
+# original string back).
 function WordWrap(
 	[string] $Text,
 	[int] $Width,
@@ -245,8 +248,8 @@ function WordWrap(
 
 	$lines = [System.Collections.ArrayList]::new()
 
-	function TrimJustifyAppend($s) {
-		$s = $s.Trim()
+	function JustifyAppend($s) {
+
 		if ([string]::IsNullOrEmpty($s)) { return }
 
 		switch ($Justification) {
@@ -265,29 +268,43 @@ function WordWrap(
 	if ([string]::IsNullOrEmpty($Text)) { return $lines }
 
 	[int] $start = 0
-	[int] $length = [Math]::Min($Width, $Text.Length)
+
 
 	while ($start -lt $Text.Length) {
 
-		if (($start + $length) -eq $Text.Length) {
-			TrimJustifyAppend $Text.Substring($start)
-			break
-		}
+		# trim whitespace at the start of a line
+		while ($start -lt $Text.Length -and [char]::IsWhiteSpace($Text, $start)) { ++$start }
 
-		if (!([char]::IsWhiteSpace($Text, $start + $length))) {
+		# The lines in the 'Adjust length' region below search for the end of the line by adjusting
+		# the 'length' value.
+
+		#region Adjust length
+
+		# start value for length
+		[int] $length = [Math]::Min($Width, $Text.Length - $start)
+
+		# Look for the first (rightmost) whitespace. If 'length' is positioned at the end of the
+		# string, we don't have to look for it as the end of the string counts as a separator.
+
+		if ((($start + $length) -lt $Text.Length) -and (!([char]::IsWhiteSpace($Text, $start + $length)))) {
 			while (($length -gt 0) -and !([char]::IsWhiteSpace($Text, $start + $length - 1))) { --$length }
-
-			if ($length -eq 0) {
-				# no whitespace, break in the middle of a word
-				$length = [Math]::Min($Width, $Text.Length - $start)
-			}
 		}
 
-		TrimJustifyAppend $Text.Substring($start, $length)
+		if ($length -eq 0) {
+			# no whitespace, break in the middle of a word
+			$length = [Math]::Min($Width, $Text.Length - $start)
+		} else {
+			# trim whitespace at the end of a line by attempting to move the 'length' position
+			# to the left
+			while (($length -gt 0) -and ([char]::IsWhiteSpace($Text, $start + $length - 1))) { --$length }
+		}
+
+		#endregion
+
+		JustifyAppend $Text.Substring($start, $length)
 
 		# prepare next iteration
 		$start += $length
-		$length = [Math]::Min($Width, $Text.Length - $start)
 	}
 	return $lines
 }

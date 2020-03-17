@@ -325,9 +325,8 @@ class WordWrapTests {
 			"Apollo 9 (March",
 			"3-13, 1969) was the",
 			"third crewed mission",
-			"in the United",
-			"States Apollo",
-			"program."
+			"in the United States",
+			"Apollo program."
 		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 20 -Justification ([TextJustification]::Left))
 	}
 
@@ -338,18 +337,9 @@ class WordWrapTests {
 			"     Apollo 9 (March",
 			" 3-13, 1969) was the",
 			"third crewed mission",
-			"       in the United",
-			"       States Apollo",
-			"            program."
+			"in the United States",
+			"     Apollo program."
 		) @(WordWrap "Apollo 9 (March 3-13, 1969) was the third crewed mission in the United States Apollo program." -Width 20 -Justification ([TextJustification]::Right))
-
-		# Why not this?
-		#   # 01234567890123456789
-		#    "     Apollo 9 (March",
-		#    " 3-13, 1969) was the",
-		#    "third crewed mission",
-		#    "in the United States",
-		#    "Apollo program.",
 	}
 
 	[TestMethod()]
@@ -363,8 +353,7 @@ class WordWrapTests {
 			"the third"
 			"crewed",
 			"mission in",
-			"the",
-			"United",
+			"the United",
 			"States",
 			"Apollo",
 			"program."
@@ -382,8 +371,7 @@ class WordWrapTests {
 			" the third",
 			"    crewed",
 			"mission in",
-			"       the",
-			"    United",
+			"the United",
 			"    States",
 			"    Apollo",
 			"  program."
