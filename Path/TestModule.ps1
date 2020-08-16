@@ -2,7 +2,7 @@ using module Gumby.Test
 
 param([ValidateSet("ExportTests", "RunTests")] $Mode = "RuntTests")
 
-Import-Module "$PSScriptRoot/Path.psm1"
+Import-Module -Force "$PSScriptRoot/Path.psm1"
 
 [TestClass()]
 class PathNormalizeTests {
@@ -117,7 +117,90 @@ class PathAsUriTests {
 	}
 }
 
-$tests = ([PathNormalizeTests]), ([PathFileBaseNameTests]), ([PathJoinTests]), ([PathAsUriTests])
+[TestClass()]
+class PathGetRelativeTests {
+	[TestMethod()]
+	[void] PathGetRelative01() {
+		Test "" (PathGetRelative "" "")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative02() {
+		Test "a" (PathGetRelative "" "a")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative03() {
+		Test ".." (PathGetRelative "a" "")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative04() {
+		Test "" (PathGetRelative "a" "a")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative05() {
+		Test "" (PathGetRelative "a/b" "a/b")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative06() {
+		Test "../c" (PathGetRelative "a/b" "a/c")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative07() {
+		Test "../../d/e" (PathGetRelative "a/b/c" "a/d/e")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative08() {
+		Test "d" (PathGetRelative "a/b/c" "a/b/c/d")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative10() {
+		Test "c/d" (PathGetRelative "a/b" "a/b/c/d")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative11() {
+		Test "../.." (PathGetRelative "a/b/c/d" "a/b")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative_BackslashesInBase() {
+		Test "../.." (PathGetRelative "a\b\c\d" "a/b")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative_BackslashesInPath() {
+		Test "../.." (PathGetRelative "a/b/c/d" "a\b")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative_DifferingCapitalization() {
+		Test "c/d" (PathGetRelative "A/B" "a\b\c\d")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative_StartingWithSlash() {
+		Test "c/d" (PathGetRelative "/A/B" "a\b\c\d")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative_RealPaths() {
+		Test "../../../Microsoft Office/Office16" (PathGetRelative "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\" "C:\Program Files (x86)\Microsoft Office\Office16")
+	}
+
+	[TestMethod()]
+	[void] PathGetRelative_TargetPathWithFileName() {
+		Test "../System32/Notepad.exe" (PathGetRelative "C:\Windows\Globalization" "c:\windows\System32\Notepad.exe")
+	}
+}
+
+$tests = ([PathNormalizeTests]), ([PathFileBaseNameTests]), ([PathJoinTests]), ([PathAsUriTests]), ([PathGetRelativeTests])
 switch ($Mode) {
 	"ExportTests" { $tests }
 	"RuntTests" { RunTests "$env:TEMP\PathTests.log" @tests }

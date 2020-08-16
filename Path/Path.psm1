@@ -129,3 +129,52 @@ function PathJoin([string[]]$Directories, [string] $BaseName, [string] $Extensio
 function PathAsUri($Path) {
 	return "file:$($Path.Replace('\', '/'))"
 }
+
+<#
+.SYNOPSIS
+Gets a relative path.
+
+.DESCRIPTION
+The function returns a relative path which, when appended to the base directory, results in the
+identifies the same element as the target path.
+
+.PARAMETER BaseDirectory
+Absolute path of base directory.
+
+.PARAMETER TargetPath
+Absolute target path to make relative with respect to base directory.
+
+.OUTPUTS
+Relative path.
+#>
+function PathGetRelative([string] $BaseDirectory, [string] $TargetPath) {
+	# On modern .NET framework versions, this should get replaced with
+	# System.IO.Path.GetRelativePath()
+
+	$baseParts = $BaseDirectory.Split(@('/', '\'), ([System.StringSplitOptions]::RemoveEmptyEntries))
+	if ($baseParts.Count -eq 0) { return $TargetPath }
+
+	$targetPathParts = $TargetPath.Split(@('/', '\'), ([System.StringSplitOptions]::RemoveEmptyEntries))
+	if ($targetPathParts.Count -eq 0) { return ("/.." * $basePArts.Count).Substring(1) }
+
+	$relativePath = [System.Text.StringBuilder]::new();
+
+	$lastCommon = 0
+	if ($baseParts[$lastCommon] -ieq $targetPathParts[$lastCommon]) {
+		while ($lastCommon + 1 -lt [Math]::Min($baseParts.Count, $targetPathParts.Count)) {
+			if ($baseParts[$lastCommon + 1] -ine $targetPathParts[$lastCommon + 1]) { break }
+			++$lastCommon
+		}
+	}
+
+	# we could as well increment
+	for ($i = $baseParts.Count - 1; $i -gt $lastCommon; --$i) { [void]$relativePath.Append('../') }
+
+	for ($i = $lastCommon + 1; $i -lt $targetPathParts.Count; ++$i) { [void]$relativePath.Append($targetPathParts[$i]).Append('/') }
+
+	if ($relativePath.Length -gt 0) {
+		return $relativePath.ToString(0, $relativePath.Length - 1)
+	} else {
+		return ""
+	}
+}
