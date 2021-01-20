@@ -10,6 +10,8 @@ enum TextFileEncoding {
 	ASCII
 }
 
+# change to test publishing automation
+
 <#
 .SYNOPSIS
 	Gets text file encoding.
