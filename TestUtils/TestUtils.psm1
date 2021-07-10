@@ -294,6 +294,16 @@ function IsMatch($expected, $actual, $messagePrefix) {
 		return $expected.IsMatch($actual, $messagePrefix)
 	} elseif (($expected -eq $null) -or ($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
 		return (AreValuesEqual $expected $actual $messagePrefix)
+	} elseif ($expected -is [double]) {
+
+		$delta = [Math]::Abs($expected - $actual)
+		if ($delta -le 0.000000000001) {
+			[Log]::Success("$($messagePrefix)value $actual is close to $expected")
+			return $true
+		} else {
+			[Log]::Failure("$($messagePrefix)actual $actual differs by $delta from expected $expected")
+			return $false
+		}
 	} elseif ($expected -is [array]) {
 		# Implementation of System.Collections.IEnumerable cannot be used to differentiate between
 		# objects and arrays as both implement this interface.
