@@ -70,6 +70,10 @@ function Convert-MetersToFeet([double] $Meters, [int] $Precision = -1, [switch] 
 	}
 }
 
+function Convert-MetersToInchesFrac([double] $Meters, [int] $Denominator = 16) {
+	Write-Output "$(Convert-ToNearestFrac (Convert-MetersToInches $Meters) $Denominator)`""
+}
+
 function Convert-MetersToFeetInchesFrac([double] $Meters, [int] $Denominator = 16) {
 	[int] $feet = [Math]::Floor((Convert-MetersToFeet $Meters))
 	[double] $remainder = $Meters - (Convert-FeetToMeters $feet)
