@@ -11,10 +11,13 @@ function GitGetRepoName($defaultRepoName = "<unknown-repo>")
 		# The 'Multiline' does not appear to cause '^' and '$' to match the start and end of a line, resp. Perhaps
 		# the output of the 'git branch' uses unexpected line breaks.
 
-		$match = [regex]::Match($cmdOut, '/([^/]+)\s+\(fetch\)', ([System.Text.RegularExpressions.RegexOptions]::Multiline))
+		$match = [regex]::Match($cmdOut, 'origin\s+https://github.com/([^/]+)/([^/]+)\.git\s+\(fetch\)', ([System.Text.RegularExpressions.RegexOptions]::Multiline))
 		if ($match.Success)
 		{
-			$repoName = $match.Groups[1].Value
+			$owner = $match.Groups[1].Value
+			$repo = $match.Groups[2].Value
+
+			$repoName = "$owner-$repo"
 		}
 	}
 	catch
