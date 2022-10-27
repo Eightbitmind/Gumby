@@ -35,9 +35,40 @@ function RemoveDirectoryIfExistingAndEmpty($Path) {
 	}
 }
 
+function BackupByRenaming($File){
+	if (!(Test-Path $File)) {
+		$errorMessage = "can't back up `"$File`" because it doesn't exist"
+		[Log]::Error($errorMessage)
+		throw $errorMessage
+	}
+
+	if ($File -is [string]) { $File = Get-Item $File }
+
+	$candidate = $File.FullName + ".original"
+	$success = $false
+	for ($i = 2; $i -lt <# sanity cap #> 1000; ++$i) {
+		if (!(Test-Path $candidate)) {
+			[Log]::Comment("backing up `"$File`" by renaming it to `"$candidate`"")
+			Rename-Item $File $candidate
+			$success = $true
+			break
+		}
+		$candidate = $File.FullName + (".original{0:D3}" -f $i)
+	}
+
+	if (!$success) {
+		$errorMessage = "failed to backup `"$File`" by renaming"
+		[Log]::Error($errorMessage)
+		throw $errorMessage
+	}
+}
+
 # alternative names:
 # EnsureSymbolicLink
-function CreateSymbolicLinkIfNotExisting($Link, $Target) {
+function CreateSymbolicLinkIfNotExisting(
+	$Link, 
+	$Target,
+	[switch] $MakeBackups = $false) {
 	if (!(Test-Path $Target)) {
 		$errorMessage = "link target `"$Target`" does not exist"
 		[Log]::Error($errorMessage)
@@ -54,13 +85,22 @@ function CreateSymbolicLinkIfNotExisting($Link, $Target) {
 				[Log]::Comment("skipping creation of symbolic link from `"$Link`" to `"$Target`" because it exists")
 			} else {
 				[Log]::Comment("re-targeting symbolic link `"$Link`" to `"$Target`"")
-				Remove-Item -Force $Link
+
+				if ($MakeBackups) {
+					BackupByRenaming $Link
+				} else {
+					Remove-Item -Force $Link
+				}
 				# requires admin privileges
 				CreateSymbolicLink -Target $Target -Link $Link
 			}
 		} else {
 			[Log]::Comment("overwriting file at `"$Link`" with link to `"$Target`"")
-			Remove-Item -Force $Link
+			if ($MakeBackups) {
+				BackupByRenaming $Link
+			} else {
+				Remove-Item -Force $Link
+			}
 			# requires admin privileges
 			CreateSymbolicLink -Target $Target -Link $Link
 		}
@@ -71,21 +111,29 @@ function CreateSymbolicLinkIfNotExisting($Link, $Target) {
 	}
 }
 
-function CopyFileIfTargetNotExistingOrIsOlder($Source, $Target) {
+function CopyFileIfTargetNotExistingOrIsOlder(
+	$Source, 
+	$Target,
+	[switch] $MakeBackups) {
 	if (!(Test-Path $Source)) {
 		$errorMessage = "source of copy operation `"$Source`" does not exist"
 		[Log]::Error($errorMessage)
 		throw $errorMessage
 	}
 
+	if ($Source -is [string]) { $Source = Get-Item $Source }
+
 	if (!(Test-Path $Target)) {
 		[Log]::Comment("copying `"$Source`" to `"$Target`" because target does not exist")
 		Copy-Item $Source $Target
 	} else {
-		$sourceTime = (Get-Item $Source).LastWriteTime
-		$targetTime = (Get-Item $Target).LastWriteTime
-		if ($sourceTime -gt $targetTime) {
+		# ensure $Target is FS object
+		if ($Target -is [string]) { $Target = Get-Item $Target }
+
+		if ($Source.LastWriteTime -gt $Target.LastWriteTime) {
 			[Log]::Comment("copying `"$Source`" to `"$Target`" because target is outdated")
+
+			if ($MakeBackups) { BackupByRenaming $Target }
 			Copy-Item $Source $Target
 		} else {
 			[Log]::Comment("skipping copying of `"$Source`" to `"$Target`" because target is up to date")
