@@ -271,9 +271,9 @@ function ExpectOr { [OrExpectation]::new($args) }
 function IsMatch($expected, $actual, $messagePrefix) {
 
 	function AreValuesEqual($expected, $actual, $messagePrefix) {
-		if ($expected -eq $null) {
-	
-			if ($actual -eq $null) {
+		if ($null -eq $expected) {
+
+			if ($null -eq $actual) {
 				[Log]::Success("$($messagePrefix)value is null")
 				return $true
 			} else {
@@ -292,10 +292,14 @@ function IsMatch($expected, $actual, $messagePrefix) {
 
 	if ($expected -is [ExpectationBase]) {
 		return $expected.IsMatch($actual, $messagePrefix)
-	} elseif (($expected -eq $null) -or ($expected -is [bool]) -or ($expected -is [int]) -or ($expected -is [string])) {
+	} elseif (
+		($null -eq $expected) -or 
+		($expected -is [bool]) -or 
+		($expected -is [int]) -or 
+		$expected.GetType().IsEnum -or
+		($expected -is [string])) {
 		return (AreValuesEqual $expected $actual $messagePrefix)
 	} elseif ($expected -is [double]) {
-
 		$delta = [Math]::Abs($expected - $actual)
 		if ($delta -le 0.000000000001) {
 			[Log]::Success("$($messagePrefix)value $actual is close to $expected")
@@ -329,16 +333,17 @@ function IsMatch($expected, $actual, $messagePrefix) {
 
 		return $result
 	} elseif ($expected -is [object]) {
-
 		$result = $true
-
 		foreach ($key in $expected.Keys) {
 			$expectedValue = $expected[$key]
 			$actualValue = $actual.($key)
 			$result = $result -and (IsMatch $expectedValue $actualValue "$($messagePrefix)member '$key': ")
 		}
-
 		return $result
+	}
+	else {
+		# Assuming that everything is an object (see last elseif condition), will this code ever be reached?
+		throw "unexpected type $($expected.GetType())"
 	}
 }
 

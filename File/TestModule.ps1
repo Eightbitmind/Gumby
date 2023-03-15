@@ -34,11 +34,7 @@ class GetTextFileEncodingTests {
 	[void] GetTextFileEncodingASCII() {
 		$testFile = "$($this.testFolder)\ascii.txt"
 		[void](Out-File -Encoding ascii -Path $testFile -InputObject "The quick brown fox")
-
-		# Write-Host (Get-TextFileEncoding $testFile)
-		# Write-Host ([TextFileEncoding]::ASCII)
 		Test ([TextFileEncoding]::ASCII) (Get-TextFileEncoding $testFile)
-		# Test 1 1
 	}
 
 	[string] $testFolder
