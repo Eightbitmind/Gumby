@@ -1,5 +1,7 @@
 using module Gumby.Debug
 using module Gumby.Test
+
+# test the code in the local module rather than the code in the installed (i.e. published) module 
 using module ".\File.psm1"
 
 param([ValidateSet("ExportTests", "RunTests")] $Mode = "RunTests")
@@ -33,10 +35,10 @@ class GetTextFileEncodingTests {
 		$testFile = "$($this.testFolder)\ascii.txt"
 		[void](Out-File -Encoding ascii -Path $testFile -InputObject "The quick brown fox")
 
-		Test ([TextFileEncoding]::ASCII) (Get-TextFileEncoding $testFile)
 		# Write-Host (Get-TextFileEncoding $testFile)
 		# Write-Host ([TextFileEncoding]::ASCII)
-		#Test 1 1
+		Test ([TextFileEncoding]::ASCII) (Get-TextFileEncoding $testFile)
+		# Test 1 1
 	}
 
 	[string] $testFolder
