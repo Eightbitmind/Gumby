@@ -27,7 +27,7 @@ class GetTextFileEncodingTests {
 
 	[TestClassTeardown()]
 	[void] Teardown() {
-		Remmove-Item -Recurse -Force $this.testFolder
+		Remove-Item -Recurse -Force $this.testFolder
 	}
 
 	[TestMethod()]
