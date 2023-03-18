@@ -2,7 +2,7 @@ param(
 	[ValidateSet("Install", "Uninstall")]
 	$Action = "Install",
 
-	[string] $TargetRootDir = "$([System.Environment]::GetFolderPath(`"MyDocuments`"))\WindowsPowerShell\Modules"
+	[string] $TargetRootDir = "$([System.Environment]::GetFolderPath(`"MyDocuments`"))\PowerShell\Modules"
 )
 
 # dot-source install helper methods
