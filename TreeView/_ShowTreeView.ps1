@@ -1,5 +1,5 @@
-using module Log
-using module Path
+using module Gumby.Log
+using module Gumby.Path
 using module TreeView
 using module Window
 
