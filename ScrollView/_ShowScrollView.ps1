@@ -1,4 +1,4 @@
-using module Log
+using module Gumby.Log
 using module ScrollView
 
 $fll = $null
