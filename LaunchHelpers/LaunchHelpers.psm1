@@ -1,17 +1,6 @@
-
-function SelectFirstExisting($CandidateList) {
-	foreach ($candidate in $CandidateList) {
-		if (Test-Path $candidate) { return $candidate }
-	}
-	throw "none of the options in $CandidateList can be found"
-}
-
 <#
 .SYNOPSIS
 	Starts AccEvent.
-
-.PARAMETER Text
-	.
 #>
 function StartAccEvent(){
 	& "${env:ProgramFiles(x86)}\Windows Kits\8.1\bin\x64\accevent.exe"
@@ -20,9 +9,6 @@ function StartAccEvent(){
 <#
 .SYNOPSIS
 	Starts the Fusion log viewer.
-
-.PARAMETER Text
-	.
 #>
 function StartFusionLogViewer() {
 	foreach ($command in
@@ -46,9 +32,6 @@ function StartILSpy() {
 <#
 .SYNOPSIS
 	Starts Inspect.
-
-.PARAMETER Text
-	.
 #>
 function StartInspect(){
 	& "${env:ProgramFiles(x86)}\Windows Kits\8.1\bin\x64\inspect.exe"
@@ -57,9 +40,6 @@ function StartInspect(){
 <#
 .SYNOPSIS
 	Starts MSTest.
-
-.PARAMETER Text
-	.
 #>
 function StartMSTest() {
 	foreach ($command in
@@ -75,9 +55,6 @@ function StartMSTest() {
 <#
 .SYNOPSIS
 	Starts tlbimp.
-
-.PARAMETER Text
-	.
 #>
 function StartTlbImp() {
 	foreach ($command in
@@ -92,77 +69,45 @@ function StartTlbImp() {
 	&$command $args
 }
 
+$StartVisualStudioCache = $null
+
 <#
 .SYNOPSIS
-	Opens a file in the PowerShell ISE.
+	Starts Visual Studio, or opens a file in it.
 
-.PARAMETER fileName
-	Name of the file to open.
+.PARAMETER File
+	File to open in Visual Studio.
+
+.PARAMETER NewInstance
+	Launches new instance of Visual Studio, or, if specified, opens a file in a new instance of
+	Visual Studio.
+
+.PARAMETER VSVersion
+	Verrsio of Visual Studio to launch or open file in.
 #>
-function OpenWithPSEdit([string] $fileName) {
-	foreach ($command in
-		"${env:SystemRoot}\system32\WindowsPowerShell\v1.0\PowerShell_ISE.exe",
-		"INVALIDPATH") {
-		if (Test-Path $command) { break }
+function StartVisualStudio([string] $File, [switch] $NewInstance, [string] $VSVersion = "latest"){
+
+	if ($null -eq $StartVisualStudioCache) {
+		$vsWherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+		
+		if (!(Test-Path $vsWherePath)) {
+			throw "requires `"$vsWherePath`", i.e. VS 2017 or greater"
+		}
+
+		$Script:StartVisualStudioCache = &$vsWherePath -sort -format json | ConvertFrom-Json
 	}
 
-	&$command $fileName
-}
-
-<#
-.SYNOPSIS
-	Opens a file in Visual Studio.
-
-.PARAMETER Text
-	.
-#>
-function OpenWithVisualStudio([string] $fileName, [switch] $newVSInstance) {
-	foreach ($command in
-		"${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\devenv.exe",
-		"${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.exe",
-		"${env:ProgramFiles(x86)}\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe",
-		"INVALIDPATH")
-	{
-		if (Test-Path $command) { break }
+	if ($StartVisualStudioCache -is [array]) {
+		throw "implement version search in vswhere data"
+	} else {
+		$vsPath = $StartVisualStudioCache.productPath
 	}
 
-	if ($newVSInstance) { $edit = '' } else { $edit = "/edit" }
-	Write-Host "DBG:$command $edit $filename"
+	if ($File -and !$NewInstance) {
+		$edit = "/edit"
+	} else {
+		$edit = ""
+	}
 
-	&$command $edit $fileName
+	&$vsPath $edit $File
 }
-
-<#
-.SYNOPSIS
-	.
-
-.PARAMETER Text
-	.
-#>
-function OpenWithVisualStudioCode([switch] $NewInstance) {
-	$app = SelectFirstExisting "$HOME\AppData\Local\Programs\Microsoft VS Code\bin\code.cmd", "${env:ProgramFiles}\Microsoft VS Code\bin\code.cmd"
-	$reuse = if ($NewInstance) { '' } else { '-r' }
-	&$app $reuse $args
-}
-
-<#
-.SYNOPSIS
-	.
-
-.PARAMETER Text
-	.
-#>
-function OpenWindowsExplorer() {
-	explorer $args
-}
-
-Export-ModuleMember -Function StartAccEvent,
-	StartFusionLogViewer,
-	StartILSpy,
-	StartInspect,
-	StartMSTest,
-	StartTlbImp,
-	OpenWithPSEdit,
-	OpenWithVisualStudio,
-	OpenWithVisualStudioCode,
-	OpenWindowsExplorer

@@ -135,8 +135,7 @@ function PathAsUri($Path) {
 Gets a relative path.
 
 .DESCRIPTION
-The function returns a relative path which, when appended to the base directory, results in the
-identifies the same element as the target path.
+The function returns a relative path which, when appended to the base directory, identifies the same element as the target path.
 
 .PARAMETER BaseDirectory
 Absolute path of base directory.
@@ -151,10 +150,12 @@ function PathGetRelative([string] $BaseDirectory, [string] $TargetPath) {
 	# On modern .NET framework versions, this should get replaced with
 	# System.IO.Path.GetRelativePath()
 
-	$baseParts = $BaseDirectory.Split(@('/', '\'), ([System.StringSplitOptions]::RemoveEmptyEntries))
+	$separators = (-join (PathSeparators)).ToCharArray()
+
+	$baseParts = $BaseDirectory.Split($separators, ([System.StringSplitOptions]::RemoveEmptyEntries))
 	if ($baseParts.Count -eq 0) { return $TargetPath }
 
-	$targetPathParts = $TargetPath.Split(@('/', '\'), ([System.StringSplitOptions]::RemoveEmptyEntries))
+	$targetPathParts = $TargetPath.Split($separators, ([System.StringSplitOptions]::RemoveEmptyEntries))
 	if ($targetPathParts.Count -eq 0) { return ("/.." * $basePArts.Count).Substring(1) }
 
 	$relativePath = [System.Text.StringBuilder]::new();

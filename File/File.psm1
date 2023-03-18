@@ -1,3 +1,5 @@
+Import-Module Gumby.Debug
+
 <#
 .SYNOPSIS
 	Values describing a text file encoding.
@@ -27,7 +29,13 @@ enum TextFileEncoding {
 	It assumes the specified file ('Path' parameter) is an existing, non-zero length file.
 #>
 function Get-TextFileEncoding ([string] $Path) {
-	[byte[]] $bytes = Get-Content -Encoding byte -ReadCount 4 -TotalCount 4 -Path $Path
+	# In Windows PowerShell (5.1), the Get-Content invocation was
+	#     [byte[]] $bytes = Get-Content -Encoding byte -ReadCount 4 -TotalCount 4 -Path $Path
+	# It seems that with PowerShell 6, 'byte' is no longer a valid -Encoding argument. Instead,
+	# the -AsByteStream switch should be used
+	Assert ($PSVersionTable.PSVersion.Major -ge 6) "needs PS 6 or later"
+ 
+	[byte[]] $bytes = Get-Content -AsByteStream -TotalCount 4 -Path $Path
 
 	if ($bytes[0] -eq 0xef -and $bytes[1] -eq 0xbb -and $bytes[2] -eq 0xbf) {
 		return [TextFileEncoding]::UTF8
