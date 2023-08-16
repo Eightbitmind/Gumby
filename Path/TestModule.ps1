@@ -113,7 +113,7 @@ class PathJoinTests {
 class PathAsUriTests {
 	[TestMethod()]
 	[void] PathAsUri_Example1() {
-		Test "file:C:/foo/bar" (PathAsUri "C:\foo\bar")
+		Test "file:///C/foo/bar" (PathAsUri "C:\foo\bar")
 	}
 }
 
