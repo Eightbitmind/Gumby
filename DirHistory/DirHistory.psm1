@@ -1,5 +1,5 @@
-using module ListBox
-using module Window
+using module Gumby.ListBox
+using module Gumby.Window
 
 # an IEnumerable implementation as required by ListBox, but treated here as a stack
 $dirHistory = [System.Collections.ArrayList]::new(<# history size #> 30)
