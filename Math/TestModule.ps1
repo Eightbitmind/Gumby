@@ -64,6 +64,7 @@ class EncodeB26Tests {
 class GenerateRandomLetterIdTests {
 	[TestMethod()]
 	[void] DefaultLength_Generates3CharString() {
+		#TODO: we need to introduce some form of padding, a random number may not always require 3 digits
 		Test 3 (GenerateRandomLetterId).Length
 	}
 
