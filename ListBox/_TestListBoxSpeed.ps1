@@ -1,5 +1,5 @@
 
-using module ListBox
+using module Gumby.ListBox
 
 $width = 102
 $height = 22

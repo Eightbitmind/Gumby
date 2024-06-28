@@ -1,5 +1,5 @@
 using module Gumby.Log
-using module ListBox
+using module Gumby.ListBox
 
 $fll = $null
 $logFileName = "$env:TEMP\_ShowListBox.log"

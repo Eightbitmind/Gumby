@@ -1,5 +1,5 @@
-using module ListBox
-using module Window
+using module Gumby.ListBox
+using module Gumby.Window
 
 <#
 .SYNOPSIS

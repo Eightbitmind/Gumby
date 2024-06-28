@@ -1,7 +1,7 @@
 using module Gumby.Log
-using module Object
-using module TreeView
-using module Window
+using module Gumby.Object
+using module Gumby.TreeView
+using module Gumby.Window
 
 $debug = $true
 

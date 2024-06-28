@@ -1,7 +1,7 @@
 using module Gumby.Log
 using module Gumby.Path
-using module TreeView
-using module Window
+using module Gumby.TreeView
+using module Gumby.Window
 
 [bool] $debug = $true
 

@@ -1,4 +1,4 @@
-using module ScrollView
+using module Gumby.ScrollView
 
 class LBItemBase {
 	[string] Name() { throw "abstract" }

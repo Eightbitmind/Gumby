@@ -1,4 +1,4 @@
-using module Win32
+using module Gumby.Win32
 
 <#
 .SYNOPSIS

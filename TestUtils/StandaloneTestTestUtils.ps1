@@ -1,5 +1,5 @@
-using module Log
-using module TestUtils
+using module Gumby.Log
+using module Gumby.Test
 
 # The file is named to *not* match the pattern used in RunAllTests.ps1.
 

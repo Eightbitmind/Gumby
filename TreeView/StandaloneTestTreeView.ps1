@@ -1,5 +1,5 @@
-using module TestUtils
-using module TreeView
+using module Gumby.Test
+using module Gumby.TreeView
 
 # The file is named to *not* match the pattern used in RunAllTests.ps1.
 

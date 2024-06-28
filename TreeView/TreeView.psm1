@@ -1,7 +1,7 @@
 using module Gumby.Debug
 using module Gumby.Log
-using module ListBox
-using module Window
+using module Gumby.ListBox
+using module Gumby.Window
 
 class TVItemBase : LBItemBase {
 	TVItemBase() {}

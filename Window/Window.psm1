@@ -1,7 +1,7 @@
 using module Gumby.Debug
 using module Gumby.Log
+using module Gumby.Math
 using module Gumby.String
-using module Math
 
 enum WindowResult {
 	OK
