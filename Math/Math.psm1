@@ -83,5 +83,7 @@ SZCW
 #>
 function GenerateRandomLetterId($Length = 3)
 {
-	return (EncodeBase26 (Get-Random -Maximum ([math]::pow(26, $Length))))
+	# pad to ensure requested number of digits
+	$paddedId =  ("A" * ($Length - 1)) + (EncodeBase26 (Get-Random -Maximum ([math]::pow(26, $Length))))
+	return $paddedId.Substring($paddedId.Length - $Length);
 }
